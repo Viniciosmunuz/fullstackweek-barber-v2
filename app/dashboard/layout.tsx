@@ -6,6 +6,7 @@ import DashboardSidebar from "./_components/sidebar"
 import ClaimAccess from "./_components/claim-access"
 import SignInPrompt from "../_components/sign-in-prompt"
 import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
+import { isDemoSelfServiceEnabled } from "../_lib/config"
 import { Button } from "../_components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../_components/ui/sheet"
 import { authOptions } from "../_lib/auth"
@@ -32,11 +33,7 @@ export default async function DashboardLayout({
   const managed = await getManagedBarbershopIds()
 
   if (managed.length === 0) {
-    return (
-      <ClaimAccess
-        selfServiceEnabled={process.env.DEMO_SELF_SERVICE === "true"}
-      />
-    )
+    return <ClaimAccess selfServiceEnabled={isDemoSelfServiceEnabled()} />
   }
 
   return (

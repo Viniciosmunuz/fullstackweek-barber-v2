@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "@/app/_lib/prisma"
+import { isDemoSelfServiceEnabled } from "@/app/_lib/config"
 import { requireSession } from "./guard"
 
 /**
@@ -19,7 +20,7 @@ import { requireSession } from "./guard"
 export async function claimDemoBarbershops() {
   const { userId } = await requireSession()
 
-  if (process.env.DEMO_SELF_SERVICE !== "true") {
+  if (!isDemoSelfServiceEnabled()) {
     throw new Error(
       "Este ambiente não permite auto-cadastro de gestores. Peça acesso ao responsável pela barbearia.",
     )
