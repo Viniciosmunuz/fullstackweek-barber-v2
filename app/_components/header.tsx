@@ -37,6 +37,9 @@ const Header = ({ transparent = false }: HeaderProps) => {
           <Button variant="ghost" asChild>
             <Link href="/bookings">Meus agendamentos</Link>
           </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/dashboard">Painel</Link>
+          </Button>
           <Button className="ml-2" asChild>
             <Link href="/barbershops">Agendar horário</Link>
           </Button>

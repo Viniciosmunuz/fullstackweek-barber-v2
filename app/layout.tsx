@@ -2,9 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, Manrope } from "next/font/google"
 import "./globals.css"
 import { Toaster } from "sonner"
-import Footer from "./_components/footer"
 import AuthProvider from "./_providers/auth"
-import MobileNav from "./_components/mobile-nav"
+import SiteChrome from "./_components/site-chrome"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,12 +42,7 @@ export default function RootLayout({
     <html lang="pt-BR" className={`dark ${inter.variable} ${manrope.variable}`}>
       <body className="font-sans">
         <AuthProvider>
-          <div className="flex min-h-full flex-col">
-            {/* pb-20 no mobile abre espaço para a barra de navegação fixa */}
-            <div className="flex-1 pb-20 lg:pb-0">{children}</div>
-            <Footer />
-          </div>
-          <MobileNav />
+          <SiteChrome>{children}</SiteChrome>
         </AuthProvider>
         <Toaster position="top-center" richColors />
       </body>

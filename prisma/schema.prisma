@@ -14,11 +14,23 @@ model User {
   email         String    @unique
   emailVerified DateTime?
   image         String?
+  phone         String?
+  /// Cliente fictício do catálogo de demonstração. O painel de gestão só
+  /// exibe registros marcados assim (mais os do próprio usuário logado), para
+  /// que dados de quem entra com a conta Google não fiquem visíveis a terceiros.
+  isDemo        Boolean   @default(false)
   accounts      Account[]
   sessions      Session[]
   bookings      Booking[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }
 
 model Account {
@@ -102,6 +114,9 @@ model Barber {
   specialty    String
   bio          String
   imageUrl     String
+  /// Profissional inativo some da escolha no agendamento, mas mantém o
+  /// histórico já registrado.
+  active       Boolean    @default(true)
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]
@@ -131,6 +146,10 @@ model Booking {
   barberId  String?
   barber    Barber?           @relation(fields: [barberId], references: [id])
   date      DateTime
+  status    BookingStatus     @default(CONFIRMED)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+
+  @@index([date])
+  @@index([barberId, date])
 }

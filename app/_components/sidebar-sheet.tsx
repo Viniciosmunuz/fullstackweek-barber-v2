@@ -1,7 +1,14 @@
 "use client"
 
 import { Button } from "./ui/button"
-import { CalendarDays, Home, LogInIcon, LogOutIcon, Store } from "lucide-react"
+import {
+  CalendarDays,
+  Home,
+  LayoutDashboard,
+  LogInIcon,
+  LogOutIcon,
+  Store,
+} from "lucide-react"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 import { quickSearchOptions } from "../_constants/search"
 import Link from "next/link"
@@ -85,6 +92,14 @@ const SidebarSheet = () => {
             <Link href="/bookings">
               <CalendarDays size={18} />
               Meus agendamentos
+            </Link>
+          </Button>
+        </SheetClose>
+        <SheetClose asChild>
+          <Button className="justify-start gap-3" variant="ghost" asChild>
+            <Link href="/dashboard">
+              <LayoutDashboard size={18} />
+              Painel de gestão
             </Link>
           </Button>
         </SheetClose>

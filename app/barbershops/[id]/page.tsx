@@ -22,7 +22,8 @@ async function getBarbershop(id: string) {
     where: { id },
     include: {
       services: { orderBy: { price: "asc" } },
-      barbers: { orderBy: { name: "asc" } },
+      // Profissional inativo não aparece para agendar, mas segue no histórico.
+      barbers: { where: { active: true }, orderBy: { name: "asc" } },
       openingHours: { orderBy: { weekday: "asc" } },
     },
   })
