@@ -3,7 +3,8 @@ import Link from "next/link"
 import { addDays, format, isValid, parseISO, startOfDay } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarX, ChevronLeft, ChevronRight } from "lucide-react"
-import { EmptyState, PageHeader, StatusBadge } from "../_components/ui"
+import { EmptyState, PageHeader } from "../_components/ui"
+import StatusSelect from "../_components/status-select"
 import BarberAvatar from "@/app/_components/barber-avatar"
 import { Button } from "@/app/_components/ui/button"
 import {
@@ -127,7 +128,11 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
                       {formatCurrency(booking.price)}
                     </td>
                     <td className="px-4 py-3">
-                      <StatusBadge status={booking.status} />
+                      <StatusSelect
+                        bookingId={booking.id}
+                        status={booking.status}
+                        clientName={booking.clientName}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -145,7 +150,11 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
                       </p>
                       <p className="truncate text-sm">{booking.clientName}</p>
                     </div>
-                    <StatusBadge status={booking.status} />
+                    <StatusSelect
+                      bookingId={booking.id}
+                      status={booking.status}
+                      clientName={booking.clientName}
+                    />
                   </div>
 
                   <div className="mt-2 flex items-center gap-2">

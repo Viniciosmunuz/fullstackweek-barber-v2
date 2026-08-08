@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { Scissors } from "lucide-react"
 import { EmptyState, PageHeader } from "../_components/ui"
+import ServiceForm from "../_components/service-form"
 import { db } from "@/app/_lib/prisma"
 import {
   getBarbershopBySlug,
@@ -38,7 +39,9 @@ const ServicesPage = async ({ searchParams }: PageProps) => {
         description={`${services.length} serviços no cardápio da ${barbershop.name}.`}
         shops={shops}
         current={barbershop}
-      />
+      >
+        <ServiceForm barbershopId={barbershop.id} />
+      </PageHeader>
 
       <div className="px-4 py-6 sm:px-6 lg:px-8">
         {services.length > 0 ? (
@@ -51,6 +54,9 @@ const ServicesPage = async ({ searchParams }: PageProps) => {
                   <th scope="col" className="px-4 py-3 font-semibold">Preço</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Vendas (30d)</th>
                   <th scope="col" className="px-4 py-3 font-semibold">Receita (30d)</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    <span className="sr-only">Ações</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.06]">
@@ -80,6 +86,19 @@ const ServicesPage = async ({ searchParams }: PageProps) => {
                       <td className="whitespace-nowrap px-4 py-3">
                         {formatCurrency(stats?.revenue ?? 0)}
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <ServiceForm
+                          barbershopId={barbershop.id}
+                          service={{
+                            id: service.id,
+                            name: service.name,
+                            description: service.description,
+                            price: Number(service.price),
+                            durationMinutes: service.durationMinutes,
+                            imageUrl: service.imageUrl,
+                          }}
+                        />
+                      </td>
                     </tr>
                   )
                 })}
@@ -105,6 +124,20 @@ const ServicesPage = async ({ searchParams }: PageProps) => {
                       <span className="shrink-0 font-display font-bold text-primary">
                         {formatCurrency(Number(service.price))}
                       </span>
+                    </div>
+
+                    <div className="mt-2 flex justify-end">
+                      <ServiceForm
+                        barbershopId={barbershop.id}
+                        service={{
+                          id: service.id,
+                          name: service.name,
+                          description: service.description,
+                          price: Number(service.price),
+                          durationMinutes: service.durationMinutes,
+                          imageUrl: service.imageUrl,
+                        }}
+                      />
                     </div>
                   </li>
                 )

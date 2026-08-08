@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { UserSquare2 } from "lucide-react"
 import { EmptyState, PageHeader } from "../_components/ui"
+import BarberForm from "../_components/barber-form"
 import BarberAvatar from "@/app/_components/barber-avatar"
 import { db } from "@/app/_lib/prisma"
 import {
@@ -52,7 +53,9 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
         description={`${barbers.length} profissionais na ${barbershop.name}.`}
         shops={shops}
         current={barbershop}
-      />
+      >
+        <BarberForm barbershopId={barbershop.id} />
+      </PageHeader>
 
       <div className="px-4 py-6 sm:px-6 lg:px-8">
         {barbers.length > 0 ? (
@@ -117,6 +120,19 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
                       </dd>
                     </div>
                   </dl>
+
+                  <div className="mt-3 flex justify-end border-t border-white/[0.06] pt-3">
+                    <BarberForm
+                      barbershopId={barbershop.id}
+                      barber={{
+                        id: barber.id,
+                        name: barber.name,
+                        specialty: barber.specialty,
+                        bio: barber.bio,
+                        active: barber.active,
+                      }}
+                    />
+                  </div>
                 </article>
               )
             })}
