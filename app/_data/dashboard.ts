@@ -209,7 +209,9 @@ export async function getClients(barbershopId: string): Promise<ClientSummary[]>
     byClient.set(key, current)
   }
 
-  return [...byClient.values()].sort((a, b) => b.spent - a.spent)
+  // Array.from em vez de spread: o tsconfig não fixa `target`, então cai em ES5,
+  // onde iterar Map.values() com spread exige downlevelIteration.
+  return Array.from(byClient.values()).sort((a, b) => b.spent - a.spent)
 }
 
 /** Faturamento por mês nos últimos 12 meses, para o gráfico de barras. */
@@ -239,7 +241,7 @@ export async function getMonthlyRevenue(barbershopId: string) {
     bucket.count += 1
   }
 
-  return [...buckets.values()]
+  return Array.from(buckets.values())
 }
 
 /** Ranking de serviços e desempenho por profissional no período. */
@@ -269,7 +271,7 @@ export async function getPerformance(barbershopId: string, period: Period) {
   }
 
   return {
-    services: [...services.values()].sort((a, b) => b.count - a.count),
-    barbers: [...barbers.values()].sort((a, b) => b.revenue - a.revenue),
+    services: Array.from(services.values()).sort((a, b) => b.count - a.count),
+    barbers: Array.from(barbers.values()).sort((a, b) => b.revenue - a.revenue),
   }
 }
