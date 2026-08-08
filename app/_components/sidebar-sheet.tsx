@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogInIcon,
   LogOutIcon,
+  ShieldCheck,
   Store,
 } from "lucide-react"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
@@ -19,7 +20,12 @@ import SignInDialog from "./sign-in-dialog"
 import { BarberFlowLogo } from "./brand/logo"
 import { getInitials } from "@/app/_lib/utils"
 
-const SidebarSheet = () => {
+interface SidebarSheetProps {
+  /** Definido pelo servidor: o cliente não decide quem é administrador. */
+  isPlatformAdmin?: boolean
+}
+
+const SidebarSheet = ({ isPlatformAdmin = false }: SidebarSheetProps) => {
   const { data } = useSession()
   const handleLogoutClick = () => signOut()
 
@@ -99,10 +105,21 @@ const SidebarSheet = () => {
           <Button className="justify-start gap-3" variant="ghost" asChild>
             <Link href="/dashboard">
               <LayoutDashboard size={18} />
-              Painel de gestão
+              Painel da barbearia
             </Link>
           </Button>
         </SheetClose>
+
+        {isPlatformAdmin && (
+          <SheetClose asChild>
+            <Button className="justify-start gap-3" variant="ghost" asChild>
+              <Link href="/admin">
+                <ShieldCheck size={18} />
+                Barbearias parceiras
+              </Link>
+            </Button>
+          </SheetClose>
+        )}
       </nav>
 
       <div className="border-b border-white/[0.06] py-4">

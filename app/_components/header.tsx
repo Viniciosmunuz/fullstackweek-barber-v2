@@ -1,9 +1,12 @@
 import Link from "next/link"
 import { MenuIcon } from "lucide-react"
+import { getServerSession } from "next-auth"
 import { Button } from "./ui/button"
 import { Sheet, SheetTrigger } from "./ui/sheet"
 import SidebarSheet from "./sidebar-sheet"
 import { BarberFlowLogo } from "./brand/logo"
+import { authOptions } from "@/app/_lib/auth"
+import { isPlatformAdminEmail } from "@/app/_lib/config"
 import { cn } from "@/app/_lib/utils"
 
 interface HeaderProps {
@@ -14,7 +17,10 @@ interface HeaderProps {
   transparent?: boolean
 }
 
-const Header = ({ transparent = false }: HeaderProps) => {
+const Header = async ({ transparent = false }: HeaderProps) => {
+  const session = await getServerSession(authOptions)
+  const isAdmin = isPlatformAdminEmail(session?.user?.email)
+
   return (
     <header
       className={cn(
@@ -29,7 +35,6 @@ const Header = ({ transparent = false }: HeaderProps) => {
           <BarberFlowLogo size="md" />
         </Link>
 
-        {/* Navegação desktop */}
         <nav className="hidden items-center gap-1 lg:flex">
           <Button variant="ghost" asChild>
             <Link href="/barbershops">Barbearias</Link>
@@ -37,9 +42,14 @@ const Header = ({ transparent = false }: HeaderProps) => {
           <Button variant="ghost" asChild>
             <Link href="/bookings">Meus agendamentos</Link>
           </Button>
-          <Button variant="ghost" asChild>
-            <Link href="/dashboard">Painel</Link>
-          </Button>
+
+          {/* Só quem administra a plataforma vê o atalho. */}
+          {isAdmin && (
+            <Button variant="ghost" asChild>
+              <Link href="/admin">Parceiras</Link>
+            </Button>
+          )}
+
           <Button className="ml-2" asChild>
             <Link href="/barbershops">Agendar horário</Link>
           </Button>
@@ -56,7 +66,7 @@ const Header = ({ transparent = false }: HeaderProps) => {
               <MenuIcon size={18} />
             </Button>
           </SheetTrigger>
-          <SidebarSheet />
+          <SidebarSheet isPlatformAdmin={isAdmin} />
         </Sheet>
       </div>
     </header>

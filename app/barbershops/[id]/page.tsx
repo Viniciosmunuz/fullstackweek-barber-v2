@@ -44,7 +44,9 @@ export async function generateMetadata({
 const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   const barbershop = await getBarbershop(params.id)
 
-  if (!barbershop) {
+  // Casa em cadastro não é acessível nem por link direto: sem endereço e sem
+  // contato, a página só frustraria quem chegasse nela.
+  if (!barbershop || !barbershop.isPublished) {
     return notFound()
   }
 

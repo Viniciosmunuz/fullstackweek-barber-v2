@@ -3,13 +3,20 @@ import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { Menu } from "lucide-react"
 import DashboardSidebar from "./_components/sidebar"
-import ClaimAccess from "./_components/claim-access"
+import NoAccess from "./_components/no-access"
 import SignInPrompt from "../_components/sign-in-prompt"
-import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
-import { isDemoSelfServiceEnabled } from "../_lib/config"
 import { Button } from "../_components/ui/button"
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../_components/ui/sheet"
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "../_components/ui/sheet"
 import { authOptions } from "../_lib/auth"
+import {
+  getManagedBarbershopIds,
+  syncPendingInvites,
+} from "../_actions/dashboard/guard"
 
 export const metadata: Metadata = {
   title: {
@@ -29,16 +36,18 @@ export default async function DashboardLayout({
     return <SignInPrompt />
   }
 
-  // Sem vínculo com nenhuma barbearia, não há painel a mostrar.
+  // O dono é cadastrado por e-mail antes de ter conta. Na primeira visita já
+  // autenticada, o convite pendente vira vínculo real.
+  await syncPendingInvites()
+
   const managed = await getManagedBarbershopIds()
 
   if (managed.length === 0) {
-    return <ClaimAccess selfServiceEnabled={isDemoSelfServiceEnabled()} />
+    return <NoAccess email={session.user.email ?? ""} />
   }
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar fixa a partir de lg */}
       <aside className="hidden w-60 shrink-0 border-r border-white/[0.06] bg-card/30 lg:block">
         <div className="sticky top-0 h-screen">
           <Suspense fallback={<div className="h-full" />}>
@@ -48,11 +57,14 @@ export default async function DashboardLayout({
       </aside>
 
       <div className="min-w-0 flex-1">
-        {/* Barra superior do mobile com a sidebar em gaveta */}
         <div className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-white/[0.06] bg-background/95 px-4 backdrop-blur lg:hidden">
           <Sheet>
             <SheetTrigger asChild>
-              <Button size="icon" variant="outline" aria-label="Abrir menu do painel">
+              <Button
+                size="icon"
+                variant="outline"
+                aria-label="Abrir menu do painel"
+              >
                 <Menu size={18} />
               </Button>
             </SheetTrigger>

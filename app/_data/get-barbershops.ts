@@ -74,6 +74,8 @@ export async function getBarbershops({
 }: SearchParams = {}) {
   const rows = (await db.barbershop.findMany({
     where: {
+      // Só o que o dono publicou: casa em cadastro não deve receber cliente.
+      isPublished: true,
       AND: [
         title
           ? {

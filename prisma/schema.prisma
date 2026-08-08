@@ -38,6 +38,26 @@ enum ManagerRole {
 /// usuário não enxerga nem edita nada daquele estabelecimento. Tabela de
 /// junção (e não `Barbershop.ownerId`) porque uma barbearia costuma ter mais
 /// de um responsável e um grupo pode administrar várias unidades.
+/// E-mail liberado pela plataforma para administrar uma barbearia.
+///
+/// O convite existe porque o dono normalmente ainda não tem conta quando é
+/// cadastrado: guarda-se o e-mail, e no primeiro login com o Google o vínculo
+/// real (BarbershopManager) é criado automaticamente.
+model BarbershopInvite {
+  id           String      @id @default(uuid())
+  /// Sempre gravado em minúsculas, para o confronto com o e-mail do Google
+  /// não falhar por diferença de caixa.
+  email        String
+  barbershopId String
+  barbershop   Barbershop  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  role         ManagerRole @default(OWNER)
+  acceptedAt   DateTime?
+  createdAt    DateTime    @default(now())
+
+  @@unique([email, barbershopId])
+  @@index([email])
+}
+
 model BarbershopManager {
   id           String      @id @default(uuid())
   userId       String
@@ -107,6 +127,10 @@ model Barbershop {
   phones      String[]
   description String
   imageUrl    String
+  /// Só barbearias publicadas aparecem no catálogo público. Uma casa recém
+  /// cadastrada pela plataforma nasce despublicada, para o dono completar o
+  /// cadastro antes de receber cliente.
+  isPublished Boolean             @default(false)
   /// Identifica qual componente de logo SVG renderizar (ver _components/brand/barbershop-logo.tsx)
   logoKey     String
   /// Cor de destaque da marca em hex, usada nos acentos do card e da página
@@ -116,6 +140,7 @@ model Barbershop {
   openingHours OpeningHour[]
   barbers     Barber[]
   managers    BarbershopManager[]
+  invites     BarbershopInvite[]
   services    BarbershopService[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
