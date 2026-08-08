@@ -2,37 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * BarberFlow — design tokens
+ *
+ * Paleta base:
+ *   Preto    #0B0B0F  ->  240 15% 5%
+ *   Grafite  #15151C  ->  240 14% 10%
+ *   Dourado  #C9A227  ->  46 68% 47%
+ *   Branco   #F5F5F5  ->  0 0% 96%
+ *   Cinza    #8E8E99  ->  240 5% 58%
+ *
+ * O produto é dark-first: a superfície escura é a identidade da marca, e o
+ * dourado aparece só em ações e acentos para não perder o peso premium.
+ */
 @layer base {
+  :root,
   .dark {
-    --background: 225 9% 9%;
-    --foreground: 210 40% 98%;
+    --background: 240 15% 5%;
+    --foreground: 0 0% 96%;
 
-    --card: 228 9% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 14% 10%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 228 9% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 14% 10%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 252 100% 69%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 46 68% 47%;
+    --primary-foreground: 240 15% 5%;
 
-    --secondary: 228 6% 16%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 12% 14%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 228 6% 16%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 12% 14%;
+    --muted-foreground: 240 5% 58%;
 
-    --accent: 228 6% 16%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 240 12% 16%;
+    --accent-foreground: 0 0% 96%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 96%;
 
-    --border: 228 6% 16%;
-    --input: 228 6% 16%;
-    --ring: 212.7 26.8% 83.9%;
+    --success: 152 55% 45%;
+    --warning: 38 92% 55%;
 
-    --radius: 0.5rem;
+    --border: 240 10% 17%;
+    --input: 240 10% 17%;
+    --ring: 46 68% 47%;
+
+    --radius: 0.875rem;
   }
 }
 
@@ -40,10 +57,64 @@
   * {
     @apply border-border antialiased;
   }
+
   html {
     @apply h-full;
+    scroll-behavior: smooth;
   }
+
   body {
     @apply h-full bg-background text-foreground;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Foco visível e consistente em toda a aplicação (acessibilidade). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  ::selection {
+    @apply bg-primary/30 text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Trilhos horizontais roláveis sem barra visível. */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Texto em degradê dourado, usado em títulos de destaque. */
+  .text-gradient-gold {
+    @apply bg-gradient-to-br from-[#E7C65A] via-primary to-[#9C7B18] bg-clip-text text-transparent;
+  }
+
+  /* Borda sutil que dá profundidade aos cards sobre fundo preto. */
+  .surface {
+    @apply border border-white/[0.06] bg-card;
+  }
+
+  .surface-hover {
+    @apply transition-colors duration-200 hover:border-primary/30 hover:bg-white/[0.03];
+  }
+
+  /* Brilho radial usado atrás do hero. */
+  .glow-gold {
+    background: radial-gradient(
+      60% 60% at 50% 0%,
+      hsl(46 68% 47% / 0.16) 0%,
+      transparent 70%
+    );
+  }
+}
+
+@layer components {
+  /* Faixa de rolagem horizontal com respiro nas bordas em telas pequenas. */
+  .rail {
+    @apply no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:px-0;
   }
 }

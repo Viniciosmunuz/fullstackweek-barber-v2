@@ -1,11 +1,12 @@
 "use client"
 
-import { Prisma } from "@prisma/client"
-import { Avatar, AvatarImage } from "./ui/avatar"
-import { Badge } from "./ui/badge"
-import { Card, CardContent } from "./ui/card"
+import { useState } from "react"
+import Image from "next/image"
 import { format, isFuture } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { toast } from "sonner"
+import { Badge } from "./ui/badge"
+import { Button } from "./ui/button"
 import {
   Sheet,
   SheetClose,
@@ -15,11 +16,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "./ui/sheet"
-import Image from "next/image"
-import PhoneItem from "./phone-item"
-import { Button } from "./ui/button"
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -27,105 +26,159 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog"
-import { DialogClose } from "@radix-ui/react-dialog"
-import { deleteBooking } from "../_actions/delete-booking"
-import { toast } from "sonner"
-import { useState } from "react"
+import PhoneItem from "./phone-item"
 import BookingSummary from "./booking-summary"
+import BarbershopLogo from "./brand/barbershop-logo"
+import { deleteBooking } from "../_actions/delete-booking"
+import { formatCurrency } from "@/app/_lib/utils"
 
-interface BookingItemProps {
-  booking: Prisma.BookingGetPayload<{
-    include: {
-      service: {
-        include: {
-          barbershop: true
-        }
-      }
+/**
+ * Formato serializado do agendamento. Definido à mão em vez de
+ * `Prisma.BookingGetPayload` porque `price` chega como número (o Decimal é
+ * convertido no servidor antes de cruzar para o cliente).
+ */
+export interface BookingItemData {
+  id: string
+  date: string | Date
+  barber: { name: string; specialty: string } | null
+  service: {
+    name: string
+    price: number
+    durationMinutes: number
+    barbershop: {
+      name: string
+      address: string
+      city: string
+      phones: string[]
+      logoKey: string
+      accentColor: string
     }
-  }>
+  }
 }
 
-// TODO: receber agendamento como prop
+interface BookingItemProps {
+  booking: BookingItemData
+}
+
 const BookingItem = ({ booking }: BookingItemProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false)
-  const {
-    service: { barbershop },
-  } = booking
-  const isConfirmed = isFuture(booking.date)
+  const [cancelling, setCancelling] = useState(false)
+
+  const { barbershop } = booking.service
+  const date = new Date(booking.date)
+  const isConfirmed = isFuture(date)
+
   const handleCancelBooking = async () => {
+    setCancelling(true)
     try {
       await deleteBooking(booking.id)
       setIsSheetOpen(false)
-      toast.success("Reserva cancelada com sucesso!")
+      toast.success("Agendamento cancelado.")
     } catch (error) {
       console.error(error)
-      toast.error("Erro ao cancelar reserva. Tente novamente.")
+      toast.error("Não foi possível cancelar. Tente novamente.")
+    } finally {
+      setCancelling(false)
     }
   }
-  const handleSheetOpenChange = (isOpen: boolean) => {
-    setIsSheetOpen(isOpen)
-  }
-  return (
-    <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
-      <SheetTrigger className="w-full min-w-[90%]">
-        <Card className="min-w-[90%]">
-          <CardContent className="flex justify-between p-0">
-            {/* ESQUERDA */}
-            <div className="flex flex-col gap-2 py-5 pl-5">
-              <Badge
-                className="w-fit"
-                variant={isConfirmed ? "default" : "secondary"}
-              >
-                {isConfirmed ? "Confirmado" : "Finalizado"}
-              </Badge>
-              <h3 className="font-semibold">{booking.service.name}</h3>
 
-              <div className="flex items-center gap-2">
-                <Avatar className="h-6 w-6">
-                  <AvatarImage src={booking.service.barbershop.imageUrl} />
-                </Avatar>
-                <p className="text-sm">{booking.service.barbershop.name}</p>
-              </div>
+  return (
+    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+      <SheetTrigger asChild>
+        <button
+          type="button"
+          className="surface surface-hover flex w-full min-w-[280px] items-stretch overflow-hidden rounded-lg text-left"
+        >
+          <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
+            <Badge
+              className="w-fit"
+              variant={isConfirmed ? "default" : "secondary"}
+            >
+              {isConfirmed ? "Confirmado" : "Concluído"}
+            </Badge>
+
+            <h3 className="truncate font-display font-bold">
+              {booking.service.name}
+            </h3>
+
+            <div className="flex items-center gap-2">
+              <span
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded"
+                style={{
+                  boxShadow: `inset 0 0 0 1px ${barbershop.accentColor}40`,
+                }}
+              >
+                <BarbershopLogo
+                  logoKey={barbershop.logoKey}
+                  accentColor={barbershop.accentColor}
+                  className="h-4 w-4"
+                />
+              </span>
+              <p className="truncate text-sm text-muted-foreground">
+                {barbershop.name}
+              </p>
             </div>
-            {/* DIREITA */}
-            <div className="flex flex-col items-center justify-center border-l-2 border-solid px-5">
-              <p className="text-sm capitalize">
-                {format(booking.date, "MMMM", { locale: ptBR })}
+
+            {booking.barber && (
+              <p className="truncate text-xs text-muted-foreground">
+                com {booking.barber.name}
               </p>
-              <p className="text-2xl">
-                {format(booking.date, "dd", { locale: ptBR })}
-              </p>
-              <p className="text-sm">
-                {format(booking.date, "HH:mm", { locale: ptBR })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            )}
+          </div>
+
+          <div className="flex flex-col items-center justify-center border-l border-white/[0.06] px-5">
+            <p className="text-xs capitalize text-muted-foreground">
+              {format(date, "MMM", { locale: ptBR })}
+            </p>
+            <p className="font-display text-2xl font-bold">
+              {format(date, "dd")}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {format(date, "HH:mm")}
+            </p>
+          </div>
+        </button>
       </SheetTrigger>
-      <SheetContent className="w-[85%]">
+
+      <SheetContent className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle className="text-left">Informações da Reserva</SheetTitle>
+          <SheetTitle className="text-left font-display">
+            Detalhes do agendamento
+          </SheetTitle>
         </SheetHeader>
 
-        <div className="relative mt-6 flex h-[180px] w-full items-end">
+        <div className="relative mt-6 flex h-[170px] w-full items-end overflow-hidden rounded-lg">
           <Image
-            alt={`Mapa da barbearia ${booking.service.barbershop.name}`}
+            alt=""
             src="/map.png"
             fill
-            className="rounded-xl object-cover"
+            sizes="(max-width: 640px) 100vw, 448px"
+            className="object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/95 to-transparent" />
 
-          <Card className="z-50 mx-5 mb-3 w-full rounded-xl">
-            <CardContent className="flex items-center gap-3 px-5 py-3">
-              <Avatar>
-                <AvatarImage src={barbershop.imageUrl} />
-              </Avatar>
-              <div>
-                <h3 className="font-bold">{barbershop.name}</h3>
-                <p className="text-xs">{barbershop.address}</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="surface relative m-3 flex w-full items-center gap-3 rounded-md p-3">
+            <span
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md"
+              style={{
+                boxShadow: `inset 0 0 0 1px ${barbershop.accentColor}40`,
+              }}
+            >
+              <BarbershopLogo
+                logoKey={barbershop.logoKey}
+                accentColor={barbershop.accentColor}
+                className="h-6 w-6"
+              />
+            </span>
+            <div className="min-w-0">
+              <h3 className="truncate font-display font-bold">
+                {barbershop.name}
+              </h3>
+              <p className="truncate text-xs text-muted-foreground">
+                {barbershop.address}
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-6">
@@ -133,14 +186,17 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             className="w-fit"
             variant={isConfirmed ? "default" : "secondary"}
           >
-            {isConfirmed ? "Confirmado" : "Finalizado"}
+            {isConfirmed ? "Confirmado" : "Concluído"}
           </Badge>
 
-          <div className="mb-3 mt-6">
+          <div className="mb-4 mt-4">
             <BookingSummary
-              barbershop={barbershop}
-              service={booking.service}
-              selectedDate={booking.date}
+              barbershopName={barbershop.name}
+              serviceName={booking.service.name}
+              price={formatCurrency(booking.service.price)}
+              durationMinutes={booking.service.durationMinutes}
+              barberName={booking.barber?.name}
+              date={date}
             />
           </div>
 
@@ -150,48 +206,47 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             ))}
           </div>
         </div>
-        <SheetFooter className="mt-6">
-          <div className="flex items-center gap-3">
-            <SheetClose asChild>
-              <Button variant="outline" className="w-full">
-                Voltar
-              </Button>
-            </SheetClose>
-            {isConfirmed && (
-              <Dialog>
-                <DialogTrigger className="w-full">
-                  <Button variant="destructive" className="w-full">
-                    Cancelar Reserva
+
+        <SheetFooter className="mt-6 flex-row gap-3">
+          <SheetClose asChild>
+            <Button variant="outline" className="w-full">
+              Voltar
+            </Button>
+          </SheetClose>
+
+          {isConfirmed && (
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="destructive" className="w-full">
+                  Cancelar
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="w-[90%] max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>Cancelar este agendamento?</DialogTitle>
+                  <DialogDescription>
+                    O horário volta a ficar disponível para outros clientes e
+                    esta ação não pode ser desfeita.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="flex-row gap-3">
+                  <DialogClose asChild>
+                    <Button variant="secondary" className="w-full">
+                      Manter
+                    </Button>
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={handleCancelBooking}
+                    disabled={cancelling}
+                    className="w-full"
+                  >
+                    {cancelling ? "Cancelando…" : "Confirmar"}
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[90%]">
-                  <DialogHeader>
-                    <DialogTitle>Você deseja cancelar sua reserva?</DialogTitle>
-                    <DialogDescription>
-                      Ao cancelar, você perderá sua reserva e não poderá
-                      recuperá-la. Essa ação é irreversível.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <DialogFooter className="flex flex-row gap-3">
-                    <DialogClose asChild>
-                      <Button variant="secondary" className="w-full">
-                        Voltar
-                      </Button>
-                    </DialogClose>
-                    <DialogClose className="w-full">
-                      <Button
-                        variant="destructive"
-                        onClick={handleCancelBooking}
-                        className="w-full"
-                      >
-                        Confirmar
-                      </Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>

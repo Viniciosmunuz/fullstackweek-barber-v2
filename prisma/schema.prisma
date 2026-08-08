@@ -63,24 +63,63 @@ model VerificationToken {
 model Barbershop {
   id          String              @id @default(uuid())
   name        String
+  slug        String              @unique
+  slogan      String
   address     String
+  city        String
   phones      String[]
   description String
   imageUrl    String
+  /// Identifica qual componente de logo SVG renderizar (ver _components/brand/barbershop-logo.tsx)
+  logoKey     String
+  /// Cor de destaque da marca em hex, usada nos acentos do card e da página
+  accentColor String
+  rating      Decimal             @default(5.0) @db.Decimal(2, 1)
+  reviewCount Int                 @default(0)
+  openingHours OpeningHour[]
+  barbers     Barber[]
+  services    BarbershopService[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
-  services    BarbershopService[]
+}
+
+model OpeningHour {
+  id           String     @id @default(uuid())
+  /// 0 = domingo ... 6 = sábado
+  weekday      Int
+  opensAt      String?
+  closesAt     String?
+  closed       Boolean    @default(false)
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@unique([barbershopId, weekday])
+}
+
+model Barber {
+  id           String     @id @default(uuid())
+  name         String
+  specialty    String
+  bio          String
+  imageUrl     String
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  bookings     Booking[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model BarbershopService {
-  id           String     @id @default(uuid())
-  name         String
-  description  String
-  imageUrl     String
-  price        Decimal    @db.Decimal(10, 2)
-  barbershopId String
-  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
-  bookings     Booking[]
+  id              String     @id @default(uuid())
+  name            String
+  description     String
+  imageUrl        String
+  price           Decimal    @db.Decimal(10, 2)
+  /// Duração estimada do serviço em minutos
+  durationMinutes Int        @default(30)
+  barbershopId    String
+  barbershop      Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
 }
 
 model Booking {
@@ -89,6 +128,8 @@ model Booking {
   user      User              @relation(fields: [userId], references: [id])
   serviceId String
   service   BarbershopService @relation(fields: [serviceId], references: [id])
+  barberId  String?
+  barber    Barber?           @relation(fields: [barberId], references: [id])
   date      DateTime
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt

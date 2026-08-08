@@ -1,0 +1,414 @@
+"use client"
+
+import { useEffect, useMemo, useState } from "react"
+import { useRouter } from "next/navigation"
+import { ptBR } from "date-fns/locale"
+import { format, isPast, isToday, set } from "date-fns"
+import { Check, ChevronLeft, Loader2 } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "./ui/button"
+import { Calendar } from "./ui/calendar"
+import BarberAvatar from "./barber-avatar"
+import { createBooking } from "../_actions/create-booking"
+import { getBookings } from "../_actions/get-bookings"
+import { cn, formatCurrency, formatDuration } from "@/app/_lib/utils"
+
+export interface FlowService {
+  id: string
+  name: string
+  description: string
+  price: number
+  durationMinutes: number
+}
+
+export interface FlowBarber {
+  id: string
+  name: string
+  specialty: string
+  imageUrl: string
+}
+
+interface BookingFlowProps {
+  service: FlowService
+  barbers: FlowBarber[]
+  barbershopName: string
+  accentColor: string
+  /** Fecha o painel que envolve o fluxo. */
+  onDone: () => void
+}
+
+const STEPS = ["Profissional", "Data", "Horário", "Confirmação"] as const
+
+const TIME_SLOTS = [
+  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
+  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
+  "17:00", "17:30", "18:00", "18:30", "19:00",
+]
+
+/**
+ * Remove horários já passados (quando o dia é hoje) e os que colidem com a
+ * agenda do profissional, considerando a duração do serviço: um corte de 40
+ * minutos às 15:00 também inviabiliza as 15:30.
+ */
+function getAvailableSlots(
+  bookings: { date: Date }[],
+  selectedDay: Date,
+  durationMinutes: number,
+) {
+  const busy = bookings.map((b) => {
+    const start = new Date(b.date).getTime()
+    return { start, end: start + durationMinutes * 60_000 }
+  })
+
+  return TIME_SLOTS.filter((time) => {
+    const [hours, minutes] = time.split(":").map(Number)
+    const slotStart = set(selectedDay, {
+      hours,
+      minutes,
+      seconds: 0,
+      milliseconds: 0,
+    })
+
+    if (isToday(selectedDay) && isPast(slotStart)) return false
+
+    const start = slotStart.getTime()
+    const end = start + durationMinutes * 60_000
+
+    return !busy.some((b) => start < b.end && end > b.start)
+  })
+}
+
+const BookingFlow = ({
+  service,
+  barbers,
+  barbershopName,
+  accentColor,
+  onDone,
+}: BookingFlowProps) => {
+  const router = useRouter()
+
+  const [step, setStep] = useState(0)
+  const [barber, setBarber] = useState<FlowBarber | null>(null)
+  const [day, setDay] = useState<Date | undefined>()
+  const [time, setTime] = useState<string | undefined>()
+  const [dayBookings, setDayBookings] = useState<{ date: Date }[]>([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+
+  // Recarrega a agenda sempre que o par (profissional, dia) muda.
+  useEffect(() => {
+    if (!barber || !day) return
+
+    let cancelled = false
+    setLoadingSlots(true)
+
+    getBookings({ barberId: barber.id, date: day })
+      .then((bookings) => {
+        if (!cancelled) setDayBookings(bookings)
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Não foi possível carregar os horários.")
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlots(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [barber, day])
+
+  const slots = useMemo(() => {
+    if (!day) return []
+    return getAvailableSlots(dayBookings, day, service.durationMinutes)
+  }, [dayBookings, day, service.durationMinutes])
+
+  const selectedDate = useMemo(() => {
+    if (!day || !time) return undefined
+    const [hours, minutes] = time.split(":").map(Number)
+    return set(day, { hours, minutes, seconds: 0, milliseconds: 0 })
+  }, [day, time])
+
+  const handleConfirm = async () => {
+    if (!selectedDate || !barber) return
+
+    setSubmitting(true)
+    try {
+      await createBooking({
+        serviceId: service.id,
+        barberId: barber.id,
+        date: selectedDate,
+      })
+
+      toast.success("Agendamento confirmado!", {
+        description: `${service.name} · ${format(selectedDate, "dd/MM 'às' HH:mm", { locale: ptBR })}`,
+        action: {
+          label: "Ver meus agendamentos",
+          onClick: () => router.push("/bookings"),
+        },
+      })
+      onDone()
+      router.refresh()
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível concluir o agendamento.",
+      )
+      // Um conflito invalida o horário escolhido: volta para a escolha.
+      setTime(undefined)
+      setStep(2)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="flex h-full flex-col">
+      {/* Indicador de etapas */}
+      <ol className="flex items-center gap-1.5 px-5 pb-4" aria-label="Etapas">
+        {STEPS.map((label, index) => {
+          const done = index < step
+          const current = index === step
+
+          return (
+            <li key={label} className="flex flex-1 flex-col gap-1.5">
+              <span
+                className={cn(
+                  "h-1 rounded-full transition-colors",
+                  done || current ? "bg-primary" : "bg-white/10",
+                )}
+              />
+              <span
+                aria-current={current ? "step" : undefined}
+                className={cn(
+                  "text-[10px] font-medium",
+                  current
+                    ? "text-primary"
+                    : done
+                      ? "text-muted-foreground"
+                      : "text-muted-foreground/50",
+                )}
+              >
+                {label}
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+
+      <div className="flex-1 overflow-y-auto px-5">
+        {/* ---------------------------------------------------- 1. BARBEIRO */}
+        {step === 0 && (
+          <div className="space-y-2">
+            <p className="pb-1 text-sm text-muted-foreground">
+              Com quem você quer ser atendido?
+            </p>
+            {barbers.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  setBarber(option)
+                  setStep(1)
+                }}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                  barber?.id === option.id
+                    ? "border-primary bg-primary/[0.07]"
+                    : "border-white/10 hover:border-primary/40 hover:bg-white/[0.03]",
+                )}
+              >
+                <BarberAvatar
+                  name={option.name}
+                  imageUrl={option.imageUrl}
+                  accentColor={accentColor}
+                  className="h-11 w-11"
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">
+                    {option.name}
+                  </span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {option.specialty}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ------------------------------------------------------- 2. DATA */}
+        {step === 1 && (
+          <div>
+            <Calendar
+              mode="single"
+              locale={ptBR}
+              selected={day}
+              onSelect={(date) => {
+                setDay(date)
+                setTime(undefined)
+                if (date) setStep(2)
+              }}
+              fromDate={new Date()}
+              className="w-full"
+              styles={{
+                head_cell: { width: "100%", textTransform: "capitalize" },
+                cell: { width: "100%" },
+                button: { width: "100%" },
+                nav_button_previous: { width: "32px", height: "32px" },
+                nav_button_next: { width: "32px", height: "32px" },
+                caption: { textTransform: "capitalize" },
+              }}
+            />
+          </div>
+        )}
+
+        {/* ---------------------------------------------------- 3. HORÁRIO */}
+        {step === 2 && day && (
+          <div>
+            <p className="pb-3 text-sm text-muted-foreground">
+              <span className="capitalize">
+                {format(day, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+              </span>{" "}
+              · {barber?.name}
+            </p>
+
+            {loadingSlots ? (
+              <div className="grid grid-cols-4 gap-2">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <span
+                    key={i}
+                    className="h-10 animate-pulse rounded-md bg-white/[0.06]"
+                  />
+                ))}
+              </div>
+            ) : slots.length > 0 ? (
+              <div className="grid grid-cols-4 gap-2">
+                {slots.map((slot) => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => {
+                      setTime(slot)
+                      setStep(3)
+                    }}
+                    className={cn(
+                      "h-10 rounded-md border text-sm font-medium transition-colors",
+                      time === slot
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-white/10 hover:border-primary/40 hover:bg-white/[0.04]",
+                    )}
+                  >
+                    {slot}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-white/10 px-4 py-10 text-center">
+                <p className="text-sm font-medium">Nenhum horário livre</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {barber?.name} não tem vaga neste dia. Tente outra data ou
+                  outro profissional.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={() => setStep(1)}
+                >
+                  Escolher outra data
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ----------------------------------------------- 4. CONFIRMAÇÃO */}
+        {step === 3 && selectedDate && barber && (
+          <div className="space-y-4">
+            <div className="surface rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display font-bold">{service.name}</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {barbershopName}
+                  </p>
+                </div>
+                <span className="font-display text-lg font-bold text-primary">
+                  {formatCurrency(service.price)}
+                </span>
+              </div>
+
+              <dl className="mt-4 space-y-2 border-t border-white/[0.06] pt-4 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Profissional</dt>
+                  <dd className="font-medium">{barber.name}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Data</dt>
+                  <dd className="font-medium capitalize">
+                    {format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Horário</dt>
+                  <dd className="font-medium">
+                    {format(selectedDate, "HH:mm")}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Duração</dt>
+                  <dd className="font-medium">
+                    {formatDuration(service.durationMinutes)}
+                  </dd>
+                </div>
+              </dl>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              O pagamento é feito na barbearia, no dia do atendimento.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Rodapé de navegação */}
+      <div className="flex gap-2 border-t border-white/[0.06] p-5">
+        {step > 0 && (
+          <Button
+            variant="outline"
+            onClick={() => setStep((s) => s - 1)}
+            disabled={submitting}
+          >
+            <ChevronLeft size={16} />
+            Voltar
+          </Button>
+        )}
+
+        {step === 3 && (
+          <Button
+            className="flex-1"
+            onClick={handleConfirm}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Confirmando…
+              </>
+            ) : (
+              <>
+                <Check size={16} />
+                Confirmar agendamento
+              </>
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default BookingFlow

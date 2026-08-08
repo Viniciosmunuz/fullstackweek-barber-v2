@@ -1,32 +1,37 @@
 "use client"
 
-import { SmartphoneIcon } from "lucide-react"
-import { Button } from "./ui/button"
+import { Copy, Phone } from "lucide-react"
 import { toast } from "sonner"
+import { Button } from "./ui/button"
 
 interface PhoneItemProps {
   phone: string
 }
 
 const PhoneItem = ({ phone }: PhoneItemProps) => {
-  const handleCopyPhoneClick = (phone: string) => {
-    navigator.clipboard.writeText(phone)
-    toast.success("Telefone copiado com sucesso!")
+  const handleCopyPhoneClick = async () => {
+    try {
+      await navigator.clipboard.writeText(phone)
+      toast.success("Telefone copiado.")
+    } catch {
+      toast.error("Não foi possível copiar o telefone.")
+    }
   }
 
   return (
-    <div className="flex justify-between" key={phone}>
-      {/* ESQUERDA */}
-      <div className="flex items-center gap-2">
-        <SmartphoneIcon />
-        <p className="text-sm">{phone}</p>
-      </div>
-      {/* DIREITA */}
+    <div className="flex items-center justify-between gap-3">
+      <span className="flex min-w-0 items-center gap-2.5">
+        <Phone size={16} className="shrink-0 text-primary" aria-hidden="true" />
+        <span className="truncate text-sm">{phone}</span>
+      </span>
+
       <Button
         variant="outline"
         size="sm"
-        onClick={() => handleCopyPhoneClick(phone)}
+        onClick={handleCopyPhoneClick}
+        aria-label={`Copiar telefone ${phone}`}
       >
+        <Copy size={14} />
         Copiar
       </Button>
     </div>

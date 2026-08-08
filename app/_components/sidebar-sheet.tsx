@@ -1,95 +1,118 @@
 "use client"
 
 import { Button } from "./ui/button"
-import { CalendarIcon, HomeIcon, LogInIcon, LogOutIcon } from "lucide-react"
+import { CalendarDays, Home, LogInIcon, LogOutIcon, Store } from "lucide-react"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 import { quickSearchOptions } from "../_constants/search"
 import Link from "next/link"
-import Image from "next/image"
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
 import { signOut, useSession } from "next-auth/react"
-import { Avatar, AvatarImage } from "./ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
+import { BarberFlowLogo } from "./brand/logo"
+import { getInitials } from "@/app/_lib/utils"
 
 const SidebarSheet = () => {
   const { data } = useSession()
   const handleLogoutClick = () => signOut()
 
   return (
-    <SheetContent className="overflow-y-auto">
+    <SheetContent className="w-[88%] overflow-y-auto sm:max-w-sm">
       <SheetHeader>
-        <SheetTitle className="text-left">Menu</SheetTitle>
+        <SheetTitle className="text-left">
+          <BarberFlowLogo size="sm" />
+        </SheetTitle>
       </SheetHeader>
 
-      <div className="flex items-center justify-between gap-3 border-b border-solid py-5">
+      <div className="mt-6 border-b border-white/[0.06] pb-6">
         {data?.user ? (
-          <div className="flex items-center gap-2">
-            <Avatar>
-              <AvatarImage src={data?.user?.image ?? ""} />
+          <div className="flex items-center gap-3">
+            <Avatar className="h-11 w-11">
+              <AvatarImage src={data.user.image ?? ""} alt="" />
+              <AvatarFallback>
+                {getInitials(data.user.name ?? "Cliente")}
+              </AvatarFallback>
             </Avatar>
 
-            <div>
-              <p className="font-bold">{data.user.name}</p>
-              <p className="text-xs">{data.user.email}</p>
+            <div className="min-w-0">
+              <p className="truncate font-semibold">{data.user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {data.user.email}
+              </p>
             </div>
           </div>
         ) : (
-          <>
-            <h2 className="font-bold">Olá, faça seu login!</h2>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-display font-bold">Olá, faça seu login</p>
+              <p className="text-xs text-muted-foreground">
+                Para agendar e acompanhar seus horários.
+              </p>
+            </div>
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="icon">
-                  <LogInIcon />
+                <Button size="icon" aria-label="Entrar">
+                  <LogInIcon size={18} />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="w-[90%]">
+              <DialogContent className="w-[90%] max-w-sm">
                 <SignInDialog />
               </DialogContent>
             </Dialog>
-          </>
+          </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-2 border-b border-solid py-5">
+      <nav className="flex flex-col gap-1 border-b border-white/[0.06] py-4">
         <SheetClose asChild>
-          <Button className="justify-start gap-2" variant="ghost" asChild>
+          <Button className="justify-start gap-3" variant="ghost" asChild>
             <Link href="/">
-              <HomeIcon size={18} />
+              <Home size={18} />
               Início
             </Link>
           </Button>
         </SheetClose>
-        <Button className="justify-start gap-2" variant="ghost" asChild>
-          <Link href="/bookings">
-            <CalendarIcon size={18} />
-            Agendamentos
-          </Link>
-        </Button>
-      </div>
+        <SheetClose asChild>
+          <Button className="justify-start gap-3" variant="ghost" asChild>
+            <Link href="/barbershops">
+              <Store size={18} />
+              Barbearias
+            </Link>
+          </Button>
+        </SheetClose>
+        <SheetClose asChild>
+          <Button className="justify-start gap-3" variant="ghost" asChild>
+            <Link href="/bookings">
+              <CalendarDays size={18} />
+              Meus agendamentos
+            </Link>
+          </Button>
+        </SheetClose>
+      </nav>
 
-      <div className="flex flex-col gap-2 border-b border-solid py-5">
-        {quickSearchOptions.map((option) => (
-          <SheetClose key={option.title} asChild>
-            <Button className="justify-start gap-2" variant="ghost" asChild>
-              <Link href={`/barbershops?service=${option.title}`}>
-                <Image
-                  alt={option.title}
-                  src={option.imageUrl}
-                  height={18}
-                  width={18}
-                />
-                {option.title}
-              </Link>
-            </Button>
-          </SheetClose>
-        ))}
+      <div className="border-b border-white/[0.06] py-4">
+        <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Serviços
+        </p>
+        <div className="flex flex-col gap-1">
+          {quickSearchOptions.map(({ icon: Icon, title }) => (
+            <SheetClose key={title} asChild>
+              <Button className="justify-start gap-3" variant="ghost" asChild>
+                <Link href={`/barbershops?service=${encodeURIComponent(title)}`}>
+                  <Icon size={18} className="text-primary" />
+                  {title}
+                </Link>
+              </Button>
+            </SheetClose>
+          ))}
+        </div>
       </div>
 
       {data?.user && (
-        <div className="flex flex-col gap-2 py-5">
+        <div className="py-4">
           <Button
             variant="ghost"
-            className="justify-start gap-2"
+            className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={handleLogoutClick}
           >
             <LogOutIcon size={18} />

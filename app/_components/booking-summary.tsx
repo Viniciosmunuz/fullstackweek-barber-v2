@@ -1,52 +1,66 @@
 import { format } from "date-fns"
-import { Card, CardContent } from "./ui/card"
-import { Barbershop, BarbershopService } from "@prisma/client"
 import { ptBR } from "date-fns/locale"
+import { formatDuration } from "@/app/_lib/utils"
 
 interface BookingSummaryProps {
-  service: Pick<BarbershopService, "name" | "price">
-  barbershop: Pick<Barbershop, "name">
-  selectedDate: Date
+  serviceName: string
+  /** Já formatado em BRL pelo chamador. */
+  price: string
+  durationMinutes: number
+  barbershopName: string
+  barberName?: string
+  date: Date
 }
 
+/** Resumo do agendamento, reaproveitado na confirmação e no detalhe da reserva. */
 const BookingSummary = ({
-  service,
-  barbershop,
-  selectedDate,
+  serviceName,
+  price,
+  durationMinutes,
+  barbershopName,
+  barberName,
+  date,
 }: BookingSummaryProps) => {
   return (
-    <Card>
-      <CardContent className="space-y-3 p-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold">{service.name}</h2>
-          <p className="text-sm font-bold">
-            {Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            }).format(Number(service.price))}
-          </p>
+    <div className="surface rounded-lg p-4">
+      <div className="flex items-start justify-between gap-3">
+        <h3 className="font-display font-bold">{serviceName}</h3>
+        <span className="font-display font-bold text-primary">{price}</span>
+      </div>
+
+      <dl className="mt-4 space-y-2 border-t border-white/[0.06] pt-4 text-sm">
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">Barbearia</dt>
+          <dd className="text-right font-medium">{barbershopName}</dd>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm text-gray-400">Data</h2>
-          <p className="text-sm">
-            {format(selectedDate, "d 'de' MMMM", {
-              locale: ptBR,
-            })}
-          </p>
+        {barberName && (
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted-foreground">Profissional</dt>
+            <dd className="text-right font-medium">{barberName}</dd>
+          </div>
+        )}
+
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">Data</dt>
+          <dd className="text-right font-medium capitalize">
+            {format(date, "d 'de' MMMM", { locale: ptBR })}
+          </dd>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm text-gray-400">Horário</h2>
-          <p className="text-sm">{format(selectedDate, "HH:mm")}</p>
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">Horário</dt>
+          <dd className="text-right font-medium">{format(date, "HH:mm")}</dd>
         </div>
 
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm text-gray-400">Barbearia</h2>
-          <p className="text-sm">{barbershop.name}</p>
+        <div className="flex justify-between gap-4">
+          <dt className="text-muted-foreground">Duração</dt>
+          <dd className="text-right font-medium">
+            {formatDuration(durationMinutes)}
+          </dd>
         </div>
-      </CardContent>
-    </Card>
+      </dl>
+    </div>
   )
 }
 

@@ -1,32 +1,32 @@
 "use client"
 
 import { SearchIcon } from "lucide-react"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
-
 import { z } from "zod"
 import { useForm } from "react-hook-form"
+import { Button } from "./ui/button"
+import { Input } from "./ui/input"
 import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form"
 
 const formSchema = z.object({
-  title: z.string().trim().min(1, {
-    message: "Digite algo para buscar",
-  }),
+  title: z.string().trim().min(1, { message: "Digite algo para buscar" }),
 })
 
-const Search = () => {
+interface SearchProps {
+  /** Preenche o campo ao voltar para uma busca já feita. */
+  defaultValue?: string
+}
+
+const Search = ({ defaultValue = "" }: SearchProps) => {
+  const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-    },
+    defaultValues: { title: defaultValue },
   })
-  const router = useRouter()
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    router.push(`/barbershops?title=${data.title}`)
+    router.push(`/barbershops?title=${encodeURIComponent(data.title)}`)
   }
 
   return (
@@ -38,18 +38,27 @@ const Search = () => {
           render={({ field }) => (
             <FormItem className="w-full">
               <FormControl>
-                <Input
-                  placeholder="Faça sua busca..."
-                  {...field}
-                  className="w-full"
-                />
+                <div className="relative">
+                  <SearchIcon
+                    size={17}
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    placeholder="Busque por barbearia ou cidade"
+                    aria-label="Buscar barbearia ou cidade"
+                    className="h-12 rounded-lg pl-10"
+                    {...field}
+                  />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit">
-          <SearchIcon />
+        <Button type="submit" size="lg" className="h-12 px-5">
+          <SearchIcon size={18} />
+          <span className="sr-only sm:not-sr-only">Buscar</span>
         </Button>
       </form>
     </Form>
