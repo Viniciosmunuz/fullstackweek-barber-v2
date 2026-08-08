@@ -22,8 +22,33 @@ model User {
   accounts      Account[]
   sessions      Session[]
   bookings      Booking[]
+  manages       BarbershopManager[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+}
+
+enum ManagerRole {
+  OWNER
+  STAFF
+}
+
+/// Vínculo entre uma pessoa e a barbearia que ela administra.
+///
+/// É o que autoriza ver e alterar dados no painel: sem uma linha aqui, o
+/// usuário não enxerga nem edita nada daquele estabelecimento. Tabela de
+/// junção (e não `Barbershop.ownerId`) porque uma barbearia costuma ter mais
+/// de um responsável e um grupo pode administrar várias unidades.
+model BarbershopManager {
+  id           String      @id @default(uuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barbershopId String
+  barbershop   Barbershop  @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  role         ManagerRole @default(OWNER)
+  createdAt    DateTime    @default(now())
+
+  @@unique([userId, barbershopId])
+  @@index([userId])
 }
 
 enum BookingStatus {
@@ -90,6 +115,7 @@ model Barbershop {
   reviewCount Int                 @default(0)
   openingHours OpeningHour[]
   barbers     Barber[]
+  managers    BarbershopManager[]
   services    BarbershopService[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt

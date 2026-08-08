@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireSession } from "./guard"
+import { requireManager } from "./guard"
 
 const schema = z.object({
   bookingId: z.string().uuid("Agendamento inválido."),
@@ -17,8 +17,6 @@ const schema = z.object({
  * ação recalcula as telas que dependem disso.
  */
 export async function updateBookingStatus(input: z.infer<typeof schema>) {
-  await requireSession()
-
   const parsed = schema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos.")
@@ -26,14 +24,18 @@ export async function updateBookingStatus(input: z.infer<typeof schema>) {
 
   const { bookingId, status } = parsed.data
 
+  // A barbearia sai do serviço vinculado ao agendamento, e é ela que autoriza:
+  // sem isso, um gestor poderia alterar a agenda de qualquer outra casa.
   const booking = await db.booking.findUnique({
     where: { id: bookingId },
-    select: { id: true },
+    select: { service: { select: { barbershopId: true } } },
   })
 
   if (!booking) {
     throw new Error("Agendamento não encontrado.")
   }
+
+  await requireManager(booking.service.barbershopId)
 
   await db.booking.update({ where: { id: bookingId }, data: { status } })
 

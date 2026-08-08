@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireSession } from "./guard"
+import { requireManager } from "./guard"
 
 const barberSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do profissional."),
@@ -22,18 +22,12 @@ export async function createBarber(
   barbershopId: string,
   input: z.infer<typeof barberSchema>,
 ) {
-  await requireSession()
+  await requireManager(barbershopId)
 
   const parsed = barberSchema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
-
-  const shop = await db.barbershop.findUnique({
-    where: { id: barbershopId },
-    select: { id: true },
-  })
-  if (!shop) throw new Error("Barbearia não encontrada.")
 
   await db.barber.create({
     data: { ...parsed.data, imageUrl: "", barbershopId },
@@ -42,11 +36,26 @@ export async function createBarber(
   revalidate()
 }
 
+/**
+ * A barbearia vem do próprio registro, não do cliente: confiar num id enviado
+ * junto permitiria autorizar contra uma casa e escrever em outra.
+ */
+async function authorizeBarber(barberId: string) {
+  const barber = await db.barber.findUnique({
+    where: { id: barberId },
+    select: { barbershopId: true },
+  })
+
+  if (!barber) throw new Error("Profissional não encontrado.")
+
+  await requireManager(barber.barbershopId)
+}
+
 export async function updateBarber(
   barberId: string,
   input: z.infer<typeof barberSchema>,
 ) {
-  await requireSession()
+  await authorizeBarber(barberId)
 
   const parsed = barberSchema.safeParse(input)
   if (!parsed.success) {
@@ -66,7 +75,7 @@ export async function updateBarber(
  * desativar: some da escolha no agendamento e o passado continua íntegro.
  */
 export async function deleteBarber(barberId: string) {
-  await requireSession()
+  await authorizeBarber(barberId)
 
   const bookings = await db.booking.count({ where: { barberId } })
 

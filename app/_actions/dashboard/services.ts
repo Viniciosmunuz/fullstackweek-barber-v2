@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireSession } from "./guard"
+import { requireManager } from "./guard"
 
 const serviceSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do serviço."),
@@ -35,18 +35,12 @@ export async function createService(
   barbershopId: string,
   input: z.infer<typeof serviceSchema>,
 ) {
-  await requireSession()
+  await requireManager(barbershopId)
 
   const parsed = serviceSchema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
-
-  const shop = await db.barbershop.findUnique({
-    where: { id: barbershopId },
-    select: { id: true },
-  })
-  if (!shop) throw new Error("Barbearia não encontrada.")
 
   await db.barbershopService.create({
     data: { ...parsed.data, barbershopId },
@@ -55,11 +49,23 @@ export async function createService(
   revalidate()
 }
 
+/** A barbearia é derivada do serviço, nunca aceita do cliente. */
+async function authorizeService(serviceId: string) {
+  const service = await db.barbershopService.findUnique({
+    where: { id: serviceId },
+    select: { barbershopId: true },
+  })
+
+  if (!service) throw new Error("Serviço não encontrado.")
+
+  await requireManager(service.barbershopId)
+}
+
 export async function updateService(
   serviceId: string,
   input: z.infer<typeof serviceSchema>,
 ) {
-  await requireSession()
+  await authorizeService(serviceId)
 
   const parsed = serviceSchema.safeParse(input)
   if (!parsed.success) {
@@ -84,7 +90,7 @@ export async function updateService(
  * apenas se o preço não mudar. Vale ter isso em mente ao reajustar tabela.
  */
 export async function deleteService(serviceId: string) {
-  await requireSession()
+  await authorizeService(serviceId)
 
   const bookings = await db.booking.count({ where: { serviceId } })
 

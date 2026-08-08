@@ -3,7 +3,9 @@ import type { Metadata } from "next"
 import { getServerSession } from "next-auth"
 import { Menu } from "lucide-react"
 import DashboardSidebar from "./_components/sidebar"
+import ClaimAccess from "./_components/claim-access"
 import SignInPrompt from "../_components/sign-in-prompt"
+import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
 import { Button } from "../_components/ui/button"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "../_components/ui/sheet"
 import { authOptions } from "../_lib/auth"
@@ -24,6 +26,17 @@ export default async function DashboardLayout({
 
   if (!session?.user) {
     return <SignInPrompt />
+  }
+
+  // Sem vínculo com nenhuma barbearia, não há painel a mostrar.
+  const managed = await getManagedBarbershopIds()
+
+  if (managed.length === 0) {
+    return (
+      <ClaimAccess
+        selfServiceEnabled={process.env.DEMO_SELF_SERVICE === "true"}
+      />
+    )
   }
 
   return (

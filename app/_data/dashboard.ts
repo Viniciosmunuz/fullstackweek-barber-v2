@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { subDays, subMonths, startOfDay, endOfDay, startOfMonth } from "date-fns"
 import { db } from "../_lib/prisma"
 import { authOptions } from "../_lib/auth"
+import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
 
 /** Janelas de tempo aceitas pelos relatórios. */
 export type Period = "today" | "7d" | "30d" | "12m"
@@ -46,20 +47,43 @@ async function visibilityFilter() {
   }
 }
 
-/** Barbearias disponíveis no seletor do painel. */
+/**
+ * Barbearias que o usuário administra — é o que alimenta o seletor do painel.
+ *
+ * A restrição vale também para leitura, não só para as mutações: mostrar o
+ * faturamento de uma casa que não é sua já seria vazamento, mesmo sem permitir
+ * edição.
+ */
 export async function getManagedBarbershops() {
+  const ids = await getManagedBarbershopIds()
+  if (ids.length === 0) return []
+
   return db.barbershop.findMany({
+    where: { id: { in: ids } },
     select: { id: true, name: true, slug: true, accentColor: true, logoKey: true },
     orderBy: { name: "asc" },
   })
 }
 
+/**
+ * Resolve a barbearia em foco dentro do que o usuário pode ver. Um slug de
+ * barbearia alheia cai para a primeira gerenciada, em vez de expor os dados.
+ */
 export async function getBarbershopBySlug(slug?: string) {
+  const ids = await getManagedBarbershopIds()
+  if (ids.length === 0) return null
+
   if (slug) {
-    const found = await db.barbershop.findUnique({ where: { slug } })
+    const found = await db.barbershop.findFirst({
+      where: { slug, id: { in: ids } },
+    })
     if (found) return found
   }
-  return db.barbershop.findFirst({ orderBy: { name: "asc" } })
+
+  return db.barbershop.findFirst({
+    where: { id: { in: ids } },
+    orderBy: { name: "asc" },
+  })
 }
 
 interface ScopeArgs {
