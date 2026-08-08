@@ -161,6 +161,12 @@ export const BarChart = ({
 
   return (
     <figure>
+      {/*
+       * As barras ficam sozinhas no container de altura fixa e os rótulos vão
+       * para uma linha irmã. Envolver barra e rótulo no mesmo flex-col faria a
+       * altura percentual da barra resolver contra um pai de altura automática
+       * — e colapsar para zero.
+       */}
       <div
         className="flex h-52 items-end gap-1.5 sm:gap-2"
         role="img"
@@ -169,21 +175,21 @@ export const BarChart = ({
         {data.map((item) => (
           <div
             key={item.label}
-            className="group flex min-w-0 flex-1 flex-col items-center gap-2"
+            title={`${item.label}: ${formatCurrency(item.revenue)} · ${item.count} atendimentos`}
+            className="min-w-0 flex-1 rounded-t bg-gradient-to-t from-primary/35 to-primary transition-opacity hover:opacity-75"
+            style={{ height: `${Math.max((item.revenue / max) * 100, 2)}%` }}
+          />
+        ))}
+      </div>
+
+      <div className="mt-2 flex gap-1.5 sm:gap-2">
+        {data.map((item) => (
+          <span
+            key={item.label}
+            className="min-w-0 flex-1 truncate text-center text-[10px] capitalize text-muted-foreground"
           >
-            <span className="text-[10px] font-medium text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100">
-              {formatCurrency(item.revenue)}
-            </span>
-            <div
-              className="w-full rounded-t bg-gradient-to-t from-primary/35 to-primary transition-opacity hover:opacity-80"
-              style={{
-                height: `${Math.max((item.revenue / max) * 100, 2)}%`,
-              }}
-            />
-            <span className="truncate text-[10px] capitalize text-muted-foreground">
-              {item.label}
-            </span>
-          </div>
+            {item.label}
+          </span>
         ))}
       </div>
 
