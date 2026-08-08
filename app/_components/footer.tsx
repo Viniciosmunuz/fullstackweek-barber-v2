@@ -17,11 +17,11 @@ const Footer = () => {
             <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               Produto
             </h2>
-            <ul className="space-y-2 text-sm">
+            <ul className="text-sm">
               <li>
                 <Link
                   href="/barbershops"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex min-h-[40px] items-center text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Barbearias
                 </Link>
@@ -29,7 +29,7 @@ const Footer = () => {
               <li>
                 <Link
                   href="/bookings"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  className="inline-flex min-h-[40px] items-center text-muted-foreground transition-colors hover:text-foreground"
                 >
                   Agendamentos
                 </Link>
