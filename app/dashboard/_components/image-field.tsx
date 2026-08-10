@@ -10,6 +10,12 @@ interface ImageFieldProps {
   id: string
   label: string
   value: string
+  /*
+   * O projeto usa a regra base `no-unused-vars`, que não entende TypeScript e
+   * enxerga o parâmetro da assinatura como variável sem uso. A exceção fica
+   * aqui, na linha, em vez de afrouxar a regra para o resto do código.
+   */
+  // eslint-disable-next-line no-unused-vars
   onChange: (value: string) => void
   hint?: string
   required?: boolean
