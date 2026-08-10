@@ -21,7 +21,12 @@ const HomeBanner = () => (
       className="pointer-events-none absolute -right-24 top-1/2 h-[460px] w-[460px] -translate-y-1/2 rounded-full bg-primary/[0.06] blur-3xl"
     />
 
-    <div className="relative flex items-center gap-2 p-5 sm:gap-6 sm:p-8 lg:p-10">
+    {/*
+      No celular o conteúdo empilha. Espremida em 42% de 375px, a cena virava
+      mancha — o desenho tem detalhe demais para esse tamanho. Empilhado, ele
+      ganha a largura inteira do cartão e volta a ser legível.
+    */}
+    <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-8 lg:p-10">
       <div className="min-w-0 flex-1">
         <h2 className="font-display text-[26px] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
           Agende nos
@@ -36,7 +41,7 @@ const HomeBanner = () => (
         </p>
       </div>
 
-      <BarberIllustration className="w-[42%] max-w-[150px] shrink-0 sm:max-w-[300px] lg:max-w-[380px]" />
+      <BarberIllustration className="w-full shrink-0 sm:w-[46%] sm:max-w-[320px] lg:max-w-[400px]" />
     </div>
   </section>
 )
