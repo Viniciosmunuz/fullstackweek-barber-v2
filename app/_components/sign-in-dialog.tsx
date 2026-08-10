@@ -10,7 +10,9 @@ const SignInDialog = () => {
   return (
     <>
       <DialogHeader className="items-center text-center">
-        <BarberFlowMark className="mb-1 h-12 w-12" />
+        {/* Peça isolada e grande o bastante para o degradê da marca aparecer.
+            `w-auto` porque o símbolo é 1,5× mais largo que alto. */}
+        <BarberFlowMark tone="gradient" className="mb-2 h-11 w-auto" />
         <DialogTitle className="font-display text-xl">
           Entrar no BarberFlow
         </DialogTitle>

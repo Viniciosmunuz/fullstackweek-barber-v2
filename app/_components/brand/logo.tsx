@@ -1,67 +1,66 @@
 import { cn } from "@/app/_lib/utils"
+import { MARK_PATH, MARK_VIEWBOX } from "./mark-path"
 
 /**
  * Identidade BarberFlow.
  *
- * O símbolo é um "B" construído por dois arcos que se abrem à direita, cortados
- * por uma haste vertical que evoca a lâmina de uma navalha. As três linhas
- * horizontais que escapam do contorno são o "flow": movimento, agenda em
- * andamento, cortes em sequência. Sem tesoura/bigode — a leitura é de produto
- * de tecnologia, não de barbearia tradicional.
+ * O símbolo é o "B" oficial: a navalha aberta forma a haste da letra e três
+ * linhas de velocidade escapam à esquerda — movimento, agenda em andamento.
+ * O contorno vem vetorizado da folha de logos (ver `mark-path.ts`), não
+ * redesenhado de olho.
  *
- * O wordmark é HTML (e não <text> no SVG) para herdar a fonte da aplicação,
- * escalar com o tipo e continuar selecionável/legível por leitores de tela.
+ * O wordmark é HTML, e não `<text>` dentro do SVG, para herdar a fonte da
+ * aplicação, acompanhar o corpo do texto e continuar legível por leitores de
+ * tela. Usa Inter (`font-sans`) porque a grotesca neutra da folha de marca é
+ * muito mais próxima dela do que da Manrope dos títulos.
  */
 
 interface MarkProps {
   className?: string
   /**
-   * `gold` fixa o dourado da marca. `current` herda a cor do texto do container,
-   * útil em superfícies monocromáticas.
+   * `gold` é o padrão e o que se usa na interface: chapado, mais legível em
+   * corpo pequeno. `gradient` reproduz o degradê da marca e vale só onde o
+   * símbolo aparece grande — login, splash. `current` herda a cor do texto,
+   * para superfícies monocromáticas.
    */
-  tone?: "gold" | "current"
+  tone?: "gold" | "gradient" | "current"
 }
 
-const GOLD = "#C9A227"
-
-/** Símbolo isolado — favicon, avatar, splash e espaços quadrados. */
+/** Símbolo isolado — favicon, avatar, splash, loading e espaços apertados. */
 export const BarberFlowMark = ({ className, tone = "gold" }: MarkProps) => {
-  const color = tone === "gold" ? GOLD : "currentColor"
+  const fill =
+    tone === "gradient"
+      ? "url(#bf-mark-gradient)"
+      : tone === "current"
+        ? "currentColor"
+        : "#C9A227"
 
   return (
     <svg
-      viewBox="0 0 48 48"
+      viewBox={MARK_VIEWBOX}
       fill="none"
       aria-hidden="true"
       focusable="false"
       className={className}
     >
-      {/* haste — a lâmina */}
-      <path d="M15 8v32" stroke={color} strokeWidth="3.5" strokeLinecap="round" />
-      {/* arco superior do B */}
-      <path
-        d="M15 9.75h11a7.13 7.13 0 0 1 0 14.25H15"
-        stroke={color}
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* arco inferior do B */}
-      <path
-        d="M15 24h12.5a7.13 7.13 0 0 1 0 14.25H15"
-        stroke={color}
-        strokeWidth="3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      {/* linhas de fluxo */}
-      <path
-        d="M39.5 15.5h5.5M38 24h7M39.5 32.5h5.5"
-        stroke={color}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
+      {/*
+        O id do degradê é fixo. Duas instâncias na mesma página repetiriam o id,
+        mas ambas descrevem o mesmo degradê — o navegador resolve pela primeira
+        e o resultado é idêntico. `gradient` é reservado a usos isolados e
+        grandes, onde isso não chega a acontecer.
+      */}
+      {tone === "gradient" && (
+        <defs>
+          <linearGradient id="bf-mark-gradient" x1="0" y1="0" x2="0.25" y2="1">
+            <stop offset="0" stopColor="#EFC65E" />
+            <stop offset="0.35" stopColor="#DCAF43" />
+            <stop offset="0.7" stopColor="#C9A227" />
+            <stop offset="1" stopColor="#9E7318" />
+          </linearGradient>
+        </defs>
+      )}
+
+      <path fill={fill} fillRule="evenodd" d={MARK_PATH} />
     </svg>
   )
 }
@@ -71,42 +70,67 @@ interface LogoProps {
   /** `dark` para fundos escuros (padrão), `light` para fundos claros. */
   variant?: "dark" | "light"
   size?: "sm" | "md" | "lg"
+  /** Só o símbolo — sidebar estreita, cabeçalho apertado, avatar. */
+  markOnly?: boolean
+  /** Assinatura "Agendamento inteligente" sob o nome; só onde há folga. */
+  tagline?: boolean
 }
 
 const SIZES = {
-  sm: { mark: "h-6 w-6", text: "text-base" },
-  md: { mark: "h-8 w-8", text: "text-xl" },
-  lg: { mark: "h-11 w-11", text: "text-3xl" },
+  sm: { mark: "h-6", text: "text-[15px]", tagline: "text-[7px]", gap: "gap-2" },
+  md: { mark: "h-8", text: "text-xl", tagline: "text-[8px]", gap: "gap-2.5" },
+  lg: { mark: "h-12", text: "text-3xl", tagline: "text-[10px]", gap: "gap-3" },
 } as const
 
 /**
- * Logo horizontal (símbolo + wordmark) — header, sidebar, login e rodapé.
- * "Barber" usa o peso forte; "Flow" vem em dourado e peso leve, reforçando a
- * ideia de continuidade do nome.
+ * Lockup horizontal (símbolo + nome) — cabeçalho, sidebar, login e rodapé.
+ * "BARBER" vem no peso forte e "FLOW" em dourado e peso leve, como na folha
+ * de marca: o contraste de peso é o que separa as duas palavras, não um
+ * espaço.
  */
 export const BarberFlowLogo = ({
   className,
   variant = "dark",
   size = "md",
+  markOnly = false,
+  tagline = false,
 }: LogoProps) => {
   const s = SIZES[size]
 
   return (
     <span
-      className={cn("inline-flex items-center gap-2.5", className)}
+      className={cn("inline-flex items-center", s.gap, className)}
       aria-label="BarberFlow"
       role="img"
     >
-      <BarberFlowMark className={s.mark} />
-      <span
-        className={cn(
-          "font-display font-extrabold tracking-tight",
-          s.text,
-          variant === "dark" ? "text-[#F5F5F5]" : "text-[#0B0B0F]",
-        )}
-      >
-        Barber<span className="font-light text-primary">Flow</span>
-      </span>
+      {/* `w-auto`: o símbolo é 1,5× mais largo que alto e não pode ser espremido
+          num quadrado, senão distorce. */}
+      <BarberFlowMark className={cn(s.mark, "w-auto shrink-0")} />
+
+      {!markOnly && (
+        <span className="inline-flex flex-col">
+          <span
+            className={cn(
+              "font-sans font-extrabold uppercase leading-none tracking-[-0.01em]",
+              s.text,
+              variant === "dark" ? "text-[#F5F5F5]" : "text-[#0B0B0F]",
+            )}
+          >
+            Barber<span className="font-light text-primary">Flow</span>
+          </span>
+
+          {tagline && (
+            <span
+              className={cn(
+                "mt-1 font-sans font-medium uppercase leading-none tracking-[0.28em] text-muted-foreground",
+                s.tagline,
+              )}
+            >
+              Agendamento inteligente
+            </span>
+          )}
+        </span>
+      )}
     </span>
   )
 }
