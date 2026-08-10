@@ -11,7 +11,12 @@
  */
 const BarberIllustration = ({ className }: { className?: string }) => (
   <svg
-    viewBox="0 0 520 360"
+    /*
+     * O quadro corta a folga à esquerda do desenho. Com o viewBox começando em
+     * zero sobrava uma faixa vazia que empurrava as figuras para a direita e as
+     * deixava menores do que o espaço permitia.
+     */
+    viewBox="168 34 352 306"
     fill="none"
     role="img"
     aria-label="Ilustração de um barbeiro finalizando o corte de um cliente"
