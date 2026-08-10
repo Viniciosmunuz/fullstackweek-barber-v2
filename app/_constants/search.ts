@@ -19,11 +19,19 @@ export const quickSearchOptions: QuickSearchOption[] = [
   { icon: Hand, title: "Massagem" },
 ]
 
-/** Critérios de ordenação da vitrine de barbearias. */
+/**
+ * Critérios de ordenação da vitrine.
+ *
+ * "Por localidade" ocupa o lugar do "Mais próximas" do desenho original: sem
+ * coordenadas nem permissão de GPS, não há como medir distância, e um rótulo de
+ * proximidade prometeria uma ordem que o app não calcula. Agrupar por cidade e
+ * bairro entrega o mesmo uso prático — ver junto o que fica na mesma região.
+ */
 export const sortOptions = [
   { value: "relevance", label: "Mais relevantes" },
   { value: "rating", label: "Mais avaliadas" },
   { value: "popular", label: "Mais populares" },
+  { value: "nearby", label: "Por localidade" },
   { value: "price", label: "Menor preço" },
 ] as const
 

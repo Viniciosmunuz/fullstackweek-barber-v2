@@ -37,32 +37,31 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
     <>
       <Header />
 
-      <div className="container py-8 lg:py-12">
-        <header className="max-w-2xl">
-          <h1 className="font-display text-3xl font-extrabold tracking-tight lg:text-4xl">
+      <div className="container pb-10 pt-6 lg:pt-10">
+        <header className="max-w-xl">
+          <h1 className="font-display text-[26px] font-extrabold leading-tight tracking-tight sm:text-4xl">
             Encontre sua barbearia
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-1.5 text-sm text-muted-foreground sm:text-base">
             {hasQuery
               ? `Resultados para ${searchParams.title ?? searchParams.service}.`
               : "Escolha pelo serviço, pela nota ou pelo bairro. O horário livre você vê na hora."}
           </p>
         </header>
 
-        <div className="mt-6 max-w-xl">
-          <Search defaultValue={searchParams.title} />
+        <div className="mt-5 max-w-xl">
+          <Search defaultValue={searchParams.title} action="/barbershops" />
         </div>
 
-        <div className="mt-8">
-          {/* useSearchParams exige limite de Suspense em componentes de página. */}
-          <Suspense fallback={<div className="h-28" />}>
-            <BarbershopFilters />
+        <div className="mt-6">
+          <Suspense fallback={<div className="h-24" />}>
+            <BarbershopFilters basePath="/barbershops" />
           </Suspense>
         </div>
 
         <div className="mt-8">
           <p
-            className="mb-4 text-sm text-muted-foreground"
+            className="mb-3 text-xs text-muted-foreground"
             role="status"
             aria-live="polite"
           >
@@ -73,26 +72,33 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
           </p>
 
           {barbershops.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {barbershops.map((barbershop) => (
-                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:gap-4 2xl:grid-cols-5">
+              {barbershops.map((barbershop, index) => (
+                <BarbershopItem
+                  key={barbershop.id}
+                  barbershop={barbershop}
+                  priority={index < 4}
+                />
               ))}
             </div>
           ) : (
-            <div className="surface flex flex-col items-center rounded-lg px-6 py-16 text-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
-                <SearchX size={24} />
+            <div className="surface flex flex-col items-center rounded-lg px-6 py-14 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
+                <SearchX size={22} />
               </span>
-              <h2 className="mt-4 font-display text-lg font-bold">
+              <h2 className="mt-4 font-display font-bold">
                 Nenhuma barbearia encontrada
               </h2>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                Tente outro termo de busca ou remova os filtros para ver o
-                catálogo completo.
+                {hasQuery
+                  ? "Tente outro termo de busca ou remova os filtros."
+                  : "Assim que uma barbearia publicar o cadastro, ela aparece aqui."}
               </p>
-              <Button variant="outline" className="mt-6" asChild>
-                <Link href="/barbershops">Limpar filtros</Link>
-              </Button>
+              {hasQuery && (
+                <Button variant="outline" size="sm" className="mt-5" asChild>
+                  <Link href="/barbershops">Limpar filtros</Link>
+                </Button>
+              )}
             </div>
           )}
         </div>

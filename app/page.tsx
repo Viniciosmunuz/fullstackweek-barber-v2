@@ -1,202 +1,198 @@
+import { Suspense } from "react"
 import Link from "next/link"
-import { ArrowRight, CalendarCheck, Clock3, Sparkles } from "lucide-react"
+import { getServerSession } from "next-auth"
+import { ArrowRight, CalendarPlus, SearchX } from "lucide-react"
 import Header from "./_components/header"
 import Search from "./_components/search"
 import BarbershopItem from "./_components/barbershop-item"
+import BarbershopFilters from "./_components/barbershop-filters"
 import BookingItem from "./_components/booking-item"
-import AppMockup from "./_components/app-mockup"
+import BarberIllustration from "./_components/barber-illustration"
 import { Button } from "./_components/ui/button"
-import { quickSearchOptions } from "./_constants/search"
-import { getFeaturedBarbershops } from "./_data/get-barbershops"
+import { authOptions } from "./_lib/auth"
+import { getBarbershops } from "./_data/get-barbershops"
 import { getConfirmedBookings } from "./_data/get-confirmed-bookings"
+import type { SortValue } from "./_constants/search"
 
-const HIGHLIGHTS = [
-  {
-    icon: CalendarCheck,
-    title: "Agenda sem conflito",
-    description:
-      "Horários ocupados somem da lista na hora. Ninguém marca em cima de ninguém.",
-  },
-  {
-    icon: Clock3,
-    title: "Duração real por serviço",
-    description:
-      "Cada serviço tem tempo próprio, então a agenda reflete o dia de verdade.",
-  },
-  {
-    icon: Sparkles,
-    title: "Experiência premium",
-    description:
-      "Da busca à confirmação, o cliente vê preço, profissional e horário antes de fechar.",
-  },
-]
+interface HomeProps {
+  searchParams: {
+    title?: string
+    service?: string
+    sort?: SortValue
+  }
+}
 
-const Home = async () => {
+/**
+ * Home — tela de descoberta.
+ *
+ * A versão anterior abria com um hero institucional e o mockup do produto, e a
+ * busca só aparecia depois de rolar. Aqui a primeira coisa na tela é procurar
+ * uma barbearia: título curto, campo de busca, filtros e a grade. A apresentação
+ * da marca foi para o fim da página, onde não atrapalha quem entrou para
+ * agendar.
+ */
+const Home = async ({ searchParams }: HomeProps) => {
+  const session = await getServerSession(authOptions)
+
   const [barbershops, confirmedBookings] = await Promise.all([
-    getFeaturedBarbershops(6),
+    getBarbershops({
+      title: searchParams.title,
+      service: searchParams.service,
+      sort: searchParams.sort,
+    }),
     getConfirmedBookings(),
   ])
 
+  const firstName = session?.user?.name?.split(" ")[0]
+  const nextBooking = confirmedBookings[0]
+  const isFiltering = Boolean(searchParams.title || searchParams.service)
+
   return (
     <>
-      <Header transparent />
+      <Header />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* HERO                                                                */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="relative overflow-hidden">
-        <div className="glow-gold pointer-events-none absolute inset-x-0 top-0 h-[420px]" />
+      <div className="container pb-10 pt-6 lg:pt-10">
+        {/* ---------------------------------------------------------------- */}
+        {/* TÍTULO                                                            */}
+        {/* ---------------------------------------------------------------- */}
+        <header className="max-w-xl">
+          {firstName && (
+            <p className="text-sm text-muted-foreground">Olá, {firstName}</p>
+          )}
+          <h1 className="mt-0.5 font-display text-[26px] font-extrabold leading-tight tracking-tight sm:text-4xl">
+            Encontre sua barbearia
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground sm:text-base">
+            Escolha pelo serviço, pela nota ou pelo bairro. O horário livre você
+            vê na hora.
+          </p>
+        </header>
 
-        <div className="container relative grid gap-12 py-12 lg:grid-cols-2 lg:items-center lg:gap-8 lg:py-20">
-          <div className="animate-fade-up">
-            <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/[0.07] px-3 py-1 text-xs font-medium text-primary">
-              <Sparkles size={13} />
-              Seu corte. Seu horário. Seu estilo.
-            </span>
-
-            <h1 className="mt-5 font-display text-[2.1rem] font-extrabold leading-[1.1] tracking-tight sm:text-5xl lg:text-[3.4rem]">
-              A gestão da sua barbearia,{" "}
-              <span className="text-gradient-gold">no seu ritmo.</span>
-            </h1>
-
-            <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted-foreground sm:text-base">
-              Agende horários, organize sua equipe e ofereça uma experiência
-              premium aos seus clientes em um único lugar.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button size="lg" asChild>
-                <Link href="/barbershops">
-                  Agendar horário
-                  <ArrowRight size={18} />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="#como-funciona">Conhecer o BarberFlow</Link>
-              </Button>
-            </div>
-
-            <div className="mt-10 max-w-lg">
-              <Search />
-            </div>
-          </div>
-
-          <div className="lg:pl-8">
-            <AppMockup />
-          </div>
+        {/* ---------------------------------------------------------------- */}
+        {/* BUSCA                                                             */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="mt-5 max-w-xl">
+          <Search defaultValue={searchParams.title} action="/" />
         </div>
-      </section>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* CATEGORIAS                                                          */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="container pb-4">
-        <div className="rail lg:flex-wrap">
-          {quickSearchOptions.map(({ icon: Icon, title }) => (
-            <Button
-              key={title}
-              variant="outline"
-              className="shrink-0 rounded-full"
-              asChild
-            >
-              <Link href={`/barbershops?service=${encodeURIComponent(title)}`}>
-                <Icon size={16} className="text-primary" />
-                {title}
-              </Link>
-            </Button>
-          ))}
+        {/* ---------------------------------------------------------------- */}
+        {/* FILTROS E ORDENAÇÃO                                               */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="mt-6">
+          <Suspense fallback={<div className="h-24" />}>
+            <BarbershopFilters basePath="/" />
+          </Suspense>
         </div>
-      </section>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* AGENDAMENTOS DO USUÁRIO                                             */}
-      {/* ------------------------------------------------------------------ */}
-      {confirmedBookings.length > 0 && (
-        <section className="container py-10">
-          <div className="mb-4 flex items-end justify-between">
-            <h2 className="font-display text-xl font-bold">
-              Seus próximos horários
+        {/* ---------------------------------------------------------------- */}
+        {/* PRÓXIMO HORÁRIO DO CLIENTE                                        */}
+        {/* ---------------------------------------------------------------- */}
+        {session?.user && !isFiltering && (
+          <section className="mt-8">
+            <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Seu próximo horário
             </h2>
-            <Button variant="link" className="h-auto p-0" asChild>
-              <Link href="/bookings">Ver todos</Link>
-            </Button>
-          </div>
 
-          <div className="rail lg:grid lg:grid-cols-3 lg:gap-4">
-            {confirmedBookings.map((booking) => (
-              <BookingItem key={booking.id} booking={booking} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* ------------------------------------------------------------------ */}
-      {/* BARBEARIAS EM DESTAQUE                                              */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="container py-10">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <h2 className="font-display text-2xl font-bold tracking-tight">
-              Barbearias em destaque
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Casas mais bem avaliadas pelos clientes do BarberFlow.
-            </p>
-          </div>
-          <Button variant="outline" asChild>
-            <Link href="/barbershops">
-              Ver todas
-              <ArrowRight size={16} />
-            </Link>
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {barbershops.map((barbershop) => (
-            <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-          ))}
-        </div>
-      </section>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* COMO FUNCIONA                                                       */}
-      {/* ------------------------------------------------------------------ */}
-      <section id="como-funciona" className="border-t border-white/[0.06] py-14">
-        <div className="container">
-          <h2 className="max-w-xl font-display text-2xl font-bold tracking-tight sm:text-3xl">
-            Feito para barbearia que não quer perder horário
-          </h2>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {HIGHLIGHTS.map(({ icon: Icon, title, description }) => (
-              <div key={title} className="surface rounded-lg p-6">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <Icon size={20} />
-                </span>
-                <h3 className="mt-4 font-display font-bold">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {description}
-                </p>
+            {nextBooking ? (
+              <div className="max-w-md">
+                <BookingItem booking={nextBooking} />
               </div>
-            ))}
+            ) : (
+              <div className="surface flex flex-wrap items-center justify-between gap-3 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  Você ainda não tem horários marcados.
+                </p>
+                <Button size="sm" variant="outline" asChild>
+                  <Link href="#barbearias">
+                    <CalendarPlus size={15} />
+                    Encontrar uma barbearia
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* GRADE                                                             */}
+        {/* ---------------------------------------------------------------- */}
+        <section id="barbearias" className="mt-8 scroll-mt-20">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">
+              {isFiltering ? "Resultados" : "Barbearias"}
+            </h2>
+            <p className="text-xs text-muted-foreground" role="status">
+              {barbershops.length}{" "}
+              {barbershops.length === 1 ? "encontrada" : "encontradas"}
+            </p>
           </div>
 
-          <div className="surface mt-10 flex flex-col items-start gap-5 rounded-lg p-8 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="font-display text-xl font-bold">
-                Pronto para marcar seu horário?
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Escolha a barbearia, o profissional e o horário em menos de um
-                minuto.
-              </p>
+          {barbershops.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:gap-4 2xl:grid-cols-5">
+              {barbershops.map((barbershop, index) => (
+                <BarbershopItem
+                  key={barbershop.id}
+                  barbershop={barbershop}
+                  priority={index < 4}
+                />
+              ))}
             </div>
-            <Button size="lg" asChild>
-              <Link href="/barbershops">
-                Encontrar barbearia
-                <ArrowRight size={18} />
+          ) : (
+            <div className="surface flex flex-col items-center rounded-lg px-6 py-14 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white/[0.06] text-muted-foreground">
+                <SearchX size={22} />
+              </span>
+              <h3 className="mt-4 font-display font-bold">
+                Nenhuma barbearia encontrada
+              </h3>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                {isFiltering
+                  ? "Tente outro termo ou remova os filtros."
+                  : "Assim que uma barbearia publicar o cadastro, ela aparece aqui."}
+              </p>
+              {isFiltering && (
+                <Button variant="outline" size="sm" className="mt-5" asChild>
+                  <Link href="/">Limpar filtros</Link>
+                </Button>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* APRESENTAÇÃO — depois da função principal                           */}
+      {/* ------------------------------------------------------------------ */}
+      <section className="border-t border-white/[0.06] bg-card/30">
+        <div className="container grid items-center gap-8 py-12 lg:grid-cols-2 lg:py-16">
+          <div className="order-2 lg:order-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              BarberFlow
+            </p>
+            <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
+              Seu corte.
+              <br />
+              Seu horário.
+              <br />
+              <span className="text-gradient-gold">Seu estilo.</span>
+            </h2>
+            <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Escolha o serviço, o profissional e o horário em menos de um
+              minuto. O que já está ocupado some da lista, então não existe
+              agendamento em cima de agendamento.
+            </p>
+
+            <Button className="mt-6" asChild>
+              <Link href="#barbearias">
+                Agendar agora
+                <ArrowRight size={17} />
               </Link>
             </Button>
+          </div>
+
+          {/* No celular a ilustração é secundária: entra menor e depois do texto. */}
+          <div className="order-1 lg:order-2">
+            <BarberIllustration className="mx-auto w-full max-w-[300px] lg:max-w-md" />
           </div>
         </div>
       </section>

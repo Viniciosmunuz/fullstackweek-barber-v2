@@ -16,9 +16,14 @@ const formSchema = z.object({
 interface SearchProps {
   /** Preenche o campo ao voltar para uma busca já feita. */
   defaultValue?: string
+  /**
+   * Para onde enviar a busca. A home agora filtra na própria página, então
+   * mandar sempre para /barbershops tiraria o usuário de onde ele já estava.
+   */
+  action?: string
 }
 
-const Search = ({ defaultValue = "" }: SearchProps) => {
+const Search = ({ defaultValue = "", action = "/barbershops" }: SearchProps) => {
   const router = useRouter()
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -26,7 +31,7 @@ const Search = ({ defaultValue = "" }: SearchProps) => {
   })
 
   const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    router.push(`/barbershops?title=${encodeURIComponent(data.title)}`)
+    router.push(`${action}?title=${encodeURIComponent(data.title)}`)
   }
 
   return (

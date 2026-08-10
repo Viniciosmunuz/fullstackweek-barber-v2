@@ -12,6 +12,7 @@ const CARD_SELECT = {
   name: true,
   slogan: true,
   address: true,
+  neighborhood: true,
   city: true,
   imageUrl: true,
   logoKey: true,
@@ -26,6 +27,7 @@ type Row = {
   name: string
   slogan: string
   address: string
+  neighborhood: string | null
   city: string
   imageUrl: string
   logoKey: string
@@ -48,6 +50,7 @@ function toCard(row: Row): BarbershopCardData & { minPrice: number } {
     name: row.name,
     slogan: row.slogan,
     address: row.address,
+    neighborhood: row.neighborhood,
     city: row.city,
     imageUrl: row.imageUrl,
     logoKey: row.logoKey,
@@ -82,6 +85,7 @@ export async function getBarbershops({
               OR: [
                 { name: { contains: title, mode: "insensitive" } },
                 { city: { contains: title, mode: "insensitive" } },
+                { neighborhood: { contains: title, mode: "insensitive" } },
                 { address: { contains: title, mode: "insensitive" } },
               ],
             }
@@ -109,6 +113,13 @@ export async function getBarbershops({
       return cards.sort((a, b) => b.reviewCount - a.reviewCount)
     case "price":
       return cards.sort((a, b) => a.minPrice - b.minPrice)
+    case "nearby":
+      // Agrupa por região: mesma cidade junta, e dentro dela por bairro.
+      return cards.sort(
+        (a, b) =>
+          a.city.localeCompare(b.city, "pt-BR") ||
+          (a.neighborhood ?? "").localeCompare(b.neighborhood ?? "", "pt-BR"),
+      )
     default:
       // "Relevantes" combina nota e volume de avaliações para não deixar uma
       // casa com nota 5,0 e 3 avaliações na frente de uma 4,8 com 600.

@@ -43,6 +43,7 @@ export interface ProfileFormData {
   slogan: string
   description: string
   address: string
+  neighborhood: string | null
   city: string
   phones: string[]
   imageUrl: string
@@ -59,6 +60,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
     slogan: barbershop.slogan,
     description: barbershop.description,
     address: barbershop.address,
+    neighborhood: barbershop.neighborhood ?? "",
     city: barbershop.city,
     imageUrl: barbershop.imageUrl,
     logoKey: barbershop.logoKey,
@@ -75,6 +77,9 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
       try {
         await updateBarbershopProfile(barbershop.id, {
           ...form,
+          // Campo vazio vira null: "sem bairro" e "bairro em branco" são a
+          // mesma coisa para quem lê o card.
+          neighborhood: form.neighborhood.trim() || null,
           phones: phones.map((p) => p.trim()).filter(Boolean),
         })
         toast.success("Dados da barbearia salvos.")
@@ -148,6 +153,21 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               placeholder="Rua Exemplo, 123 — Centro"
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="p-neighborhood">Bairro</Label>
+            <Input
+              id="p-neighborhood"
+              value={form.neighborhood}
+              onChange={(e) =>
+                setForm({ ...form, neighborhood: e.target.value })
+              }
+              placeholder="Vila Madalena"
+            />
+            <p className="text-xs text-muted-foreground">
+              É o que aparece no card da busca.
+            </p>
           </div>
 
           <div className="space-y-1.5">

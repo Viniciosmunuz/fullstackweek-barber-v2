@@ -71,6 +71,7 @@ const SettingsPage = async ({ searchParams }: PageProps) => {
               slogan: barbershop.slogan,
               description: barbershop.description,
               address: barbershop.address,
+              neighborhood: barbershop.neighborhood,
               city: barbershop.city,
               phones: barbershop.phones,
               imageUrl: barbershop.imageUrl,

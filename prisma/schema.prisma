@@ -123,6 +123,9 @@ model Barbershop {
   slug        String              @unique
   slogan      String
   address     String
+  /// Bairro exibido nos cards. O endereço completo é longo demais para um card
+  /// de grade, e o bairro é o que o cliente usa para decidir se fica perto.
+  neighborhood String?
   city        String
   phones      String[]
   description String

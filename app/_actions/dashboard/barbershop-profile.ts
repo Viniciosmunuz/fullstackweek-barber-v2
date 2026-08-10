@@ -14,6 +14,7 @@ const profileSchema = z.object({
     .min(20, "Descreva a barbearia em pelo menos 20 caracteres.")
     .max(600, "A descrição deve ter até 600 caracteres."),
   address: z.string().trim().min(5, "Informe o endereço."),
+  neighborhood: z.string().trim().max(60, "Bairro muito longo.").nullable(),
   city: z.string().trim().min(2, "Informe a cidade e o estado."),
   phones: z
     .array(z.string().trim().min(8, "Telefone muito curto."))
