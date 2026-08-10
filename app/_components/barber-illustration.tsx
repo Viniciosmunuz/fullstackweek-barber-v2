@@ -75,20 +75,51 @@ const BarberIllustration = ({ className }: { className?: string }) => (
       strokeWidth="1.5"
       strokeOpacity="0.5"
     />
-    <path
-      d="M406 126h58M406 140h58M406 154h40"
-      stroke="#C9A227"
-      strokeWidth="3"
-      strokeLinecap="round"
-      strokeOpacity="0.75"
-    />
-    <path
-      d="M430 166l8-6 8 6"
-      stroke="#C9A227"
-      strokeWidth="1.5"
-      strokeOpacity="0.6"
-      fill="none"
-    />
+    {/*
+      O lema entra como texto de verdade, não como traços decorativos: a arte
+      fica legível em tela grande e o SVG continua sendo só vetor.
+      `aria-hidden` no elemento raiz mantém isso fora da leitura assistiva, que
+      já recebe a descrição da cena.
+    */}
+    <text
+      x="435"
+      y="128"
+      textAnchor="middle"
+      fill="#C9A227"
+      fontSize="11"
+      fontWeight="700"
+      letterSpacing="0.5"
+    >
+      SEU CORTE.
+    </text>
+    <text
+      x="435"
+      y="144"
+      textAnchor="middle"
+      fill="#C9A227"
+      fontSize="11"
+      fontWeight="700"
+      letterSpacing="0.5"
+    >
+      SEU HORÁRIO.
+    </text>
+    <text
+      x="435"
+      y="160"
+      textAnchor="middle"
+      fill="#C9A227"
+      fontSize="11"
+      fontWeight="700"
+      letterSpacing="0.5"
+    >
+      SEU ESTILO.
+    </text>
+    {/* tesoura miúda, fechando o quadro */}
+    <g stroke="#C9A227" strokeWidth="1.4" strokeOpacity="0.8" fill="none">
+      <path d="M429 172l10-6M429 166l10 6" strokeLinecap="round" />
+      <circle cx="427" cy="173" r="2" />
+      <circle cx="427" cy="165" r="2" />
+    </g>
 
     {/* prateleira com frascos */}
     <rect x="392" y="212" width="96" height="3" rx="1.5" fill="#2C2C38" />
