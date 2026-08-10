@@ -1,48 +1,68 @@
-import BarberIllustration from "./barber-illustration"
-
 /**
  * Banner de apresentação da home, entre a ordenação e a grade.
  *
- * Sem botão e sem logo por decisão de projeto: a página inteira já é sobre
- * agendar — um "Agendar agora" apontaria para a lista logo abaixo — e a marca
- * já está no cabeçalho, a poucos pixels dali. O que sobra é o recado e a cena.
+ * A arte é a imagem enviada pelo dono do produto, recortada exatamente no
+ * cartão interno dela — a moldura arredondada que aparece aqui é a do próprio
+ * site, não a da imagem, para acompanhar o resto da página.
  *
- * A ilustração acompanha o texto em qualquer largura, encolhendo no celular em
- * vez de sumir: ela é o motivo de o banner existir.
+ * São dois recortes, e não um só redimensionado, porque o texto vem pintado na
+ * arte: a 343px de largura a linha de apoio virava um borrão cinza de 7px. No
+ * celular entra apenas a cena, com título e subtítulo em HTML de verdade —
+ * legíveis, selecionáveis e no corpo certo. Do `sm` para cima entra o cartão
+ * inteiro, como na referência.
+ *
+ * `<picture>` em vez de duas `<Image>` alternadas por `hidden`: com `media` o
+ * navegador baixa um arquivo só. Escondidas por CSS, as duas seriam baixadas.
+ *
+ * O fundo é a cor exata do interior da arte, e não `surface`, para que a
+ * imagem encoste no cartão sem emenda no empilhamento do celular.
  */
 const HomeBanner = () => (
   <section
     aria-label="Sobre o BarberFlow"
-    className="surface relative overflow-hidden rounded-lg"
+    className="relative overflow-hidden rounded-lg border border-white/[0.06] bg-[#08080B]"
   >
-    {/* brilho dourado que amarra a arte ao fundo */}
-    <div
-      aria-hidden="true"
-      className="pointer-events-none absolute -right-24 top-1/2 h-[460px] w-[460px] -translate-y-1/2 rounded-full bg-primary/[0.06] blur-3xl"
-    />
-
     {/*
-      No celular o conteúdo empilha. Espremida em 42% de 375px, a cena virava
-      mancha — o desenho tem detalhe demais para esse tamanho. Empilhado, ele
-      ganha a largura inteira do cartão e volta a ser legível.
+      Do `sm` para cima este mesmo texto já aparece pintado na arte, então ele
+      fica só para leitores de tela — sem repetir em voz o que a imagem mostra.
     */}
-    <div className="relative flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6 sm:p-8 lg:p-10">
-      <div className="min-w-0 flex-1">
-        <h2 className="font-display text-[26px] font-extrabold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl">
-          Agende nos
-          <br />
-          <span className="text-primary">melhores</span>
-        </h2>
+    <div className="px-5 pt-5 sm:sr-only">
+      <h2 className="font-display text-[26px] font-extrabold leading-[1.1] tracking-tight">
+        Agende nos
+        <br />
+        <span className="text-primary">melhores</span>
+      </h2>
 
-        <p className="mt-3 max-w-md text-[13px] leading-relaxed text-muted-foreground sm:mt-4 sm:text-[15px]">
-          Mais que um corte, uma experiência.
-          <br className="hidden sm:block" /> Seu estilo, seu horário, do seu
-          jeito.
-        </p>
-      </div>
-
-      <BarberIllustration className="w-full shrink-0 sm:w-[46%] sm:max-w-[320px] lg:max-w-[400px]" />
+      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+        Mais que um corte, uma experiência. Seu estilo, seu horário, do seu
+        jeito.
+      </p>
     </div>
+
+    <picture>
+      {/* `width`/`height` nos dois: as proporções diferem e cada uma precisa
+          reservar o próprio espaço, senão a troca de recorte empurra a grade. */}
+      <source
+        media="(min-width: 640px)"
+        srcSet="/banner-home.jpg"
+        width={957}
+        height={456}
+      />
+      {/*
+        `<img>` e não `<Image>`: direção de arte por `media` é justamente o caso
+        em que `<picture>` é o elemento certo, e os dois arquivos já saem
+        comprimidos do recorte. `alt` vazio porque o texto acima cobre o que a
+        imagem comunica.
+      */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/banner-home-arte.jpg"
+        alt=""
+        width={559}
+        height={449}
+        className="mt-4 h-auto w-full sm:mt-0"
+      />
+    </picture>
   </section>
 )
 
