@@ -14,6 +14,14 @@ import {
   setPartnerPublished,
 } from "@/app/_actions/platform/partners"
 
+/*
+ * Cada componente é um export nomeado próprio.
+ *
+ * Anexá-los como propriedades de outro componente (PartnerRow.InviteButton)
+ * quebra em produção: a fronteira Server/Client só transporta os exports do
+ * módulo, e propriedades penduradas na função não chegam do outro lado.
+ */
+
 function useAction() {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -34,14 +42,18 @@ function useAction() {
   return { pending, run }
 }
 
-interface PartnerRowProps {
+interface PartnerActionsProps {
   barbershopId: string
   name: string
   isPublished: boolean
 }
 
 /** Ações da barbearia: abrir o painel, publicar/despublicar e excluir. */
-const PartnerRow = ({ barbershopId, name, isPublished }: PartnerRowProps) => {
+export const PartnerActions = ({
+  barbershopId,
+  name,
+  isPublished,
+}: PartnerActionsProps) => {
   const { pending, run } = useAction()
 
   return (
@@ -80,7 +92,9 @@ const PartnerRow = ({ barbershopId, name, isPublished }: PartnerRowProps) => {
         size="sm"
         disabled={pending}
         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-        onClick={() => run(() => deletePartner(barbershopId), `${name} removida.`)}
+        onClick={() =>
+          run(() => deletePartner(barbershopId), `${name} removida.`)
+        }
       >
         <Trash2 size={14} />
         Excluir
@@ -90,13 +104,13 @@ const PartnerRow = ({ barbershopId, name, isPublished }: PartnerRowProps) => {
 }
 
 /** Libera mais um e-mail para a mesma barbearia. */
-PartnerRow.InviteButton = function InviteButton({
+export const InviteButton = ({
   barbershopId,
   name,
 }: {
   barbershopId: string
   name: string
-}) {
+}) => {
   const { pending, run } = useAction()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
@@ -168,13 +182,13 @@ PartnerRow.InviteButton = function InviteButton({
 }
 
 /** Tira o acesso de um e-mail já liberado. */
-PartnerRow.RevokeButton = function RevokeButton({
+export const RevokeButton = ({
   inviteId,
   email,
 }: {
   inviteId: string
   email: string
-}) {
+}) => {
   const { pending, run } = useAction()
 
   return (
@@ -184,11 +198,11 @@ PartnerRow.RevokeButton = function RevokeButton({
       disabled={pending}
       aria-label={`Revogar acesso de ${email}`}
       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-      onClick={() => run(() => revokePartnerAccess(inviteId), "Acesso revogado.")}
+      onClick={() =>
+        run(() => revokePartnerAccess(inviteId), "Acesso revogado.")
+      }
     >
       <X size={14} />
     </Button>
   )
 }
-
-export default PartnerRow

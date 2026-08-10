@@ -8,7 +8,11 @@ import Header from "../_components/header"
 import SignInPrompt from "../_components/sign-in-prompt"
 import BarbershopLogo from "../_components/brand/barbershop-logo"
 import NewPartnerForm from "./_components/new-partner-form"
-import PartnerRow from "./_components/partner-row"
+import {
+  InviteButton,
+  PartnerActions,
+  RevokeButton,
+} from "./_components/partner-row"
 import { authOptions } from "../_lib/auth"
 import { isPlatformAdminEmail } from "../_lib/config"
 import { db } from "../_lib/prisma"
@@ -175,7 +179,7 @@ const AdminPage = async () => {
                     </div>
                   </div>
 
-                  <PartnerRow
+                  <PartnerActions
                     barbershopId={shop.id}
                     name={shop.name}
                     isPublished={shop.isPublished}
@@ -226,7 +230,7 @@ const AdminPage = async () => {
                                 ? `Entrou em ${format(invite.acceptedAt, "dd/MM/yy", { locale: ptBR })}`
                                 : "Aguardando 1º acesso"}
                             </span>
-                            <PartnerRow.RevokeButton
+                            <RevokeButton
                               inviteId={invite.id}
                               email={invite.email}
                             />
@@ -237,10 +241,7 @@ const AdminPage = async () => {
                   )}
 
                   <div className="mt-3">
-                    <PartnerRow.InviteButton
-                      barbershopId={shop.id}
-                      name={shop.name}
-                    />
+                    <InviteButton barbershopId={shop.id} name={shop.name} />
                   </div>
                 </div>
               </article>
