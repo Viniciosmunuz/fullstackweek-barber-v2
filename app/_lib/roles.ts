@@ -24,6 +24,16 @@ export interface SessionRole {
   email: string | null
   /** Atalho para decidir se o link do painel deve aparecer. */
   canAccessDashboard: boolean
+  /**
+   * Administração da plataforma — quem cadastra as parceiras.
+   *
+   * Separado de `role` de propósito: o dono de uma barbearia também responde
+   * como `ADMIN`, porque manda na casa dele. Usar `role` para liberar a área
+   * da plataforma faria o lojista enxergar um link para o painel que não é
+   * dele. O servidor recusa o acesso de qualquer forma, mas oferecer a porta
+   * e fechá-la na cara é confuso e revela que a área existe.
+   */
+  isPlatformAdmin: boolean
 }
 
 export async function getSessionRole(): Promise<SessionRole> {
@@ -34,11 +44,23 @@ export async function getSessionRole(): Promise<SessionRole> {
   const email = user?.email ?? null
 
   if (!userId) {
-    return { role: "USER", userId: null, email: null, canAccessDashboard: false }
+    return {
+      role: "USER",
+      userId: null,
+      email: null,
+      canAccessDashboard: false,
+      isPlatformAdmin: false,
+    }
   }
 
   if (isPlatformAdminEmail(email)) {
-    return { role: "ADMIN", userId, email, canAccessDashboard: true }
+    return {
+      role: "ADMIN",
+      userId,
+      email,
+      canAccessDashboard: true,
+      isPlatformAdmin: true,
+    }
   }
 
   const links = await db.barbershopManager.findMany({
@@ -47,7 +69,13 @@ export async function getSessionRole(): Promise<SessionRole> {
   })
 
   if (links.length === 0) {
-    return { role: "USER", userId, email, canAccessDashboard: false }
+    return {
+      role: "USER",
+      userId,
+      email,
+      canAccessDashboard: false,
+      isPlatformAdmin: false,
+    }
   }
 
   // Basta ser dono de uma unidade para responder como ADMIN no produto.
@@ -55,5 +83,5 @@ export async function getSessionRole(): Promise<SessionRole> {
     ? "ADMIN"
     : "BARBER"
 
-  return { role, userId, email, canAccessDashboard: true }
+  return { role, userId, email, canAccessDashboard: true, isPlatformAdmin: false }
 }
