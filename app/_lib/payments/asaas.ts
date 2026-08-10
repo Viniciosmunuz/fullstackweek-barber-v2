@@ -23,14 +23,21 @@ import { toReais } from "./policy"
 
 const TIMEOUT_MS = 15_000
 
+/**
+ * Os campos são declarados e atribuídos à mão, sem propriedades de parâmetro
+ * do TypeScript (`constructor(readonly status: number)`). A regra base
+ * `no-unused-vars` deste projeto não conhece essa sintaxe e acusa o parâmetro
+ * como não utilizado, derrubando o build.
+ */
 export class AsaasError extends Error {
-  constructor(
-    message: string,
-    readonly status: number,
-    readonly body: unknown,
-  ) {
+  readonly status: number
+  readonly body: unknown
+
+  constructor(message: string, status: number, body: unknown) {
     super(message)
     this.name = "AsaasError"
+    this.status = status
+    this.body = body
   }
 }
 
