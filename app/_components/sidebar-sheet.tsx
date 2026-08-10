@@ -21,11 +21,19 @@ import { BarberFlowLogo } from "./brand/logo"
 import { getInitials } from "@/app/_lib/utils"
 
 interface SidebarSheetProps {
-  /** Definido pelo servidor: o cliente não decide quem é administrador. */
+  /**
+   * Definidos pelo servidor: o cliente não decide o próprio papel. Esconder os
+   * links é só higiene de interface — o bloqueio real está nas rotas e nas
+   * server actions.
+   */
+  canAccessDashboard?: boolean
   isPlatformAdmin?: boolean
 }
 
-const SidebarSheet = ({ isPlatformAdmin = false }: SidebarSheetProps) => {
+const SidebarSheet = ({
+  canAccessDashboard = false,
+  isPlatformAdmin = false,
+}: SidebarSheetProps) => {
   const { data } = useSession()
   const handleLogoutClick = () => signOut()
 
@@ -101,14 +109,16 @@ const SidebarSheet = ({ isPlatformAdmin = false }: SidebarSheetProps) => {
             </Link>
           </Button>
         </SheetClose>
-        <SheetClose asChild>
-          <Button className="justify-start gap-3" variant="ghost" asChild>
-            <Link href="/dashboard">
-              <LayoutDashboard size={18} />
-              Painel da barbearia
-            </Link>
-          </Button>
-        </SheetClose>
+        {canAccessDashboard && (
+          <SheetClose asChild>
+            <Button className="justify-start gap-3" variant="ghost" asChild>
+              <Link href="/dashboard">
+                <LayoutDashboard size={18} />
+                Painel da barbearia
+              </Link>
+            </Button>
+          </SheetClose>
+        )}
 
         {isPlatformAdmin && (
           <SheetClose asChild>

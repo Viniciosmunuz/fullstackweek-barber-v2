@@ -12,6 +12,7 @@ import { Button } from "@/app/_components/ui/button"
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
 import { db } from "@/app/_lib/prisma"
 import { getWeekdayLabel } from "@/app/_lib/utils"
+import { getSessionRole } from "@/app/_lib/roles"
 
 interface BarbershopPageProps {
   params: { id: string }
@@ -42,7 +43,10 @@ export async function generateMetadata({
 }
 
 const BarbershopPage = async ({ params }: BarbershopPageProps) => {
-  const barbershop = await getBarbershop(params.id)
+  const [barbershop, { role, canAccessDashboard }] = await Promise.all([
+    getBarbershop(params.id),
+    getSessionRole(),
+  ])
 
   // Casa em cadastro não é acessível nem por link direto: sem endereço e sem
   // contato, a página só frustraria quem chegasse nela.
@@ -105,7 +109,10 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   <MenuIcon size={18} />
                 </Button>
               </SheetTrigger>
-              <SidebarSheet />
+              <SidebarSheet
+                canAccessDashboard={canAccessDashboard}
+                isPlatformAdmin={role === "ADMIN"}
+              />
             </Sheet>
           </div>
 
