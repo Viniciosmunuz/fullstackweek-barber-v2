@@ -1,44 +1,66 @@
-# Aula Zero
+# BarberFlow
 
-- [x] Setup do banco
-- [x] Seeding do banco (colocar dados)
-- [] Introdução ao Next.js
-- [] Tailwind e Shadcn
-- [] Git Hooks
+**Seu corte. Seu horário. Seu estilo.**
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+Plataforma de agendamento para barbearias. O cliente encontra uma casa, escolhe
+o serviço e fecha o horário; a barbearia parceira administra agenda, equipe,
+serviços e relatórios num painel próprio.
 
-## Getting Started
+## Como funciona o acesso
 
-First, run the development server:
+Há três papéis, e nenhum deles é gravado no banco como um campo editável — todos
+são derivados, para que duas fontes de verdade não possam discordar:
+
+| Papel | Como se obtém | O que pode fazer |
+| --- | --- | --- |
+| **Cliente** | Qualquer login Google | Buscar, agendar, ver os próprios horários |
+| **Barbearia** | E-mail convidado por um admin da plataforma | Painel da própria barbearia |
+| **Admin** | E-mail listado em `PLATFORM_ADMIN_EMAILS` | Cadastrar barbearias parceiras |
+
+O convite é por e-mail: o admin cadastra o endereço em `/admin`, e no primeiro
+login daquele e-mail o vínculo com a barbearia é criado. `PLATFORM_ADMIN_EMAILS`
+vive na variável de ambiente, e não no banco, justamente para que ninguém possa
+se promover a admin através da aplicação.
+
+## Rodando localmente
 
 ```bash
+docker compose up -d
+npm install
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Variáveis de ambiente
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variável | Para quê |
+| --- | --- |
+| `DATABASE_URL` | Conexão PostgreSQL |
+| `NEXTAUTH_URL` | URL base da aplicação |
+| `NEXTAUTH_SECRET` | Assinatura da sessão |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Login Google |
+| `PLATFORM_ADMIN_EMAILS` | Lista separada por vírgula dos admins |
+| `RESEND_API_KEY` | Envio dos convites (opcional — sem ela, o convite é copiado à mão) |
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+> `PLATFORM_ADMIN_EMAILS` não pode ser marcada como *sensitive* na Vercel: o
+> Next.js embute `process.env` no build, e variáveis sensíveis não existem
+> naquele momento — a leitura compilaria como `undefined`.
 
-## Learn More
+## Stack
 
-To learn more about Next.js, take a look at the following resources:
+Next.js 14 (App Router) · Prisma · PostgreSQL · NextAuth · Tailwind · shadcn/ui
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Marca
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+Os arquivos de marca ficam em `public/brand`. O contorno do símbolo é a fonte
+única em `app/_components/brand/mark-path.ts`: dele saem o componente React, os
+SVGs e os PNGs de favicon e PWA — nenhuma versão é redesenhada em separado.
 
-## Deploy on Vercel
+| Uso | Versão |
+| --- | --- |
+| Cabeçalho, rodapé, painel | Símbolo + `BARBERFLOW` |
+| Favicon, PWA, loading, espaços apertados | Só o símbolo |
+| Barbearias fictícias | Identidade própria de cada uma (`brand/barbershop-logo.tsx`) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+O símbolo da plataforma nunca representa uma barbearia: BarberFlow é o produto,
+as casas têm marca própria.
