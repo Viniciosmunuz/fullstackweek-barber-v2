@@ -2,8 +2,37 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
+import { headers } from "next/headers"
 import { db } from "@/app/_lib/prisma"
+import { buildInviteMessage, sendEmail, type EmailResult } from "@/app/_lib/email"
 import { requirePlatformAdmin } from "../dashboard/guard"
+
+/**
+ * URL pública do painel.
+ *
+ * Sai do cabeçalho da própria requisição para o convite continuar correto em
+ * qualquer domínio — produção, preview ou desenvolvimento — sem depender de uma
+ * variável a mais.
+ */
+function dashboardUrl() {
+  const host = headers().get("host") ?? "localhost:3000"
+  const protocol = host.startsWith("localhost") ? "http" : "https"
+  return `${protocol}://${host}/dashboard`
+}
+
+/** Dispara o convite e devolve o que aconteceu, para a interface avisar. */
+async function notifyInvite(
+  email: string,
+  barbershopName: string,
+): Promise<EmailResult> {
+  const { subject, html, text } = buildInviteMessage({
+    barbershopName,
+    email,
+    dashboardUrl: dashboardUrl(),
+  })
+
+  return sendEmail({ to: email, subject, html, text })
+}
 
 const createSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome da barbearia."),
@@ -87,9 +116,13 @@ export async function createPartner(input: z.infer<typeof createSchema>) {
     data: { email: ownerEmail, barbershopId: barbershop.id, role: "OWNER" },
   })
 
+  // O e-mail é um extra: se falhar ou não estiver configurado, o cadastro já
+  // está feito e o administrador repassa o convite por outro canal.
+  const email = await notifyInvite(ownerEmail, name)
+
   revalidatePath("/admin")
 
-  return { id: barbershop.id, slug }
+  return { id: barbershop.id, slug, email }
 }
 
 const inviteSchema = z.object({
@@ -109,18 +142,43 @@ export async function invitePartnerManager(input: z.infer<typeof inviteSchema>) 
 
   const { barbershopId, email, role } = parsed.data
 
-  const existing = await db.barbershopInvite.findUnique({
-    where: { email_barbershopId: { email, barbershopId } },
-    select: { id: true },
-  })
+  const [existing, barbershop] = await Promise.all([
+    db.barbershopInvite.findUnique({
+      where: { email_barbershopId: { email, barbershopId } },
+      select: { id: true },
+    }),
+    db.barbershop.findUnique({
+      where: { id: barbershopId },
+      select: { name: true },
+    }),
+  ])
 
   if (existing) {
     throw new Error("Este e-mail já está liberado para esta barbearia.")
   }
+  if (!barbershop) throw new Error("Barbearia não encontrada.")
 
   await db.barbershopInvite.create({ data: { email, barbershopId, role } })
 
+  const result = await notifyInvite(email, barbershop.name)
+
   revalidatePath("/admin")
+
+  return { email: result }
+}
+
+/** Reenvia o convite de um e-mail já liberado. */
+export async function resendInvite(inviteId: string) {
+  await requirePlatformAdmin()
+
+  const invite = await db.barbershopInvite.findUnique({
+    where: { id: inviteId },
+    select: { email: true, barbershop: { select: { name: true } } },
+  })
+
+  if (!invite) throw new Error("Convite não encontrado.")
+
+  return { email: await notifyInvite(invite.email, invite.barbershop.name) }
 }
 
 /**

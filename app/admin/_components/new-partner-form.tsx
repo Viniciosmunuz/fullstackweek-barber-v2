@@ -27,8 +27,22 @@ const NewPartnerForm = () => {
 
     startTransition(async () => {
       try {
-        await createPartner(form)
-        toast.success(`${form.name} cadastrada. E-mail liberado.`)
+        const result = await createPartner(form)
+
+        // O cadastro já está feito; o e-mail é o extra. A mensagem diz qual dos
+        // dois aconteceu para o administrador saber se precisa avisar à mão.
+        if (result.email.status === "sent") {
+          toast.success(`${form.name} cadastrada. Convite enviado por e-mail.`)
+        } else if (result.email.status === "skipped") {
+          toast.success(`${form.name} cadastrada.`, {
+            description: "Envio de e-mail não configurado — copie o convite.",
+          })
+        } else {
+          toast.warning(`${form.name} cadastrada, mas o e-mail falhou.`, {
+            description: "Use o botão de copiar convite.",
+          })
+        }
+
         setForm({ name: "", city: "", ownerEmail: "" })
         setOpen(false)
         router.refresh()

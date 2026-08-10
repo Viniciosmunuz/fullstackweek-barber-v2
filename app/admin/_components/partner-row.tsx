@@ -3,16 +3,27 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Eye, EyeOff, Loader2, Trash2, UserPlus, X } from "lucide-react"
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  Loader2,
+  Send,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import {
   deletePartner,
   invitePartnerManager,
+  resendInvite,
   revokePartnerAccess,
   setPartnerPublished,
 } from "@/app/_actions/platform/partners"
+import { getInviteText } from "@/app/_actions/platform/invite-text"
 
 /*
  * Cada componente é um export nomeado próprio.
@@ -178,6 +189,82 @@ export const InviteButton = ({
         <X size={14} />
       </Button>
     </form>
+  )
+}
+
+/**
+ * Reenvia o convite ou entrega o texto para envio manual.
+ *
+ * Quando não há provedor de e-mail configurado, copiar a mensagem é o caminho
+ * que realmente funciona — e o conteúdo é idêntico ao do envio automático.
+ */
+export const InviteActions = ({
+  inviteId,
+  email,
+  emailConfigured,
+}: {
+  inviteId: string
+  email: string
+  emailConfigured: boolean
+}) => {
+  const [pending, startTransition] = useTransition()
+
+  const handleResend = () =>
+    startTransition(async () => {
+      try {
+        const result = await resendInvite(inviteId)
+
+        if (result.email.status === "sent") {
+          toast.success(`Convite reenviado para ${email}.`)
+        } else if (result.email.status === "skipped") {
+          toast.info("Envio de e-mail não configurado. Copie a mensagem.")
+        } else {
+          toast.error(`O provedor recusou: ${result.email.reason}`)
+        }
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Não foi possível reenviar.",
+        )
+      }
+    })
+
+  const handleCopy = () =>
+    startTransition(async () => {
+      try {
+        const text = await getInviteText(inviteId)
+        await navigator.clipboard.writeText(text)
+        toast.success("Convite copiado. Cole no WhatsApp ou no seu e-mail.")
+      } catch {
+        toast.error("Não foi possível copiar o convite.")
+      }
+    })
+
+  return (
+    <span className="flex items-center gap-1">
+      {emailConfigured && (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          onClick={handleResend}
+          aria-label={`Reenviar convite para ${email}`}
+        >
+          <Send size={13} />
+          Reenviar
+        </Button>
+      )}
+
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={pending}
+        onClick={handleCopy}
+        aria-label={`Copiar convite de ${email}`}
+      >
+        <Copy size={13} />
+        Copiar convite
+      </Button>
+    </span>
   )
 }
 

@@ -3,18 +3,20 @@ import Link from "next/link"
 import { getServerSession } from "next-auth"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { CheckCircle2, Clock, ShieldAlert, Store } from "lucide-react"
+import { CheckCircle2, Clock, Mail, ShieldAlert, Store } from "lucide-react"
 import Header from "../_components/header"
 import SignInPrompt from "../_components/sign-in-prompt"
 import BarbershopLogo from "../_components/brand/barbershop-logo"
 import NewPartnerForm from "./_components/new-partner-form"
 import {
+  InviteActions,
   InviteButton,
   PartnerActions,
   RevokeButton,
 } from "./_components/partner-row"
 import { authOptions } from "../_lib/auth"
 import { isPlatformAdminEmail } from "../_lib/config"
+import { isEmailConfigured } from "../_lib/email"
 import { db } from "../_lib/prisma"
 
 export const metadata: Metadata = { title: "Administração da plataforma" }
@@ -83,6 +85,7 @@ const AdminPage = async () => {
     },
   })
 
+  const emailConfigured = isEmailConfigured()
   const published = barbershops.filter((shop) => shop.isPublished).length
   const pendingInvites = barbershops.reduce(
     (total, shop) =>
@@ -132,6 +135,25 @@ const AdminPage = async () => {
             </p>
           </div>
         </div>
+
+        {!emailConfigured && (
+          <div
+            role="note"
+            className="mt-6 flex items-start gap-3 rounded-lg border border-warning/25 bg-warning/[0.06] p-4 text-sm"
+          >
+            <Mail size={17} className="mt-0.5 shrink-0 text-warning" />
+            <p className="text-muted-foreground">
+              O envio automático de e-mail não está configurado, então o convite
+              não sai daqui sozinho. Use{" "}
+              <strong className="text-foreground">Copiar convite</strong> e
+              mande por WhatsApp ou pelo seu e-mail. Para automatizar, defina{" "}
+              <code className="rounded bg-white/[0.08] px-1 py-0.5 text-xs">
+                RESEND_API_KEY
+              </code>{" "}
+              nas variáveis de ambiente.
+            </p>
+          </div>
+        )}
 
         <div className="mt-8">
           <NewPartnerForm />
@@ -224,12 +246,22 @@ const AdminPage = async () => {
                             </span>
                           </span>
 
-                          <span className="flex items-center gap-3">
+                          <span className="flex flex-wrap items-center gap-2">
                             <span className="text-xs text-muted-foreground">
                               {invite.acceptedAt
                                 ? `Entrou em ${format(invite.acceptedAt, "dd/MM/yy", { locale: ptBR })}`
                                 : "Aguardando 1º acesso"}
                             </span>
+
+                            {/* Já entrou não precisa mais de convite. */}
+                            {!invite.acceptedAt && (
+                              <InviteActions
+                                inviteId={invite.id}
+                                email={invite.email}
+                                emailConfigured={emailConfigured}
+                              />
+                            )}
+
                             <RevokeButton
                               inviteId={invite.id}
                               email={invite.email}

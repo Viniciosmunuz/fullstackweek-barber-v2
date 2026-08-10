@@ -16,6 +16,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/app/_components/ui/dialog"
+import ImageField from "./image-field"
 import {
   createService,
   deleteService,
@@ -195,19 +196,14 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="service-image">URL da imagem</Label>
-            <Input
-              id="service-image"
-              required
-              value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground">
-              Precisa estar em utfs.io — os demais domínios são bloqueados pelo
-              otimizador de imagens.
-            </p>
-          </div>
+          <ImageField
+            id="service-image"
+            label="Imagem do serviço"
+            required
+            value={form.imageUrl}
+            onChange={(imageUrl) => setForm({ ...form, imageUrl })}
+            hint="Aparece ao lado do serviço na sua página."
+          />
 
           <DialogFooter className="flex-row gap-2 pt-2">
             {isEdit && (

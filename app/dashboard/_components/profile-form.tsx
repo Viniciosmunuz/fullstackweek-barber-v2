@@ -8,6 +8,7 @@ import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
 import BarbershopLogo from "@/app/_components/brand/barbershop-logo"
+import ImageField from "./image-field"
 import { updateBarbershopProfile } from "@/app/_actions/dashboard/barbershop-profile"
 
 /** Símbolos disponíveis para a marca, iguais aos do componente de logo. */
@@ -201,20 +202,14 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="p-image">Foto da barbearia (URL)</Label>
-          <Input
-            id="p-image"
-            required
-            value={form.imageUrl}
-            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-            placeholder="https://utfs.io/f/..."
-          />
-          <p className="text-xs text-muted-foreground">
-            Precisa estar em utfs.io — os demais domínios são bloqueados pelo
-            otimizador de imagens.
-          </p>
-        </div>
+        <ImageField
+          id="p-image"
+          label="Foto da barbearia"
+          required
+          value={form.imageUrl}
+          onChange={(imageUrl) => setForm({ ...form, imageUrl })}
+          hint="É a foto de capa que o cliente vê na busca e no topo da sua página. Prefira uma imagem larga, do ambiente."
+        />
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
