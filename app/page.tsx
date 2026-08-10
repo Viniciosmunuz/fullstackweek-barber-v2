@@ -1,13 +1,13 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { getServerSession } from "next-auth"
-import { ArrowRight, CalendarPlus, SearchX } from "lucide-react"
+import { CalendarPlus, SearchX } from "lucide-react"
 import Header from "./_components/header"
 import Search from "./_components/search"
 import BarbershopItem from "./_components/barbershop-item"
 import BarbershopFilters from "./_components/barbershop-filters"
 import BookingItem from "./_components/booking-item"
-import BarberIllustration from "./_components/barber-illustration"
+import HomeBanner from "./_components/home-banner"
 import { Button } from "./_components/ui/button"
 import { authOptions } from "./_lib/auth"
 import { getBarbershops } from "./_data/get-barbershops"
@@ -114,12 +114,21 @@ const Home = async ({ searchParams }: HomeProps) => {
         )}
 
         {/* ---------------------------------------------------------------- */}
+        {/* BANNER — só fora de busca, para não afastar o usuário do resultado */}
+        {/* ---------------------------------------------------------------- */}
+        {!isFiltering && (
+          <div className="mt-8">
+            <HomeBanner />
+          </div>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
         {/* GRADE                                                             */}
         {/* ---------------------------------------------------------------- */}
         <section id="barbearias" className="mt-8 scroll-mt-20">
           <div className="mb-3 flex items-end justify-between gap-3">
             <h2 className="font-display text-lg font-bold tracking-tight sm:text-xl">
-              {isFiltering ? "Resultados" : "Barbearias"}
+              {isFiltering ? "Resultados" : "Barbearias em destaque"}
             </h2>
             <p className="text-xs text-muted-foreground" role="status">
               {barbershops.length}{" "}
@@ -160,42 +169,6 @@ const Home = async ({ searchParams }: HomeProps) => {
         </section>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* APRESENTAÇÃO — depois da função principal                           */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="border-t border-white/[0.06] bg-card/30">
-        <div className="container grid items-center gap-8 py-12 lg:grid-cols-2 lg:py-16">
-          <div className="order-2 lg:order-1">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
-              BarberFlow
-            </p>
-            <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
-              Seu corte.
-              <br />
-              Seu horário.
-              <br />
-              <span className="text-gradient-gold">Seu estilo.</span>
-            </h2>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Escolha o serviço, o profissional e o horário em menos de um
-              minuto. O que já está ocupado some da lista, então não existe
-              agendamento em cima de agendamento.
-            </p>
-
-            <Button className="mt-6" asChild>
-              <Link href="#barbearias">
-                Agendar agora
-                <ArrowRight size={17} />
-              </Link>
-            </Button>
-          </div>
-
-          {/* No celular a ilustração é secundária: entra menor e depois do texto. */}
-          <div className="order-1 lg:order-2">
-            <BarberIllustration className="mx-auto w-full max-w-[300px] lg:max-w-md" />
-          </div>
-        </div>
-      </section>
     </>
   )
 }
