@@ -88,8 +88,19 @@ export const PartnerActions = ({
         {isPublished ? "No catálogo" : "Rascunho"}
       </span>
 
+      {/*
+        Cai em Configurações, e não no Dashboard: a razão de a plataforma abrir
+        uma parceira é quase sempre acertar o cadastro dela — completar dados,
+        conferir a logo, publicar. O movimento da casa é assunto do dono, e
+        continua a um clique daqui, na barra lateral do painel.
+      */}
       <Button variant="ghost" size="sm" asChild>
-        <Link href={`/dashboard?shop=${slug}`}>Abrir painel</Link>
+        <Link
+          href={`/dashboard/configuracoes?shop=${slug}`}
+          aria-label={`Abrir o cadastro de ${name}`}
+        >
+          Configurar
+        </Link>
       </Button>
 
       <Button
