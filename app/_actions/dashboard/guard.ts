@@ -103,7 +103,7 @@ export async function requireManager(barbershopId: string) {
   // A administração da plataforma alcança qualquer barbearia — é quem dá
   // suporte ao parceiro quando algo trava no cadastro dele.
   if (isPlatformAdminEmail(email)) {
-    return { userId, role: "OWNER" as ShopRole }
+    return { userId, email, role: "OWNER" as ShopRole }
   }
 
   const link = await db.barbershopManager.findUnique({
@@ -115,7 +115,7 @@ export async function requireManager(barbershopId: string) {
     throw new Error("Você não tem permissão para gerenciar esta barbearia.")
   }
 
-  return { userId, role: link.role as ShopRole }
+  return { userId, email, role: link.role as ShopRole }
 }
 
 /**

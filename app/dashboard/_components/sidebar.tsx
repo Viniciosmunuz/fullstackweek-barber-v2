@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation"
 import {
   BarChart3,
   CalendarDays,
+  KeyRound,
   LayoutDashboard,
   Scissors,
   Settings,
@@ -34,6 +35,12 @@ const NAV: NavItem[] = [
     href: "/dashboard/barbeiros",
     label: "Barbeiros",
     icon: UserSquare2,
+    ownerOnly: true,
+  },
+  {
+    href: "/dashboard/equipe",
+    label: "Equipe",
+    icon: KeyRound,
     ownerOnly: true,
   },
   {

@@ -1,9 +1,9 @@
 "use server"
 
-import { headers } from "next/headers"
 import { db } from "@/app/_lib/prisma"
 import { buildInviteMessage } from "@/app/_lib/email"
 import { requirePlatformAdmin } from "../dashboard/guard"
+import { dashboardUrl } from "../dashboard/invite-mail"
 
 /**
  * Texto pronto do convite, para repassar por WhatsApp ou e-mail próprio.
@@ -16,18 +16,16 @@ export async function getInviteText(inviteId: string) {
 
   const invite = await db.barbershopInvite.findUnique({
     where: { id: inviteId },
-    select: { email: true, barbershop: { select: { name: true } } },
+    select: { email: true, role: true, barbershop: { select: { name: true } } },
   })
 
   if (!invite) throw new Error("Convite não encontrado.")
 
-  const host = headers().get("host") ?? "localhost:3000"
-  const protocol = host.startsWith("localhost") ? "http" : "https"
-
   const { text } = buildInviteMessage({
     barbershopName: invite.barbershop.name,
     email: invite.email,
-    dashboardUrl: `${protocol}://${host}/dashboard`,
+    dashboardUrl: dashboardUrl(),
+    role: invite.role,
   })
 
   return text

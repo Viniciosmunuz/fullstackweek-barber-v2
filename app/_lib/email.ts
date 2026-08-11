@@ -79,6 +79,13 @@ interface InviteContent {
   barbershopName: string
   email: string
   dashboardUrl: string
+  /**
+   * O convite do dono e o da equipe pedem coisas diferentes na chegada: um vai
+   * completar o cadastro da casa, o outro vai abrir a agenda do dia. Mandar a
+   * mesma instrução para os dois faria o barbeiro procurar uma tela que ele
+   * nem enxerga.
+   */
+  role?: "OWNER" | "STAFF"
 }
 
 /**
@@ -91,18 +98,29 @@ export function buildInviteMessage({
   barbershopName,
   email,
   dashboardUrl,
+  role = "OWNER",
 }: InviteContent) {
+  const isOwner = role === "OWNER"
+
   const subject = `Seu acesso ao painel da ${barbershopName}`
+
+  const opening = isOwner
+    ? `Você foi liberado para administrar a ${barbershopName} no BarberFlow.`
+    : `Você foi liberado para usar o painel da ${barbershopName} no BarberFlow.`
+
+  const lastStep = isOwner
+    ? `3. Complete o cadastro da barbearia e publique`
+    : `3. Acompanhe a agenda do dia e confirme os atendimentos`
 
   const text = [
     `Olá!`,
     ``,
-    `Você foi liberado para administrar a ${barbershopName} no BarberFlow.`,
+    opening,
     ``,
     `Como entrar:`,
     `1. Acesse ${dashboardUrl}`,
     `2. Entre com a conta Google do e-mail ${email}`,
-    `3. Complete o cadastro da barbearia e publique`,
+    lastStep,
     ``,
     `Importante: use exatamente esse e-mail para entrar, senão o acesso não será reconhecido.`,
   ].join("\n")
@@ -117,9 +135,14 @@ export function buildInviteMessage({
           Seu acesso ao painel da ${barbershopName}
         </h1>
         <p style="color:#8E8E99;line-height:1.6;margin:0 0 24px">
-          Você foi liberado para administrar a <strong style="color:#F5F5F5">${barbershopName}</strong>.
+          Você foi liberado para ${isOwner ? "administrar a" : "usar o painel da"}
+          <strong style="color:#F5F5F5">${barbershopName}</strong>.
           Entre com a conta Google de <strong style="color:#F5F5F5">${email}</strong> para
-          completar o cadastro e começar a receber agendamentos.
+          ${
+            isOwner
+              ? "completar o cadastro e começar a receber agendamentos"
+              : "abrir a agenda e acompanhar os atendimentos do dia"
+          }.
         </p>
         <a href="${dashboardUrl}"
            style="display:inline-block;background:#C9A227;color:#0B0B0F;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:10px">
