@@ -167,9 +167,9 @@ model Barbershop {
   paymentsEnabled  Boolean  @default(false)
   payoutWalletId   String?
   depositType      FeeType  @default(PERCENT)
-  depositValue     Decimal  @default(30) @db.Decimal(10, 2)
+  depositValue     Decimal  @default(30.0) @db.Decimal(10, 2)
   platformFeeType  FeeType  @default(PERCENT)
-  platformFeeValue Decimal  @default(10) @db.Decimal(10, 2)
+  platformFeeValue Decimal  @default(10.0) @db.Decimal(10, 2)
   openingHours OpeningHour[]
   barbers     Barber[]
   managers    BarbershopManager[]
