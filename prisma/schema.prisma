@@ -15,6 +15,10 @@ model User {
   emailVerified DateTime?
   image         String?
   phone         String?
+  /// Exigido pelo provedor para emitir cobrança — não há como gerar PIX sem
+  /// documento. Só é pedido a quem escolhe pagar o sinal na hora do
+  /// agendamento; quem paga na barbearia nunca informa.
+  cpfCnpj       String?
   /// Cliente fictício do catálogo de demonstração. O painel de gestão só
   /// exibe registros marcados assim (mais os do próprio usuário logado), para
   /// que dados de quem entra com a conta Google não fiquem visíveis a terceiros.

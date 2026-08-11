@@ -2,6 +2,7 @@
 
 import { endOfDay, startOfDay } from "date-fns"
 import { db } from "../_lib/prisma"
+import { activeBookingFilter } from "../_lib/booking-slot"
 
 interface GetBookingsProps {
   /** Profissional cuja agenda será consultada. */
@@ -25,6 +26,8 @@ export const getBookings = ({ barberId, date }: GetBookingsProps) => {
         gte: startOfDay(date),
         lte: endOfDay(date),
       },
+      // Reserva cujo prazo de sinal venceu não ocupa mais o horário.
+      ...activeBookingFilter(),
     },
     select: { id: true, date: true },
   })

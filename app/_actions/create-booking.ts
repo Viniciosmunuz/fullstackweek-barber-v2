@@ -6,6 +6,7 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { db } from "../_lib/prisma"
 import { authOptions } from "../_lib/auth"
+import { activeBookingFilter } from "../_lib/booking-slot"
 
 interface CreateBookingParams {
   serviceId: string
@@ -29,8 +30,11 @@ export const createBooking = async ({
 
   // A lista de horários já esconde o que está ocupado, mas duas pessoas podem
   // confirmar o mesmo minuto ao mesmo tempo. Esta checagem fecha essa janela.
+  //
+  // Usa o mesmo filtro da listagem: se as duas discordarem, o cliente vê um
+  // horário livre, escolhe, e leva um erro na hora de confirmar.
   const conflict = await db.booking.findFirst({
-    where: { barberId, date },
+    where: { barberId, date, ...activeBookingFilter() },
     select: { id: true },
   })
 
