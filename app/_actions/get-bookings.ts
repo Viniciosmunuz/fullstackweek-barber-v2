@@ -3,6 +3,7 @@
 import { endOfDay, startOfDay } from "date-fns"
 import { db } from "../_lib/prisma"
 import { activeBookingFilter } from "../_lib/booking-slot"
+import { expireStaleHolds } from "../_lib/expire-holds"
 
 interface GetBookingsProps {
   /** Profissional cuja agenda será consultada. */
@@ -18,7 +19,11 @@ interface GetBookingsProps {
  * as outras. A disponibilidade real é por profissional: é o barbeiro que não
  * pode atender duas pessoas ao mesmo tempo.
  */
-export const getBookings = ({ barberId, date }: GetBookingsProps) => {
+export const getBookings = async ({ barberId, date }: GetBookingsProps) => {
+  // Momento natural para a limpeza: é exatamente quando alguém está escolhendo
+  // horário que a agenda precisa estar honesta.
+  await expireStaleHolds()
+
   return db.booking.findMany({
     where: {
       barberId,

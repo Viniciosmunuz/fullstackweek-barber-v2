@@ -13,6 +13,11 @@
  */
 export function activeBookingFilter(now: Date = new Date()) {
   return {
+    // Cancelado não ocupa horário. Antes isso não estava escrito em lugar
+    // nenhum, e passou despercebido porque cancelar apagava a linha. Desde que
+    // reserva paga passou a ser preservada em vez de apagada, uma linha
+    // cancelada continuaria bloqueando o horário para sempre.
+    status: { not: "CANCELLED" as const },
     OR: [
       // Reserva firme: nunca teve prazo, ou o sinal já foi pago.
       { expiresAt: null },

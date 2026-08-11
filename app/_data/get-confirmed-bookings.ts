@@ -3,7 +3,21 @@
 import { getServerSession } from "next-auth"
 import { authOptions } from "../_lib/auth"
 import { db } from "../_lib/prisma"
+import { expireStaleHolds } from "../_lib/expire-holds"
 import type { BookingItemData } from "../_components/booking-item"
+
+/**
+ * O que o cliente reconhece como "meu agendamento".
+ *
+ * Duas exclusões, e nenhuma era feita antes: cancelado não é agendamento, e
+ * reserva com prazo em aberto é apenas um horário segurado enquanto o sinal
+ * não chega — mostrá-la aqui prometeria ao cliente algo que ainda pode não
+ * acontecer. Pago, o webhook zera `expiresAt` e ela entra na lista.
+ */
+const REAL_BOOKING = {
+  status: { not: "CANCELLED" as const },
+  expiresAt: null,
+}
 
 const BOOKING_SELECT = {
   id: true,
@@ -62,8 +76,10 @@ export const getConfirmedBookings = async (): Promise<BookingItemData[]> => {
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) return []
 
+  await expireStaleHolds()
+
   const rows = await db.booking.findMany({
-    where: { userId, date: { gte: new Date() } },
+    where: { userId, date: { gte: new Date() }, ...REAL_BOOKING },
     select: BOOKING_SELECT,
     orderBy: { date: "asc" },
   })
@@ -77,7 +93,7 @@ export const getConcludedBookingsData = async (): Promise<BookingItemData[]> => 
   if (!userId) return []
 
   const rows = await db.booking.findMany({
-    where: { userId, date: { lt: new Date() } },
+    where: { userId, date: { lt: new Date() }, ...REAL_BOOKING },
     select: BOOKING_SELECT,
     orderBy: { date: "desc" },
   })
