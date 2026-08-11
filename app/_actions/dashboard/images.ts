@@ -1,6 +1,12 @@
 "use server"
 
 import { db } from "@/app/_lib/prisma"
+import {
+  actionError,
+  actionOk,
+  type ActionResult,
+} from "@/app/_lib/action-result"
+import { UPLOAD_PREFIX } from "@/app/_lib/image-source"
 import { requireOwner } from "./guard"
 
 /**
@@ -23,7 +29,10 @@ const ALLOWED_TYPES = ["image/webp", "image/png", "image/jpeg"]
  * Do ponto de vista do resto do sistema, imagem enviada e imagem hospedada fora
  * são a mesma coisa — e é por isso que nenhuma outra tela precisou mudar.
  */
-export async function uploadImage(barbershopId: string, formData: FormData) {
+export async function uploadImage(
+  barbershopId: string,
+  formData: FormData,
+): Promise<ActionResult<string>> {
   await requireOwner(barbershopId)
 
   const file = formData.get("file")
@@ -31,25 +40,26 @@ export async function uploadImage(barbershopId: string, formData: FormData) {
   // Sem `instanceof File`: a classe só existe como global a partir do Node 20,
   // e o tipo de `FormData.get` já garante que o que não é string é arquivo.
   if (!file || typeof file === "string") {
-    throw new Error("Nenhum arquivo recebido.")
+    return actionError("Nenhum arquivo recebido.")
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error("Envie uma imagem PNG, JPG ou WebP.")
-  }
-
-  if (file.size > MAX_BYTES) {
-    throw new Error(
-      "Imagem muito grande. Tente uma menor que 1,5 MB ou reduza antes de enviar.",
-    )
+    return actionError("Envie uma imagem PNG, JPG ou WebP.")
   }
 
   const bytes = Buffer.from(await file.arrayBuffer())
 
   // `file.size` vem do cliente; `bytes.length` é o que de fato chegou. É este
   // que vale, tanto para gravar quanto para conferir o teto.
-  if (bytes.length === 0) throw new Error("O arquivo chegou vazio.")
-  if (bytes.length > MAX_BYTES) throw new Error("Imagem muito grande.")
+  if (bytes.length === 0) {
+    return actionError("O arquivo chegou vazio.")
+  }
+
+  if (bytes.length > MAX_BYTES) {
+    return actionError(
+      "Imagem muito grande. Tente uma menor que 1,5 MB ou reduza antes de enviar.",
+    )
+  }
 
   const asset = await db.imageAsset.create({
     data: {
@@ -61,5 +71,5 @@ export async function uploadImage(barbershopId: string, formData: FormData) {
     select: { id: true },
   })
 
-  return `/api/images/${asset.id}`
+  return actionOk(`${UPLOAD_PREFIX}${asset.id}`)
 }

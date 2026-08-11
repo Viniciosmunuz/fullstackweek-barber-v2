@@ -1,12 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState, useTransition } from "react"
-import { ImageOff, ImageUp, Loader2, Upload } from "lucide-react"
+import { FileCheck2, ImageOff, ImageUp, Loader2, Upload } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { Label } from "@/app/_components/ui/label"
 import { uploadImage } from "@/app/_actions/dashboard/images"
+import { messageFrom } from "@/app/_lib/action-result"
+import { UPLOAD_PREFIX } from "@/app/_lib/image-source"
 import { cn } from "@/app/_lib/utils"
 
 /** Maior lado da imagem depois de reduzida. */
@@ -97,6 +99,9 @@ const ImageField = ({
   const [sending, startUpload] = useTransition()
   const fileInput = useRef<HTMLInputElement>(null)
 
+  /** Veio do dispositivo, e não de um endereço que alguém colou. */
+  const uploaded = value.startsWith(UPLOAD_PREFIX)
+
   // Espera a digitação parar antes de tentar carregar, senão cada tecla
   // dispararia uma requisição.
   const [debounced, setDebounced] = useState(value)
@@ -119,15 +124,17 @@ const ImageField = ({
         const body = new FormData()
         body.append("file", reduced, "imagem.webp")
 
-        const url = await uploadImage(barbershopId, body)
-        onChange(url)
+        const result = await uploadImage(barbershopId, body)
+
+        if (!result.ok) {
+          toast.error(result.message)
+          return
+        }
+
+        onChange(result.data)
         toast.success("Imagem enviada. Salve o formulário para valer.")
       } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Não foi possível enviar a imagem.",
-        )
+        toast.error(messageFrom(error, "Não foi possível enviar a imagem."))
       } finally {
         // Zera o input para que escolher o mesmo arquivo de novo ainda dispare
         // o evento — o navegador não reemite `change` para valor idêntico.
@@ -138,18 +145,50 @@ const ImageField = ({
 
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id}>{label}</Label>
+      {/* Sem arquivo há um campo para o rótulo apontar; com arquivo não há
+          controle nenhum, e um `label` solto atrapalha o leitor de tela mais do
+          que ajuda — o nome vai para o grupo abaixo. */}
+      {uploaded ? (
+        <span className="block text-sm font-medium leading-none">{label}</span>
+      ) : (
+        <Label htmlFor={id}>{label}</Label>
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Input
-          id={id}
-          required={required}
-          inputMode="url"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="https://... ou envie do dispositivo"
-          className="min-w-0 flex-1"
-        />
+        {uploaded ? (
+          /*
+           * Quem enviou um arquivo não deve continuar vendo um campo que pede
+           * endereço: o endereço existe, mas é detalhe interno e não diz nada a
+           * quem escolheu a foto na galeria. Some o campo, fica o fato.
+           */
+          <div
+            role="group"
+            aria-label={label}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-md border border-input px-3 py-2 text-sm"
+          >
+            <FileCheck2 size={15} className="shrink-0 text-primary" />
+            <span className="truncate">Imagem enviada do dispositivo</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-auto shrink-0"
+              onClick={() => onChange("")}
+            >
+              Remover
+            </Button>
+          </div>
+        ) : (
+          <Input
+            id={id}
+            required={required}
+            inputMode="url"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="Cole um endereço ou envie um arquivo"
+            className="min-w-0 flex-1"
+          />
+        )}
 
         <input
           ref={fileInput}
@@ -174,7 +213,7 @@ const ImageField = ({
           ) : (
             <Upload size={14} />
           )}
-          Enviar arquivo
+          {uploaded ? "Trocar arquivo" : "Enviar arquivo"}
         </Button>
       </div>
 

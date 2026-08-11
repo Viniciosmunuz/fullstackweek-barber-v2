@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/app/_components/ui/dialog"
 import ImageField from "./image-field"
+import { messageFrom } from "@/app/_lib/action-result"
 import {
   createService,
   deleteService,
@@ -70,11 +71,18 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
 
     startTransition(async () => {
       try {
+        const result = service
+          ? await updateService(service.id, payload)
+          : await createService(barbershopId, payload)
+
+        if (!result.ok) {
+          toast.error(result.message)
+          return
+        }
+
         if (service) {
-          await updateService(service.id, payload)
           toast.success("Serviço atualizado.")
         } else {
-          await createService(barbershopId, payload)
           toast.success("Serviço adicionado.")
           setForm({
             name: "",
@@ -84,12 +92,11 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
             imageUrl: FALLBACK_IMAGE,
           })
         }
+
         setOpen(false)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível salvar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível salvar."))
       }
     })
   }

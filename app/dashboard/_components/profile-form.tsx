@@ -10,6 +10,7 @@ import { Label } from "@/app/_components/ui/label"
 import BarbershopLogo from "@/app/_components/brand/barbershop-logo"
 import ImageField from "./image-field"
 import { updateBarbershopProfile } from "@/app/_actions/dashboard/barbershop-profile"
+import { messageFrom } from "@/app/_lib/action-result"
 
 /** Símbolos disponíveis para a marca, iguais aos do componente de logo. */
 const LOGO_OPTIONS = [
@@ -78,7 +79,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
 
     startTransition(async () => {
       try {
-        await updateBarbershopProfile(barbershop.id, {
+        const result = await updateBarbershopProfile(barbershop.id, {
           ...form,
           // Campo vazio vira null: "sem bairro" e "bairro em branco" são a
           // mesma coisa para quem lê o card.
@@ -86,12 +87,16 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
           logoUrl: form.logoUrl.trim() || null,
           phones: phones.map((p) => p.trim()).filter(Boolean),
         })
+
+        if (!result.ok) {
+          toast.error(result.message)
+          return
+        }
+
         toast.success("Dados da barbearia salvos.")
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível salvar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível salvar."))
       }
     })
   }

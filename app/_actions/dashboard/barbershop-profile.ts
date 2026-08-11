@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
+import { IMAGE_SOURCE_MESSAGE, isImageSource } from "@/app/_lib/image-source"
+import {
+  actionError,
+  actionOk,
+  type ActionResult,
+} from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 
 const profileSchema = z.object({
@@ -20,7 +26,7 @@ const profileSchema = z.object({
     .array(z.string().trim().min(8, "Telefone muito curto."))
     .min(1, "Informe ao menos um telefone.")
     .max(3, "No máximo três telefones."),
-  imageUrl: z.string().trim().url("Informe uma URL de imagem válida."),
+  imageUrl: z.string().trim().refine(isImageSource, IMAGE_SOURCE_MESSAGE),
   logoKey: z.string().trim().min(1),
   /**
    * Logo real da casa, ou `null` quando ela ainda usa o símbolo genérico.
@@ -32,7 +38,7 @@ const profileSchema = z.object({
   logoUrl: z
     .string()
     .trim()
-    .url("Informe uma URL de imagem válida para a logo.")
+    .refine(isImageSource, IMAGE_SOURCE_MESSAGE)
     .nullable(),
   accentColor: z
     .string()
@@ -45,12 +51,14 @@ export type BarbershopProfileInput = z.infer<typeof profileSchema>
 export async function updateBarbershopProfile(
   barbershopId: string,
   input: BarbershopProfileInput,
-) {
+): Promise<ActionResult> {
   await requireOwner(barbershopId)
 
   const parsed = profileSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    // Devolvida, não lançada: em produção o Next apagaria esta mensagem, e ela
+    // é exatamente o que a pessoa precisa ler para corrigir o campo.
+    return actionError(parsed.error.issues[0].message)
   }
 
   await db.barbershop.update({
@@ -61,6 +69,8 @@ export async function updateBarbershopProfile(
   revalidatePath("/dashboard/configuracoes")
   revalidatePath("/barbershops")
   revalidatePath(`/barbershops/${barbershopId}`)
+
+  return actionOk()
 }
 
 const hourSchema = z.object({

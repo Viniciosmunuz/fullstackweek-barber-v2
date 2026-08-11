@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
+import { IMAGE_SOURCE_MESSAGE, isImageSource } from "@/app/_lib/image-source"
+import {
+  actionError,
+  actionOk,
+  type ActionResult,
+} from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 
 const serviceSchema = z.object({
@@ -21,7 +27,7 @@ const serviceSchema = z.object({
     .int("A duração deve ser em minutos inteiros.")
     .min(5, "A duração mínima é de 5 minutos.")
     .max(480, "A duração máxima é de 8 horas."),
-  imageUrl: z.string().trim().url("Informe uma URL de imagem válida."),
+  imageUrl: z.string().trim().refine(isImageSource, IMAGE_SOURCE_MESSAGE),
 })
 
 function revalidate() {
@@ -34,12 +40,12 @@ function revalidate() {
 export async function createService(
   barbershopId: string,
   input: z.infer<typeof serviceSchema>,
-) {
+): Promise<ActionResult> {
   await requireOwner(barbershopId)
 
   const parsed = serviceSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    return actionError(parsed.error.issues[0].message)
   }
 
   await db.barbershopService.create({
@@ -47,6 +53,8 @@ export async function createService(
   })
 
   revalidate()
+
+  return actionOk()
 }
 
 /** A barbearia é derivada do serviço, nunca aceita do cliente. */
@@ -64,12 +72,12 @@ async function authorizeService(serviceId: string) {
 export async function updateService(
   serviceId: string,
   input: z.infer<typeof serviceSchema>,
-) {
+): Promise<ActionResult> {
   await authorizeService(serviceId)
 
   const parsed = serviceSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    return actionError(parsed.error.issues[0].message)
   }
 
   await db.barbershopService.update({
@@ -78,6 +86,8 @@ export async function updateService(
   })
 
   revalidate()
+
+  return actionOk()
 }
 
 /**
