@@ -90,10 +90,15 @@ model Notification {
   @@index([userId, readAt])
 }
 
+/// Estados que a barbearia decide sobre o atendimento.
+///
+/// A espera pelo sinal NÃO entra aqui: ela é expressa por `Booking.expiresAt`.
+/// Chegou a existir um `PENDING_PAYMENT`, e ele continua no banco porque
+/// PostgreSQL não remove valor de enum — mas nada o usa. Declarar aqui um
+/// quinto estado quebrava as uniões que o painel escreve à mão, e sobretudo
+/// se confundia com `PENDING`, que é um estado que a barbearia escolhe no
+/// painel e significa outra coisa.
 enum BookingStatus {
-  /// Reserva segurando o horário enquanto o sinal não é pago. Não conta como
-  /// agendamento para a barbearia e some sozinha quando `expiresAt` vence.
-  PENDING_PAYMENT
   PENDING
   CONFIRMED
   COMPLETED
