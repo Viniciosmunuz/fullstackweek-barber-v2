@@ -13,6 +13,7 @@ import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
 import { db } from "@/app/_lib/prisma"
 import { getWeekdayLabel } from "@/app/_lib/utils"
 import { getSessionRole } from "@/app/_lib/roles"
+import { splitDeposit, toReais } from "@/app/_lib/payments/policy"
 
 interface BarbershopPageProps {
   params: { id: string }
@@ -43,7 +44,7 @@ export async function generateMetadata({
 }
 
 const BarbershopPage = async ({ params }: BarbershopPageProps) => {
-  const [barbershop, { canAccessDashboard, isPlatformAdmin }] =
+  const [barbershop, { canAccessDashboard, isPlatformAdmin, userId }] =
     await Promise.all([getBarbershop(params.id), getSessionRole()])
 
   // Casa em cadastro não é acessível nem por link direto: sem endereço e sem
@@ -54,6 +55,22 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
   const accent = barbershop.accentColor
   const today = new Date().getDay()
+
+  // A casa só oferece pagamento pelo app quando tem carteira configurada. Sem
+  // ela o split não teria destino, e o botão só produziria erro.
+  const acceptsDeposit =
+    barbershop.paymentsEnabled && Boolean(barbershop.payoutWalletId)
+
+  // O documento é pedido uma vez. Quem já informou não repete a cada
+  // agendamento — e o valor nunca vem do cliente, sempre do banco.
+  const savedDocument = userId
+    ? (
+        await db.user.findUnique({
+          where: { id: userId },
+          select: { cpfCnpj: true },
+        })
+      )?.cpfCnpj ?? null
+    : null
 
   // Decimal do Prisma não atravessa para Client Component: converte aqui.
   const services = barbershop.services.map((service) => ({
@@ -217,6 +234,17 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   barbers={barbers}
                   barbershopName={barbershop.name}
                   accentColor={accent}
+                  // O valor sai da política da casa aplicada ao preço deste
+                  // serviço, calculado no servidor. O cliente nunca informa
+                  // quanto vai pagar.
+                  depositAmount={
+                    acceptsDeposit
+                      ? toReais(
+                          splitDeposit(service.price, barbershop).amountCents,
+                        )
+                      : null
+                  }
+                  savedDocument={savedDocument}
                 />
               ))}
             </div>

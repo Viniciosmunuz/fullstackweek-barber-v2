@@ -16,6 +16,10 @@ interface ServiceItemProps {
   barbers: FlowBarber[]
   barbershopName: string
   accentColor: string
+  /** Sinal em reais; `null` quando a casa só recebe no balcão. */
+  depositAmount?: number | null
+  /** Documento já informado antes, para não pedir de novo. */
+  savedDocument?: string | null
 }
 
 const ServiceItem = ({
@@ -23,6 +27,8 @@ const ServiceItem = ({
   barbers,
   barbershopName,
   accentColor,
+  depositAmount = null,
+  savedDocument = null,
 }: ServiceItemProps) => {
   const { data } = useSession()
   const [signInOpen, setSignInOpen] = useState(false)
@@ -88,6 +94,8 @@ const ServiceItem = ({
               barbers={barbers}
               barbershopName={barbershopName}
               accentColor={accentColor}
+              depositAmount={depositAmount}
+              savedDocument={savedDocument}
               onDone={() => setSheetOpen(false)}
             />
           </div>
