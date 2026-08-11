@@ -12,6 +12,7 @@ import {
   getPixQrCode,
 } from "@/app/_lib/payments/asaas"
 import { isPaymentsConfigured } from "@/app/_lib/config"
+import type { DepositResult } from "./types"
 
 /**
  * Cria a reserva e o sinal em PIX.
@@ -34,17 +35,6 @@ const schema = z.object({
       message: "Informe um CPF ou CNPJ válido.",
     }),
 })
-
-export interface DepositResult {
-  bookingId: string
-  /** Copia e cola do PIX. */
-  pixPayload: string | null
-  /** Imagem do QR em base64, como o provedor devolve. */
-  qrCodeBase64: string | null
-  /** Valor do sinal, em reais. */
-  amount: number
-  expiresAt: Date
-}
 
 export async function createBookingWithDeposit(
   input: z.infer<typeof schema>,

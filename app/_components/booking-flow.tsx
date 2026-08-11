@@ -9,7 +9,10 @@ import { toast } from "sonner"
 import { Button } from "./ui/button"
 import { Calendar } from "./ui/calendar"
 import BarberAvatar from "./barber-avatar"
+import DepositPayment from "./deposit-payment"
 import { createBooking } from "../_actions/create-booking"
+import { createBookingWithDeposit } from "../_actions/payments/create-deposit"
+import type { DepositResult } from "../_actions/payments/types"
 import { getBookings } from "../_actions/get-bookings"
 import { cn, formatCurrency, formatDuration } from "@/app/_lib/utils"
 
@@ -33,9 +36,19 @@ interface BookingFlowProps {
   barbers: FlowBarber[]
   barbershopName: string
   accentColor: string
+  /**
+   * Sinal em reais, quando a barbearia aceita pagamento pelo aplicativo.
+   * `null` mantém o fluxo antigo, em que só se paga no balcão.
+   */
+  depositAmount?: number | null
+  /** Documento já informado antes, para não pedir de novo. */
+  savedDocument?: string | null
   /** Fecha o painel que envolve o fluxo. */
   onDone: () => void
 }
+
+/** Como o cliente escolheu pagar. */
+type PayMode = "SHOP" | "DEPOSIT"
 
 const STEPS = ["Profissional", "Data", "Horário", "Confirmação"] as const
 
@@ -84,6 +97,8 @@ const BookingFlow = ({
   barbers,
   barbershopName,
   accentColor,
+  depositAmount = null,
+  savedDocument = null,
   onDone,
 }: BookingFlowProps) => {
   const router = useRouter()
@@ -95,6 +110,12 @@ const BookingFlow = ({
   const [dayBookings, setDayBookings] = useState<{ date: Date }[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  // Pagar na barbearia continua sendo o padrão: é como funciona hoje, e
+  // transformar o sinal em obrigação afastaria quem só quer marcar horário.
+  const [payMode, setPayMode] = useState<PayMode>("SHOP")
+  const [document, setDocument] = useState(savedDocument ?? "")
+  const [deposit, setDeposit] = useState<DepositResult | null>(null)
 
   // Recarrega a agenda sempre que o par (profissional, dia) muda.
   useEffect(() => {
@@ -135,6 +156,19 @@ const BookingFlow = ({
 
     setSubmitting(true)
     try {
+      if (payMode === "DEPOSIT") {
+        const result = await createBookingWithDeposit({
+          serviceId: service.id,
+          barberId: barber.id,
+          date: selectedDate,
+          cpfCnpj: document,
+        })
+
+        // A reserva já existe segurando o horário; agora é esperar o PIX.
+        setDeposit(result)
+        return
+      }
+
       await createBooking({
         serviceId: service.id,
         barberId: barber.id,
@@ -162,6 +196,48 @@ const BookingFlow = ({
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleDepositPaid = () => {
+    toast.success("Sinal recebido, agendamento confirmado!", {
+      action: {
+        label: "Ver meus agendamentos",
+        onClick: () => router.push("/bookings"),
+      },
+    })
+    setDeposit(null)
+    onDone()
+    router.refresh()
+  }
+
+  const handleDepositExpired = () => {
+    toast.error("O prazo do sinal venceu e o horário foi liberado.")
+    setDeposit(null)
+    setTime(undefined)
+    setStep(2)
+    router.refresh()
+  }
+
+  // Documento só é validado em profundidade no servidor; aqui basta o
+  // suficiente para não deixar o botão disparar uma chamada que já vai falhar.
+  const documentDigits = document.replace(/\D/g, "")
+  const documentLooksValid =
+    documentDigits.length === 11 || documentDigits.length === 14
+  const canConfirm =
+    payMode === "SHOP" || (Boolean(depositAmount) && documentLooksValid)
+
+  if (deposit) {
+    return (
+      <DepositPayment
+        bookingId={deposit.bookingId}
+        pixPayload={deposit.pixPayload}
+        qrCodeBase64={deposit.qrCodeBase64}
+        amount={deposit.amount}
+        expiresAt={deposit.expiresAt}
+        onPaid={handleDepositPaid}
+        onExpired={handleDepositExpired}
+      />
+    )
   }
 
   return (
@@ -367,9 +443,88 @@ const BookingFlow = ({
               </dl>
             </div>
 
-            <p className="text-xs text-muted-foreground">
-              O pagamento é feito na barbearia, no dia do atendimento.
-            </p>
+            {depositAmount ? (
+              <fieldset className="surface rounded-lg p-4">
+                <legend className="sr-only">Forma de pagamento</legend>
+
+                <div className="space-y-2">
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                      payMode === "SHOP"
+                        ? "border-primary/40 bg-primary/[0.06]"
+                        : "border-white/[0.06] hover:bg-white/[0.03]",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="pay-mode"
+                      className="mt-1 accent-primary"
+                      checked={payMode === "SHOP"}
+                      onChange={() => setPayMode("SHOP")}
+                    />
+                    <span className="text-sm">
+                      <span className="font-medium">Pagar na barbearia</span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        Você acerta tudo no dia do atendimento.
+                      </span>
+                    </span>
+                  </label>
+
+                  <label
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                      payMode === "DEPOSIT"
+                        ? "border-primary/40 bg-primary/[0.06]"
+                        : "border-white/[0.06] hover:bg-white/[0.03]",
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="pay-mode"
+                      className="mt-1 accent-primary"
+                      checked={payMode === "DEPOSIT"}
+                      onChange={() => setPayMode("DEPOSIT")}
+                    />
+                    <span className="text-sm">
+                      <span className="font-medium">
+                        Pagar {formatCurrency(depositAmount)} agora por PIX
+                      </span>
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        Abatido do valor na barbearia. Garante seu horário.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
+                {payMode === "DEPOSIT" && (
+                  <div className="mt-4 border-t border-white/[0.06] pt-4">
+                    <label
+                      htmlFor="deposit-document"
+                      className="text-xs font-medium text-muted-foreground"
+                    >
+                      CPF do pagador
+                    </label>
+                    <input
+                      id="deposit-document"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      placeholder="000.000.000-00"
+                      value={document}
+                      onChange={(event) => setDocument(event.target.value)}
+                      className="mt-1.5 h-10 w-full rounded-md border border-white/[0.08] bg-background px-3 text-sm outline-none focus-visible:border-primary/50"
+                    />
+                    <p className="mt-1.5 text-[11px] text-muted-foreground">
+                      Exigido pelo banco para emitir a cobrança PIX.
+                    </p>
+                  </div>
+                )}
+              </fieldset>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                O pagamento é feito na barbearia, no dia do atendimento.
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -391,17 +546,19 @@ const BookingFlow = ({
           <Button
             className="flex-1"
             onClick={handleConfirm}
-            disabled={submitting}
+            disabled={submitting || !canConfirm}
           >
             {submitting ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                Confirmando…
+                {payMode === "DEPOSIT" ? "Gerando PIX…" : "Confirmando…"}
               </>
             ) : (
               <>
                 <Check size={16} />
-                Confirmar agendamento
+                {payMode === "DEPOSIT"
+                  ? "Gerar PIX do sinal"
+                  : "Confirmar agendamento"}
               </>
             )}
           </Button>
