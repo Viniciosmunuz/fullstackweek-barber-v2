@@ -11,6 +11,7 @@ import {
   Store,
   Users,
   UserSquare2,
+  Wallet,
 } from "lucide-react"
 import { BarberFlowLogo } from "@/app/_components/brand/logo"
 import { cn } from "@/app/_lib/utils"
@@ -21,6 +22,7 @@ const NAV = [
   { href: "/dashboard/clientes", label: "Clientes", icon: Users },
   { href: "/dashboard/barbeiros", label: "Barbeiros", icon: UserSquare2 },
   { href: "/dashboard/servicos", label: "Serviços", icon: Scissors },
+  { href: "/dashboard/repasses", label: "Repasses", icon: Wallet },
   { href: "/dashboard/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/dashboard/configuracoes", label: "Configurações", icon: Settings },
 ]
