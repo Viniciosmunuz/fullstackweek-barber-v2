@@ -14,6 +14,7 @@ import { db } from "@/app/_lib/prisma"
 import { getWeekdayLabel } from "@/app/_lib/utils"
 import { getSessionRole } from "@/app/_lib/roles"
 import { splitDeposit, toReais } from "@/app/_lib/payments/policy"
+import { isPaymentsConfigured } from "@/app/_lib/config"
 
 interface BarbershopPageProps {
   params: { id: string }
@@ -56,10 +57,14 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   const accent = barbershop.accentColor
   const today = new Date().getDay()
 
-  // A casa só oferece pagamento pelo app quando tem carteira configurada. Sem
-  // ela o split não teria destino, e o botão só produziria erro.
+  // Três condições, e nenhuma é redundante: a instalação precisa ter chave do
+  // provedor, a casa precisa aceitar, e precisa existir carteira para onde o
+  // split repassar. Faltando qualquer uma, o botão apareceria e só produziria
+  // erro — melhor não oferecer.
   const acceptsDeposit =
-    barbershop.paymentsEnabled && Boolean(barbershop.payoutWalletId)
+    isPaymentsConfigured() &&
+    barbershop.paymentsEnabled &&
+    Boolean(barbershop.payoutWalletId)
 
   // O documento é pedido uma vez. Quem já informou não repete a cada
   // agendamento — e o valor nunca vem do cliente, sempre do banco.
