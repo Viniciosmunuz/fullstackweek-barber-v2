@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireManager } from "./guard"
+import { requireOwner } from "./guard"
 
 const barberSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do profissional."),
@@ -22,7 +22,7 @@ export async function createBarber(
   barbershopId: string,
   input: z.infer<typeof barberSchema>,
 ) {
-  await requireManager(barbershopId)
+  await requireOwner(barbershopId)
 
   const parsed = barberSchema.safeParse(input)
   if (!parsed.success) {
@@ -48,7 +48,7 @@ async function authorizeBarber(barberId: string) {
 
   if (!barber) throw new Error("Profissional não encontrado.")
 
-  await requireManager(barber.barbershopId)
+  await requireOwner(barber.barbershopId)
 }
 
 export async function updateBarber(

@@ -12,6 +12,7 @@ import {
   getBarbershopBySlug,
   getManagedBarbershops,
 } from "@/app/_data/dashboard"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import { formatCurrency, formatDuration } from "@/app/_lib/utils"
 
 export const metadata = { title: "Agendamentos" }
@@ -39,6 +40,10 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
       addDays(day, offset),
       "yyyy-MM-dd",
     )}`
+
+  // O preço de cada linha continua à vista para os dois papéis — é o mesmo que
+  // o cliente viu ao agendar. O que sai para a equipe é o fechamento do dia.
+  const isOwner = await isOwnerOf(barbershop.id)
 
   const revenue = bookings
     .filter((b) => b.status === "COMPLETED")
@@ -86,12 +91,14 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
             </strong>{" "}
             agendamentos
           </span>
-          <span>
-            <strong className="font-semibold text-foreground">
-              {formatCurrency(revenue)}
-            </strong>{" "}
-            concluído no dia
-          </span>
+          {isOwner && (
+            <span>
+              <strong className="font-semibold text-foreground">
+                {formatCurrency(revenue)}
+              </strong>{" "}
+              concluído no dia
+            </span>
+          )}
         </div>
 
         {bookings.length > 0 ? (

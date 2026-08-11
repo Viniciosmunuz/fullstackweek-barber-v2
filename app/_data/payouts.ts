@@ -1,5 +1,6 @@
 import { db } from "@/app/_lib/prisma"
 import { toCents, toReais } from "@/app/_lib/payments/policy"
+import { requireOwner } from "@/app/_actions/dashboard/guard"
 import { resolvePeriod, type Period } from "./dashboard"
 
 /**
@@ -50,6 +51,11 @@ export async function getPayouts(
   barbershopId: string,
   period: Period,
 ): Promise<PayoutSummary> {
+  // A autorização mora junto da consulta, e não só na página que a chama: a
+  // página de hoje já recusa antes de chegar aqui, mas quem escrever a próxima
+  // tela de dinheiro herda a checagem em vez de precisar lembrar dela.
+  await requireOwner(barbershopId)
+
   const { from, to } = resolvePeriod(period)
 
   const rows = await db.payment.findMany({

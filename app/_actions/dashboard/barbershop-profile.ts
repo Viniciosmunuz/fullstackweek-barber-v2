@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireManager } from "./guard"
+import { requireOwner } from "./guard"
 
 const profileSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome da barbearia."),
@@ -34,7 +34,7 @@ export async function updateBarbershopProfile(
   barbershopId: string,
   input: BarbershopProfileInput,
 ) {
-  await requireManager(barbershopId)
+  await requireOwner(barbershopId)
 
   const parsed = profileSchema.safeParse(input)
   if (!parsed.success) {
@@ -63,7 +63,7 @@ export async function updateOpeningHours(
   barbershopId: string,
   hours: z.infer<typeof hourSchema>[],
 ) {
-  await requireManager(barbershopId)
+  await requireOwner(barbershopId)
 
   const parsed = z.array(hourSchema).length(7).safeParse(hours)
   if (!parsed.success) {
@@ -99,7 +99,7 @@ export async function updateOpeningHours(
  * cliente uma página sem endereço nem contato.
  */
 export async function publishBarbershop(barbershopId: string, publish: boolean) {
-  await requireManager(barbershopId)
+  await requireOwner(barbershopId)
 
   if (publish) {
     const shop = await db.barbershop.findUnique({

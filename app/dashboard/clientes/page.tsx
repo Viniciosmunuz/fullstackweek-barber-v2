@@ -10,6 +10,7 @@ import {
   getClients,
   getManagedBarbershops,
 } from "@/app/_data/dashboard"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import { formatCurrency, getInitials } from "@/app/_lib/utils"
 
 export const metadata = { title: "Clientes" }
@@ -25,6 +26,11 @@ const ClientsPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  // A ficha do cliente é ferramenta de atendimento e fica para os dois papéis:
+  // saber quem já veio e o que costuma pedir é como se atende bem. O que sai
+  // para a equipe é só o somatório da casa — esse é o caixa, não o histórico.
+  const isOwner = await isOwnerOf(barbershop.id)
 
   const all = await getClients(barbershop.id)
 
@@ -73,12 +79,14 @@ const ClientsPage = async ({ searchParams }: PageProps) => {
             </strong>{" "}
             exibidos
           </span>
-          <span>
-            <strong className="font-semibold text-foreground">
-              {formatCurrency(totalSpent)}
-            </strong>{" "}
-            em atendimentos concluídos
-          </span>
+          {isOwner && (
+            <span>
+              <strong className="font-semibold text-foreground">
+                {formatCurrency(totalSpent)}
+              </strong>{" "}
+              em atendimentos concluídos
+            </span>
+          )}
         </div>
 
         {sorted.length > 0 ? (

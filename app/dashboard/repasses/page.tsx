@@ -2,12 +2,19 @@ import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { ArrowDownLeft, Landmark, Percent, Wallet } from "lucide-react"
-import { EmptyState, MetricCard, PageHeader, PeriodFilter } from "../_components/ui"
+import {
+  EmptyState,
+  MetricCard,
+  OwnerOnly,
+  PageHeader,
+  PeriodFilter,
+} from "../_components/ui"
 import {
   getBarbershopBySlug,
   getManagedBarbershops,
   type Period,
 } from "@/app/_data/dashboard"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import { getPayouts } from "@/app/_data/payouts"
 import { formatCurrency } from "@/app/_lib/utils"
 
@@ -31,6 +38,12 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  // A checagem vem antes da consulta: o extrato não chega a ser lido para
+  // quem não pode vê-lo.
+  if (!(await isOwnerOf(barbershop.id))) {
+    return <OwnerOnly title="Repasses" shops={shops} current={barbershop} />
+  }
 
   const period: Period = searchParams.period ?? "30d"
   const payouts = await getPayouts(barbershop.id, period)

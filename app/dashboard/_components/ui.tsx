@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Suspense } from "react"
-import type { LucideIcon } from "lucide-react"
+import { Lock, type LucideIcon } from "lucide-react"
 import ShopSwitcher from "./shop-switcher"
 import { cn, formatCurrency } from "@/app/_lib/utils"
 import { PERIOD_LABELS, type Period } from "@/app/_data/dashboard"
@@ -238,4 +238,39 @@ export const EmptyState = ({
     <h2 className="mt-4 font-display font-bold">{title}</h2>
     <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
   </div>
+)
+
+/* -------------------------------------------------------------------------- */
+/* Área restrita ao responsável                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * O que a equipe vê ao abrir uma área que é do dono.
+ *
+ * Mostra a página em vez de devolver 404: o funcionário pode ter chegado por
+ * um link salvo, e "não existe" o mandaria procurar defeito onde não há. Dizer
+ * de quem é a área, e a quem pedir, resolve sem virar suporte.
+ *
+ * Vale como cortesia, não como proteção — o dado sequer é buscado, e as
+ * mutações continuam recusando no servidor.
+ */
+export const OwnerOnly = ({
+  title,
+  shops,
+  current,
+}: {
+  title: string
+  shops: Shop[]
+  current: Shop
+}) => (
+  <>
+    <PageHeader title={title} shops={shops} current={current} />
+    <div className="px-4 py-6 sm:px-6 lg:px-8">
+      <EmptyState
+        icon={Lock}
+        title="Área do responsável"
+        description={`Só quem responde pela ${current.name} abre esta parte do painel. Sua agenda e seus clientes continuam disponíveis no menu.`}
+      />
+    </div>
+  </>
 )

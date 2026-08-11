@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { Scissors } from "lucide-react"
-import { EmptyState, PageHeader } from "../_components/ui"
+import { EmptyState, OwnerOnly, PageHeader } from "../_components/ui"
 import ServiceForm from "../_components/service-form"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import { db } from "@/app/_lib/prisma"
 import {
   getBarbershopBySlug,
@@ -23,6 +24,10 @@ const ServicesPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  if (!(await isOwnerOf(barbershop.id))) {
+    return <OwnerOnly title="Serviços" shops={shops} current={barbershop} />
+  }
 
   const [services, performance] = await Promise.all([
     db.barbershopService.findMany({

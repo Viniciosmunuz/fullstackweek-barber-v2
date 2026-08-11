@@ -24,12 +24,21 @@ import {
   getPerformance,
   type Period,
 } from "@/app/_data/dashboard"
-import { formatCurrency } from "@/app/_lib/utils"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
+import { cn, formatCurrency } from "@/app/_lib/utils"
 
 interface PageProps {
   searchParams: { shop?: string; period?: Period }
 }
 
+/**
+ * Home do painel, e a única tela que os dois papéis abrem.
+ *
+ * Por isso ela é a que muda de conteúdo em vez de recusar: para a equipe o
+ * painel continua útil — movimento do dia, clientes, próximos atendimentos —
+ * mas sem o caixa da casa. Faturamento, ticket médio e receita por
+ * profissional são conversa de quem responde pelo negócio.
+ */
 const DashboardPage = async ({ searchParams }: PageProps) => {
   const [shops, barbershop] = await Promise.all([
     getManagedBarbershops(),
@@ -39,11 +48,13 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
   if (!barbershop) return notFound()
 
   const period: Period = searchParams.period ?? "30d"
+  const isOwner = await isOwnerOf(barbershop.id)
 
-  const [overview, monthly, performance] = await Promise.all([
+  const [overview, performance, monthly] = await Promise.all([
     getOverview(barbershop.id, period),
-    getMonthlyRevenue(barbershop.id),
     getPerformance(barbershop.id, period),
+    // Doze meses de faturamento só são buscados se houver quem possa vê-los.
+    isOwner ? getMonthlyRevenue(barbershop.id) : Promise.resolve([]),
   ])
 
   const upcoming = overview.rows
@@ -66,7 +77,12 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
       </PageHeader>
 
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+          className={cn(
+            "grid gap-4 sm:grid-cols-2",
+            isOwner ? "xl:grid-cols-4" : "xl:grid-cols-3",
+          )}
+        >
           <MetricCard
             label="Agendamentos hoje"
             value={String(overview.bookingsToday)}
@@ -79,28 +95,36 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
             hint="Únicos no período"
             icon={Users}
           />
-          <MetricCard
-            label="Faturamento"
-            value={formatCurrency(overview.revenue)}
-            hint="Somente atendimentos concluídos"
-            icon={CircleDollarSign}
-          />
+          {isOwner && (
+            <MetricCard
+              label="Faturamento"
+              value={formatCurrency(overview.revenue)}
+              hint="Somente atendimentos concluídos"
+              icon={CircleDollarSign}
+            />
+          )}
           <MetricCard
             label="Serviços realizados"
             value={String(overview.completed)}
-            hint={`Ticket médio ${formatCurrency(overview.ticket)}`}
+            hint={
+              isOwner
+                ? `Ticket médio ${formatCurrency(overview.ticket)}`
+                : "Concluídos no período"
+            }
             icon={Scissors}
           />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.4fr_1fr]">
-          <section className="surface rounded-lg p-5">
-            <h2 className="font-display font-bold">Faturamento por mês</h2>
-            <p className="mb-5 text-xs text-muted-foreground">
-              Últimos 12 meses, considerando atendimentos concluídos.
-            </p>
-            <BarChart data={monthly} />
-          </section>
+        <div className={cn("grid gap-6", isOwner && "xl:grid-cols-[1.4fr_1fr]")}>
+          {isOwner && (
+            <section className="surface rounded-lg p-5">
+              <h2 className="font-display font-bold">Faturamento por mês</h2>
+              <p className="mb-5 text-xs text-muted-foreground">
+                Últimos 12 meses, considerando atendimentos concluídos.
+              </p>
+              <BarChart data={monthly} />
+            </section>
+          )}
 
           <section className="surface rounded-lg p-5">
             <h2 className="font-display font-bold">Próximos atendimentos</h2>
@@ -143,7 +167,7 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
           </section>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className={cn("grid gap-6", isOwner && "lg:grid-cols-2")}>
           <section className="surface rounded-lg p-5">
             <h2 className="mb-4 font-display font-bold">Serviços mais pedidos</h2>
             {performance.services.length > 0 ? (
@@ -155,7 +179,8 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
                       <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
                         <span className="truncate">{service.name}</span>
                         <span className="shrink-0 text-muted-foreground">
-                          {service.count} · {formatCurrency(service.revenue)}
+                          {service.count}
+                          {isOwner && ` · ${formatCurrency(service.revenue)}`}
                         </span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
@@ -175,38 +200,44 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
             )}
           </section>
 
-          <section className="surface rounded-lg p-5">
-            <h2 className="mb-4 font-display font-bold">
-              Desempenho dos barbeiros
-            </h2>
-            {performance.barbers.length > 0 ? (
-              <ul className="space-y-3">
-                {performance.barbers.map((barber) => {
-                  const max = performance.barbers[0].revenue || 1
-                  return (
-                    <li key={barber.name}>
-                      <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
-                        <span className="truncate">{barber.name}</span>
-                        <span className="shrink-0 text-muted-foreground">
-                          {barber.count} · {formatCurrency(barber.revenue)}
-                        </span>
-                      </div>
-                      <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                        <div
-                          className="h-full rounded-full bg-primary/70"
-                          style={{ width: `${(barber.revenue / max) * 100}%` }}
-                        />
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : (
-              <p className="py-6 text-sm text-muted-foreground">
-                Sem atendimentos concluídos no período.
-              </p>
-            )}
-          </section>
+          {/*
+           * Ranking de colegas por receita: informação de quem decide comissão
+           * e escala, não de quem está no cadeirão ao lado.
+           */}
+          {isOwner && (
+            <section className="surface rounded-lg p-5">
+              <h2 className="mb-4 font-display font-bold">
+                Desempenho dos barbeiros
+              </h2>
+              {performance.barbers.length > 0 ? (
+                <ul className="space-y-3">
+                  {performance.barbers.map((barber) => {
+                    const max = performance.barbers[0].revenue || 1
+                    return (
+                      <li key={barber.name}>
+                        <div className="mb-1 flex items-baseline justify-between gap-3 text-sm">
+                          <span className="truncate">{barber.name}</span>
+                          <span className="shrink-0 text-muted-foreground">
+                            {barber.count} · {formatCurrency(barber.revenue)}
+                          </span>
+                        </div>
+                        <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                          <div
+                            className="h-full rounded-full bg-primary/70"
+                            style={{ width: `${(barber.revenue / max) * 100}%` }}
+                          />
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <p className="py-6 text-sm text-muted-foreground">
+                  Sem atendimentos concluídos no período.
+                </p>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </>

@@ -14,7 +14,7 @@ import {
 } from "../_components/ui/sheet"
 import { authOptions } from "../_lib/auth"
 import {
-  getManagedBarbershopIds,
+  getManagedShopRoles,
   syncPendingInvites,
 } from "../_actions/dashboard/guard"
 
@@ -40,9 +40,13 @@ export default async function DashboardLayout({
   // autenticada, o convite pendente vira vínculo real.
   await syncPendingInvites()
 
-  const managed = await getManagedBarbershopIds()
+  // Traz o papel junto com a barbearia porque o menu depende dele: layout não
+  // recebe searchParams, então quem resolve a barbearia da URL é a própria
+  // barra lateral, e ela precisa da lista para saber em qual delas o usuário
+  // é dono.
+  const shops = await getManagedShopRoles()
 
-  if (managed.length === 0) {
+  if (shops.length === 0) {
     return <NoAccess email={session.user.email ?? ""} />
   }
 
@@ -51,7 +55,7 @@ export default async function DashboardLayout({
       <aside className="hidden w-60 shrink-0 border-r border-white/[0.06] bg-card/30 lg:block">
         <div className="sticky top-0 h-screen">
           <Suspense fallback={<div className="h-full" />}>
-            <DashboardSidebar />
+            <DashboardSidebar shops={shops} />
           </Suspense>
         </div>
       </aside>
@@ -71,7 +75,7 @@ export default async function DashboardLayout({
             <SheetContent side="left" className="w-64 p-0">
               <SheetTitle className="sr-only">Menu do painel</SheetTitle>
               <Suspense fallback={<div className="h-full" />}>
-                <DashboardSidebar />
+                <DashboardSidebar shops={shops} />
               </Suspense>
             </SheetContent>
           </Sheet>

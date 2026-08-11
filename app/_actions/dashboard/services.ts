@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
-import { requireManager } from "./guard"
+import { requireOwner } from "./guard"
 
 const serviceSchema = z.object({
   name: z.string().trim().min(2, "Informe o nome do serviço."),
@@ -35,7 +35,7 @@ export async function createService(
   barbershopId: string,
   input: z.infer<typeof serviceSchema>,
 ) {
-  await requireManager(barbershopId)
+  await requireOwner(barbershopId)
 
   const parsed = serviceSchema.safeParse(input)
   if (!parsed.success) {
@@ -58,7 +58,7 @@ async function authorizeService(serviceId: string) {
 
   if (!service) throw new Error("Serviço não encontrado.")
 
-  await requireManager(service.barbershopId)
+  await requireOwner(service.barbershopId)
 }
 
 export async function updateService(

@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { UserSquare2 } from "lucide-react"
-import { EmptyState, PageHeader } from "../_components/ui"
+import { EmptyState, OwnerOnly, PageHeader } from "../_components/ui"
 import BarberForm from "../_components/barber-form"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import BarberAvatar from "@/app/_components/barber-avatar"
 import { db } from "@/app/_lib/prisma"
 import {
@@ -24,6 +25,10 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  if (!(await isOwnerOf(barbershop.id))) {
+    return <OwnerOnly title="Barbeiros" shops={shops} current={barbershop} />
+  }
 
   const [barbers, openingHours, performance] = await Promise.all([
     db.barber.findMany({

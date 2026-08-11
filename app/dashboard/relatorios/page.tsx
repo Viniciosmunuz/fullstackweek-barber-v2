@@ -10,9 +10,11 @@ import {
   BarChart,
   EmptyState,
   MetricCard,
+  OwnerOnly,
   PageHeader,
   PeriodFilter,
 } from "../_components/ui"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import {
   getBarbershopBySlug,
   getManagedBarbershops,
@@ -37,6 +39,10 @@ const ReportsPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  if (!(await isOwnerOf(barbershop.id))) {
+    return <OwnerOnly title="Relatórios" shops={shops} current={barbershop} />
+  }
 
   const period: Period = searchParams.period ?? "30d"
 

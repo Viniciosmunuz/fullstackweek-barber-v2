@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { PageHeader } from "../_components/ui"
+import { OwnerOnly, PageHeader } from "../_components/ui"
 import ProfileForm from "../_components/profile-form"
 import HoursForm from "../_components/hours-form"
 import PublishCard from "../_components/publish-card"
@@ -8,6 +8,7 @@ import {
   getBarbershopBySlug,
   getManagedBarbershops,
 } from "@/app/_data/dashboard"
+import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 
 export const metadata = { title: "Configurações" }
 
@@ -22,6 +23,10 @@ const SettingsPage = async ({ searchParams }: PageProps) => {
   ])
 
   if (!barbershop) return notFound()
+
+  if (!(await isOwnerOf(barbershop.id))) {
+    return <OwnerOnly title="Configurações" shops={shops} current={barbershop} />
+  }
 
   const [openingHours, counts] = await Promise.all([
     db.openingHour.findMany({
