@@ -30,12 +30,80 @@ interface SidebarSheetProps {
   isPlatformAdmin?: boolean
 }
 
+/**
+ * Um bloco de links do menu, com título opcional.
+ *
+ * Existia só na lista de serviços; virou peça para os três blocos usarem o
+ * mesmo título e o mesmo respiro. Cada bloco é um `nav` próprio porque são
+ * grupos de navegação distintos, e o leitor de tela anuncia o título de cada um
+ * ao entrar.
+ */
+const MenuSection = ({
+  label,
+  showLabel = true,
+  children,
+}: {
+  label: string
+  /**
+   * Quando falso, o título continua valendo para leitor de tela mas não ocupa
+   * espaço na tela — útil no bloco que não precisa se distinguir de nenhum
+   * outro.
+   */
+  showLabel?: boolean
+  children: React.ReactNode
+}) => (
+  <nav aria-label={label} className="border-b border-white/[0.06] py-4">
+    {showLabel && (
+      <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+    )}
+    <div className="flex flex-col gap-1">{children}</div>
+  </nav>
+)
+
 const SidebarSheet = ({
   canAccessDashboard = false,
   isPlatformAdmin = false,
 }: SidebarSheetProps) => {
   const { data } = useSession()
   const handleLogoutClick = () => signOut()
+
+  /*
+   * Quem só usa o site como cliente vê a lista como sempre viu: sem título,
+   * porque um "CLIENTE" sozinho no topo não separa de nada. O título aparece
+   * quando existe um segundo bloco do outro lado — aí ele passa a informar.
+   */
+  const hasTools = canAccessDashboard || isPlatformAdmin
+
+  const clientLinks = (
+    <>
+      <SheetClose asChild>
+        <Button className="justify-start gap-3" variant="ghost" asChild>
+          <Link href="/">
+            <Home size={18} />
+            Início
+          </Link>
+        </Button>
+      </SheetClose>
+      <SheetClose asChild>
+        <Button className="justify-start gap-3" variant="ghost" asChild>
+          <Link href="/barbershops">
+            <Store size={18} />
+            Barbearias
+          </Link>
+        </Button>
+      </SheetClose>
+      <SheetClose asChild>
+        <Button className="justify-start gap-3" variant="ghost" asChild>
+          <Link href="/bookings">
+            <CalendarDays size={18} />
+            Meus agendamentos
+          </Link>
+        </Button>
+      </SheetClose>
+    </>
+  )
 
   return (
     <SheetContent className="w-[88%] overflow-y-auto sm:max-w-sm">
@@ -84,71 +152,48 @@ const SidebarSheet = ({
         )}
       </div>
 
-      <nav className="flex flex-col gap-1 border-b border-white/[0.06] py-4">
-        <SheetClose asChild>
-          <Button className="justify-start gap-3" variant="ghost" asChild>
-            <Link href="/">
-              <Home size={18} />
-              Início
-            </Link>
-          </Button>
-        </SheetClose>
-        <SheetClose asChild>
-          <Button className="justify-start gap-3" variant="ghost" asChild>
-            <Link href="/barbershops">
-              <Store size={18} />
-              Barbearias
-            </Link>
-          </Button>
-        </SheetClose>
-        <SheetClose asChild>
-          <Button className="justify-start gap-3" variant="ghost" asChild>
-            <Link href="/bookings">
-              <CalendarDays size={18} />
-              Meus agendamentos
-            </Link>
-          </Button>
-        </SheetClose>
-        {canAccessDashboard && (
-          <SheetClose asChild>
-            <Button className="justify-start gap-3" variant="ghost" asChild>
-              <Link href="/dashboard">
-                <LayoutDashboard size={18} />
-                Painel da barbearia
-              </Link>
-            </Button>
-          </SheetClose>
-        )}
+      <MenuSection label="Cliente" showLabel={hasTools}>
+        {clientLinks}
+      </MenuSection>
 
-        {isPlatformAdmin && (
-          <SheetClose asChild>
-            <Button className="justify-start gap-3" variant="ghost" asChild>
-              <Link href="/admin">
-                <ShieldCheck size={18} />
-                Barbearias parceiras
-              </Link>
-            </Button>
-          </SheetClose>
-        )}
-      </nav>
-
-      <div className="border-b border-white/[0.06] py-4">
-        <p className="mb-2 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Serviços
-        </p>
-        <div className="flex flex-col gap-1">
-          {quickSearchOptions.map(({ icon: Icon, title }) => (
-            <SheetClose key={title} asChild>
+      {hasTools && (
+        <MenuSection label="Ferramentas">
+          {canAccessDashboard && (
+            <SheetClose asChild>
               <Button className="justify-start gap-3" variant="ghost" asChild>
-                <Link href={`/barbershops?service=${encodeURIComponent(title)}`}>
-                  <Icon size={18} className="text-primary" />
-                  {title}
+                <Link href="/dashboard">
+                  <LayoutDashboard size={18} />
+                  Painel da barbearia
                 </Link>
               </Button>
             </SheetClose>
-          ))}
-        </div>
-      </div>
+          )}
+
+          {isPlatformAdmin && (
+            <SheetClose asChild>
+              <Button className="justify-start gap-3" variant="ghost" asChild>
+                <Link href="/admin">
+                  <ShieldCheck size={18} />
+                  Barbearias parceiras
+                </Link>
+              </Button>
+            </SheetClose>
+          )}
+        </MenuSection>
+      )}
+
+      <MenuSection label="Serviços">
+        {quickSearchOptions.map(({ icon: Icon, title }) => (
+          <SheetClose key={title} asChild>
+            <Button className="justify-start gap-3" variant="ghost" asChild>
+              <Link href={`/barbershops?service=${encodeURIComponent(title)}`}>
+                <Icon size={18} className="text-primary" />
+                {title}
+              </Link>
+            </Button>
+          </SheetClose>
+        ))}
+      </MenuSection>
 
       {data?.user && (
         <div className="py-4">

@@ -45,6 +45,19 @@ const Header = async ({ transparent = false }: HeaderProps) => {
             <Link href="/bookings">Meus agendamentos</Link>
           </Button>
 
+          {/*
+            No menu do celular a separação é um título; aqui, numa barra
+            horizontal, não cabe — então é um traço. A intenção é a mesma:
+            deixar claro onde termina o que você usa como cliente e começa o
+            que você usa para trabalhar.
+          */}
+          {(canAccessDashboard || isPlatformAdmin) && (
+            <span
+              aria-hidden="true"
+              className="mx-2 h-5 w-px shrink-0 bg-white/[0.12]"
+            />
+          )}
+
           {canAccessDashboard && (
             <Button variant="ghost" asChild>
               <Link href="/dashboard">Painel</Link>
