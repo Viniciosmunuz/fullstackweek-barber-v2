@@ -97,11 +97,6 @@ enum BookingStatus {
   CANCELLED
 }
 
-enum FeeType {
-  PERCENT
-  FIXED
-}
-
 model Account {
   userId            String
   type              String
