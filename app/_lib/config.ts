@@ -30,3 +30,39 @@ export function isPlatformAdminEmail(email?: string | null) {
   if (!email) return false
   return getPlatformAdminEmails().includes(email.trim().toLowerCase())
 }
+
+/* -------------------------------------------------------------------------- */
+/* Pagamentos                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Chave da conta da plataforma no Asaas. Sem ela, a cobrança fica desligada. */
+export function getAsaasApiKey(): string {
+  return process.env["ASAAS_API_KEY"]?.trim() ?? ""
+}
+
+/**
+ * Ambiente do provedor. Só `production` aponta para a API real — qualquer
+ * outro valor, inclusive ausente, cai no sandbox. O padrão seguro é o que não
+ * movimenta dinheiro de verdade.
+ */
+export function getAsaasBaseUrl(): string {
+  const env = process.env["ASAAS_ENV"]?.trim().toLowerCase()
+
+  return env === "production"
+    ? "https://api.asaas.com/v3"
+    : "https://api-sandbox.asaas.com/v3"
+}
+
+/**
+ * Token que o Asaas devolve no header `asaas-access-token` a cada webhook.
+ *
+ * É o que separa uma notificação real de alguém chamando a rota direto para
+ * marcar uma reserva como paga sem ter pago.
+ */
+export function getAsaasWebhookToken(): string {
+  return process.env["ASAAS_WEBHOOK_TOKEN"]?.trim() ?? ""
+}
+
+export function isPaymentsConfigured(): boolean {
+  return getAsaasApiKey().length > 0
+}
