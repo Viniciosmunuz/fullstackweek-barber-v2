@@ -97,6 +97,25 @@ enum BookingStatus {
   CANCELLED
 }
 
+/// Como um valor é calculado: percentual sobre o preço do serviço ou fixo.
+enum FeeType {
+  PERCENT
+  FIXED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  EXPIRED
+  REFUNDED
+  FAILED
+}
+
+enum PaymentMethod {
+  PIX
+  CARD
+}
+
 model Account {
   userId            String
   type              String
@@ -159,6 +178,26 @@ model Barbershop {
   accentColor String
   rating      Decimal             @default(5.0) @db.Decimal(2, 1)
   reviewCount Int                 @default(0)
+
+  /// ---------------------------------------------------------------------
+  /// Cobrança do sinal
+  /// ---------------------------------------------------------------------
+  /// Só cobra sinal quem tem carteira configurada. Enquanto for `false`, o
+  /// agendamento segue o fluxo antigo — é o que permite ligar a cobrança
+  /// barbearia por barbearia sem interromper quem já opera.
+  paymentsEnabled  Boolean  @default(false)
+  /// Carteira da barbearia no provedor, destino do repasse do split.
+  payoutWalletId   String?
+  /// Sinal pago pelo cliente na reserva, abatido do serviço na loja.
+  /// Quem define é a barbearia: é a política de no-show dela.
+  depositType      FeeType  @default(PERCENT)
+  depositValue     Decimal  @default(30) @db.Decimal(10, 2)
+  /// Taxa da plataforma por agendamento. Definida pela administração da
+  /// plataforma, nunca pela barbearia — é receita de quem opera o produto, e
+  /// deixar o lojista editar seria deixá-lo zerar a própria conta.
+  platformFeeType  FeeType  @default(PERCENT)
+  platformFeeValue Decimal  @default(10) @db.Decimal(10, 2)
+
   openingHours OpeningHour[]
   barbers     Barber[]
   managers    BarbershopManager[]
@@ -220,9 +259,73 @@ model Booking {
   barber    Barber?           @relation(fields: [barberId], references: [id])
   date      DateTime
   status    BookingStatus     @default(CONFIRMED)
+  /// Prazo do sinal — e, enquanto não for nulo, a marca de que esta reserva
+  /// apenas segura o horário e ainda não é um agendamento.
+  ///
+  /// A alternativa seria um valor novo em `BookingStatus`, mas `PENDING` já é
+  /// um estado que a barbearia escolhe à mão no painel, e os dois se
+  /// confundiriam. Guardar a espera aqui mantém o enum com o significado que
+  /// ele já tem: o que a barbearia decidiu sobre o atendimento.
+  ///
+  /// Pago, vira nulo e a reserva entra na agenda. Vencido sem pagamento, o
+  /// horário volta à lista sem apagar o registro — a tentativa continua
+  /// auditável.
+  expiresAt DateTime?
+  payment   Payment?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
   @@index([date])
   @@index([barberId, date])
+  @@index([expiresAt])
+}
+
+/// Sinal de um agendamento.
+///
+/// Os três valores são gravados no momento da cobrança e não são recalculados
+/// depois: se a taxa da plataforma mudar amanhã, o que já foi cobrado precisa
+/// continuar contando a história de ontem.
+model Payment {
+  id          String        @id @default(uuid())
+  bookingId   String        @unique
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  status      PaymentStatus @default(PENDING)
+  method      PaymentMethod @default(PIX)
+  /// Total cobrado do cliente
+  amount      Decimal       @db.Decimal(10, 2)
+  /// Parte retida pela plataforma
+  platformFee Decimal       @db.Decimal(10, 2)
+  /// Parte repassada à barbearia pelo split
+  shopAmount  Decimal       @db.Decimal(10, 2)
+  /// Id da cobrança no provedor. Único para o webhook não conseguir vincular
+  /// o mesmo pagamento a duas reservas.
+  providerId  String?       @unique
+  checkoutUrl String?
+  pixPayload  String?
+  expiresAt   DateTime
+  paidAt      DateTime?
+  refundedAt  DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  events PaymentEvent[]
+
+  @@index([status, expiresAt])
+}
+
+/// Webhook recebido do provedor, guardado antes de ser aplicado.
+///
+/// `providerEventId` é único: o provedor reenvia o mesmo evento quando não
+/// recebe 200, e sem essa trava um reenvio confirmaria a reserva duas vezes ou
+/// somaria a taxa em dobro no relatório.
+model PaymentEvent {
+  id              String   @id @default(uuid())
+  providerEventId String   @unique
+  paymentId       String?
+  payment         Payment? @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  type            String
+  payload         Json
+  receivedAt      DateTime @default(now())
+
+  @@index([paymentId])
 }
