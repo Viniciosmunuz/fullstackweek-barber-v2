@@ -20,10 +20,13 @@ export function actionError(message: string): { ok: false; message: string } {
   return { ok: false, message }
 }
 
-export function actionOk(): ActionResult<undefined>
-export function actionOk<T>(data: T): ActionResult<T>
-export function actionOk<T>(data?: T) {
-  return { ok: true as const, data }
+/**
+ * Sem sobrecarga de propósito: a regra base `no-unused-vars` deste projeto não
+ * conhece assinatura de sobrecarga e acusa o parâmetro da declaração sem corpo
+ * como variável sem uso, derrubando o build. Uma assinatura só, com padrão.
+ */
+export function actionOk<T = undefined>(data?: T): ActionResult<T> {
+  return { ok: true, data: data as T }
 }
 
 /**
