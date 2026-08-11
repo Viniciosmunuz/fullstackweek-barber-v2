@@ -198,6 +198,7 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
 
           <ImageField
             id="service-image"
+            barbershopId={barbershopId}
             label="Imagem do serviço"
             required
             value={form.imageUrl}

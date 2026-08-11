@@ -228,6 +228,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
 
         <ImageField
           id="p-image"
+          barbershopId={barbershop.id}
           label="Foto da barbearia"
           required
           value={form.imageUrl}
@@ -237,6 +238,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
 
         <ImageField
           id="p-logo"
+          barbershopId={barbershop.id}
           label="Logo da barbearia"
           value={form.logoUrl}
           onChange={(logoUrl) => setForm({ ...form, logoUrl })}

@@ -215,12 +215,36 @@ model Barbershop {
   platformFeeValue Decimal  @default(10) @db.Decimal(10, 2)
 
   openingHours OpeningHour[]
+  images      ImageAsset[]
   barbers     Barber[]
   managers    BarbershopManager[]
   invites     BarbershopInvite[]
   services    BarbershopService[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+}
+
+/// Imagem enviada do dispositivo, guardada no próprio banco.
+///
+/// Não há bucket de objetos nesta instalação, e acrescentar um exigiria uma
+/// dependência nova e mais uma conta para configurar antes de qualquer foto
+/// subir. Os arquivos aqui são pequenos — o navegador reduz a imagem antes de
+/// enviar — e a rota que os serve manda cache imutável, então cada um é baixado
+/// uma vez e nunca mais.
+///
+/// A linha é presa à barbearia para o dia em que ela sair: sem isso, os bytes
+/// ficariam no banco sem ninguém que os reclame.
+model ImageAsset {
+  id           String     @id @default(uuid())
+  /// `image/webp` na maioria dos casos — é o que o navegador produz ao reduzir.
+  mimeType     String
+  data         Bytes
+  byteSize     Int
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  @@index([barbershopId])
 }
 
 model OpeningHour {

@@ -11,6 +11,17 @@ const nextConfig = {
      */
     remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
+  experimental: {
+    serverActions: {
+      /*
+       * Envio de imagem passa por server action, e o teto padrão é 1 MB.
+       * O navegador reduz o arquivo antes de subir e o servidor recusa acima
+       * de 1,5 MB, então esta folga só existe para o erro cair na validação
+       * — com mensagem — em vez de morrer no limite do corpo da requisição.
+       */
+      bodySizeLimit: "2mb",
+    },
+  },
 }
 
 export default nextConfig
