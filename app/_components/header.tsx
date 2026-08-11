@@ -15,7 +15,8 @@ interface HeaderProps {
 }
 
 const Header = async ({ transparent = false }: HeaderProps) => {
-  const { canAccessDashboard, isPlatformAdmin } = await getSessionRole()
+  const { canAccessDashboard, isPlatformAdmin, toolsRole } =
+    await getSessionRole()
 
   // O sino só faz sentido para quem opera uma barbearia — é lá que nascem os
   // avisos. Cliente não recebe notificação hoje, então nem carregamos a lista.
@@ -94,10 +95,7 @@ const Header = async ({ transparent = false }: HeaderProps) => {
                 <MenuIcon size={18} />
               </Button>
             </SheetTrigger>
-            <SidebarSheet
-              canAccessDashboard={canAccessDashboard}
-              isPlatformAdmin={isPlatformAdmin}
-            />
+            <SidebarSheet toolsRole={toolsRole} />
           </Sheet>
         </div>
       </div>

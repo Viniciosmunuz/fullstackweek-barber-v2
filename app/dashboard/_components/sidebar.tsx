@@ -2,72 +2,10 @@
 
 import Link from "next/link"
 import { usePathname, useSearchParams } from "next/navigation"
-import {
-  BarChart3,
-  CalendarDays,
-  KeyRound,
-  LayoutDashboard,
-  Scissors,
-  Settings,
-  Store,
-  Users,
-  UserSquare2,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react"
+import { Store } from "lucide-react"
 import { BarberFlowLogo } from "@/app/_components/brand/logo"
+import { DASHBOARD_NAV } from "@/app/_constants/dashboard-nav"
 import { cn } from "@/app/_lib/utils"
-
-interface NavItem {
-  href: string
-  label: string
-  icon: LucideIcon
-  exact?: boolean
-  /** Some para quem é da equipe: é decisão de negócio, não operação do dia. */
-  ownerOnly?: boolean
-}
-
-const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/dashboard/agendamentos", label: "Agendamentos", icon: CalendarDays },
-  { href: "/dashboard/clientes", label: "Clientes", icon: Users },
-  {
-    href: "/dashboard/barbeiros",
-    label: "Barbeiros",
-    icon: UserSquare2,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/equipe",
-    label: "Equipe",
-    icon: KeyRound,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/servicos",
-    label: "Serviços",
-    icon: Scissors,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/repasses",
-    label: "Repasses",
-    icon: Wallet,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/relatorios",
-    label: "Relatórios",
-    icon: BarChart3,
-    ownerOnly: true,
-  },
-  {
-    href: "/dashboard/configuracoes",
-    label: "Configurações",
-    icon: Settings,
-    ownerOnly: true,
-  },
-]
 
 interface SidebarProps {
   /** Slug da barbearia ativa, propagado nos links para não perder o contexto. */
@@ -103,7 +41,7 @@ const DashboardSidebar = ({ shop, shops }: SidebarProps) => {
       </Link>
 
       <ul className="flex flex-col gap-1">
-        {NAV.filter((item) => isOwner || !item.ownerOnly).map(
+        {DASHBOARD_NAV.filter((item) => isOwner || !item.ownerOnly).map(
           ({ href, label, icon: Icon, exact }) => {
             const current = exact
               ? pathname === href

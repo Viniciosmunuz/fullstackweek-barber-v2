@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "./auth"
 import { db } from "./prisma"
 import { isPlatformAdminEmail } from "./config"
+import type { ToolsRole } from "../_constants/dashboard-nav"
 
 /**
  * Papéis do produto.
@@ -34,6 +35,15 @@ export interface SessionRole {
    * e fechá-la na cara é confuso e revela que a área existe.
    */
   isPlatformAdmin: boolean
+  /**
+   * Em que papel a pessoa entra no menu de ferramentas do site, ou `null` para
+   * quem só usa como cliente.
+   *
+   * Derivado aqui junto dos outros, e não no cabeçalho, porque duas telas
+   * abrem esse menu — a home e a página da barbearia — e a conta precisa dar o
+   * mesmo resultado nas duas.
+   */
+  toolsRole: ToolsRole | null
 }
 
 export async function getSessionRole(): Promise<SessionRole> {
@@ -50,6 +60,7 @@ export async function getSessionRole(): Promise<SessionRole> {
       email: null,
       canAccessDashboard: false,
       isPlatformAdmin: false,
+      toolsRole: null,
     }
   }
 
@@ -60,6 +71,7 @@ export async function getSessionRole(): Promise<SessionRole> {
       email,
       canAccessDashboard: true,
       isPlatformAdmin: true,
+      toolsRole: "admin",
     }
   }
 
@@ -75,13 +87,22 @@ export async function getSessionRole(): Promise<SessionRole> {
       email,
       canAccessDashboard: false,
       isPlatformAdmin: false,
+      toolsRole: null,
     }
   }
 
   // Basta ser dono de uma unidade para responder como ADMIN no produto.
-  const role: AppRole = links.some((link) => link.role === "OWNER")
-    ? "ADMIN"
-    : "BARBER"
+  const isOwnerSomewhere = links.some((link) => link.role === "OWNER")
+  const role: AppRole = isOwnerSomewhere ? "ADMIN" : "BARBER"
 
-  return { role, userId, email, canAccessDashboard: true, isPlatformAdmin: false }
+  return {
+    role,
+    userId,
+    email,
+    canAccessDashboard: true,
+    isPlatformAdmin: false,
+    // Dono de uma unidade e colaborador de outra entra como dono. As telas que
+    // só a primeira lhe dá continuam recusando por barbearia, dentro do painel.
+    toolsRole: isOwnerSomewhere ? "owner" : "collaborator",
+  }
 }

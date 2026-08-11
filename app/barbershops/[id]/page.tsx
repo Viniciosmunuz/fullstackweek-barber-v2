@@ -45,8 +45,10 @@ export async function generateMetadata({
 }
 
 const BarbershopPage = async ({ params }: BarbershopPageProps) => {
-  const [barbershop, { canAccessDashboard, isPlatformAdmin, userId }] =
-    await Promise.all([getBarbershop(params.id), getSessionRole()])
+  const [barbershop, { toolsRole, userId }] = await Promise.all([
+    getBarbershop(params.id),
+    getSessionRole(),
+  ])
 
   // Casa em cadastro não é acessível nem por link direto: sem endereço e sem
   // contato, a página só frustraria quem chegasse nela.
@@ -129,10 +131,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
                   <MenuIcon size={18} />
                 </Button>
               </SheetTrigger>
-              <SidebarSheet
-                canAccessDashboard={canAccessDashboard}
-                isPlatformAdmin={isPlatformAdmin}
-              />
+              <SidebarSheet toolsRole={toolsRole} />
             </Sheet>
           </div>
 

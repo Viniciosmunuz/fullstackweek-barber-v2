@@ -1,10 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "./ui/button"
 import {
   CalendarDays,
+  ChevronDown,
   Home,
-  LayoutDashboard,
   LogInIcon,
   LogOutIcon,
   ShieldCheck,
@@ -12,22 +13,28 @@ import {
 } from "lucide-react"
 import { SheetClose, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet"
 import { quickSearchOptions } from "../_constants/search"
+import {
+  TOOLS_LABEL,
+  toolsFor,
+  type ToolsRole,
+} from "../_constants/dashboard-nav"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog"
 import { signOut, useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import SignInDialog from "./sign-in-dialog"
 import { BarberFlowLogo } from "./brand/logo"
-import { getInitials } from "@/app/_lib/utils"
+import { cn, getInitials } from "@/app/_lib/utils"
 
 interface SidebarSheetProps {
   /**
-   * Definidos pelo servidor: o cliente não decide o próprio papel. Esconder os
-   * links é só higiene de interface — o bloqueio real está nas rotas e nas
-   * server actions.
+   * Papel de quem está logado, definido pelo servidor: o cliente não decide o
+   * próprio papel. `null` para quem só usa o site como cliente.
+   *
+   * Esconder os links é só higiene de interface — o bloqueio real está nas
+   * rotas e nas server actions, que recusam de novo a cada gravação.
    */
-  canAccessDashboard?: boolean
-  isPlatformAdmin?: boolean
+  toolsRole?: ToolsRole | null
 }
 
 /**
@@ -62,10 +69,72 @@ const MenuSection = ({
   </nav>
 )
 
-const SidebarSheet = ({
-  canAccessDashboard = false,
-  isPlatformAdmin = false,
-}: SidebarSheetProps) => {
+/**
+ * Bloco de ferramentas, que abre e fecha.
+ *
+ * Antes o menu levava a "Painel da barbearia" e as ferramentas de verdade só
+ * apareciam depois, na barra lateral do painel — duas paradas para chegar na
+ * agenda. Aqui elas estão à mão, e a lista é a do papel de quem abriu: o
+ * colaborador não vê porta que só se fecha na cara dele.
+ *
+ * Nasce aberto porque é o motivo de existir do menu para quem trabalha na
+ * casa; fecha para quem quiser o menu curto.
+ */
+const ToolsSection = ({ role }: { role: ToolsRole }) => {
+  const [open, setOpen] = useState(true)
+  const label = TOOLS_LABEL[role]
+
+  return (
+    <div className="border-b border-white/[0.06] py-4">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        aria-expanded={open}
+        aria-controls="menu-ferramentas"
+        className="flex w-full items-center justify-between gap-2 rounded-md px-4 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
+      >
+        {label}
+        <ChevronDown
+          size={14}
+          aria-hidden="true"
+          className={cn("transition-transform", open && "rotate-180")}
+        />
+      </button>
+
+      {open && (
+        <nav
+          id="menu-ferramentas"
+          aria-label={label}
+          className="mt-2 flex flex-col gap-1"
+        >
+          {role === "admin" && (
+            <SheetClose asChild>
+              <Button className="justify-start gap-3" variant="ghost" asChild>
+                <Link href="/admin">
+                  <ShieldCheck size={18} className="text-primary" />
+                  Barbearias parceiras
+                </Link>
+              </Button>
+            </SheetClose>
+          )}
+
+          {toolsFor(role).map(({ href, label: item, icon: Icon }) => (
+            <SheetClose key={href} asChild>
+              <Button className="justify-start gap-3" variant="ghost" asChild>
+                <Link href={href}>
+                  <Icon size={18} className="text-primary" />
+                  {item}
+                </Link>
+              </Button>
+            </SheetClose>
+          ))}
+        </nav>
+      )}
+    </div>
+  )
+}
+
+const SidebarSheet = ({ toolsRole = null }: SidebarSheetProps) => {
   const { data } = useSession()
   const handleLogoutClick = () => signOut()
 
@@ -74,7 +143,7 @@ const SidebarSheet = ({
    * porque um "CLIENTE" sozinho no topo não separa de nada. O título aparece
    * quando existe um segundo bloco do outro lado — aí ele passa a informar.
    */
-  const hasTools = canAccessDashboard || isPlatformAdmin
+  const hasTools = toolsRole !== null
 
   const clientLinks = (
     <>
@@ -156,31 +225,7 @@ const SidebarSheet = ({
         {clientLinks}
       </MenuSection>
 
-      {hasTools && (
-        <MenuSection label="Ferramentas">
-          {canAccessDashboard && (
-            <SheetClose asChild>
-              <Button className="justify-start gap-3" variant="ghost" asChild>
-                <Link href="/dashboard">
-                  <LayoutDashboard size={18} />
-                  Painel da barbearia
-                </Link>
-              </Button>
-            </SheetClose>
-          )}
-
-          {isPlatformAdmin && (
-            <SheetClose asChild>
-              <Button className="justify-start gap-3" variant="ghost" asChild>
-                <Link href="/admin">
-                  <ShieldCheck size={18} />
-                  Barbearias parceiras
-                </Link>
-              </Button>
-            </SheetClose>
-          )}
-        </MenuSection>
-      )}
+      {toolsRole && <ToolsSection role={toolsRole} />}
 
       <MenuSection label="Serviços">
         {quickSearchOptions.map(({ icon: Icon, title }) => (
