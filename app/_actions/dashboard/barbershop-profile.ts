@@ -37,7 +37,7 @@ const profileSchema = z.object({
   accentColor: z
     .string()
     .trim()
-    .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor em hexadecimal, como #C9A227."),
+    .regex(/^#[0-9a-fA-F]{6}$/, "Use uma cor em hexadecimal, como #834CF1."),
 })
 
 export type BarbershopProfileInput = z.infer<typeof profileSchema>

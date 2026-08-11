@@ -26,7 +26,7 @@ const LOGO_OPTIONS = [
 ]
 
 const COLOR_OPTIONS = [
-  "#C9A227",
+  "#834CF1",
   "#B87333",
   "#D8DCE2",
   "#2F6F4E",

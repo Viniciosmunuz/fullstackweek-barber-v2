@@ -126,10 +126,10 @@ export function buildInviteMessage({
   ].join("\n")
 
   const html = `
-    <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0B0B0F;color:#F5F5F5;padding:32px">
-      <div style="max-width:520px;margin:0 auto;background:#15151C;border-radius:14px;padding:32px">
+    <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#0E0D12;color:#F5F5F5;padding:32px">
+      <div style="max-width:520px;margin:0 auto;background:#18161D;border-radius:14px;padding:32px">
         <p style="font-size:20px;font-weight:700;margin:0 0 4px">
-          Barber<span style="color:#C9A227;font-weight:300">Flow</span>
+          Barber<span style="color:#834CF1;font-weight:300">Flow</span>
         </p>
         <h1 style="font-size:19px;margin:24px 0 8px">
           Seu acesso ao painel da ${barbershopName}
@@ -145,7 +145,7 @@ export function buildInviteMessage({
           }.
         </p>
         <a href="${dashboardUrl}"
-           style="display:inline-block;background:#C9A227;color:#0B0B0F;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:10px">
+           style="display:inline-block;background:#834CF1;color:#FFFFFF;text-decoration:none;font-weight:700;padding:13px 26px;border-radius:10px">
           Acessar o painel
         </a>
         <p style="color:#8E8E99;font-size:13px;line-height:1.6;margin:26px 0 0">

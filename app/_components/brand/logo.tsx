@@ -18,22 +18,22 @@ import { MARK_PATH, MARK_VIEWBOX } from "./mark-path"
 interface MarkProps {
   className?: string
   /**
-   * `gold` é o padrão e o que se usa na interface: chapado, mais legível em
+   * `solid` é o padrão e o que se usa na interface: chapado, mais legível em
    * corpo pequeno. `gradient` reproduz o degradê da marca e vale só onde o
    * símbolo aparece grande — login, splash. `current` herda a cor do texto,
    * para superfícies monocromáticas.
    */
-  tone?: "gold" | "gradient" | "current"
+  tone?: "solid" | "gradient" | "current"
 }
 
 /** Símbolo isolado — favicon, avatar, splash, loading e espaços apertados. */
-export const BarberFlowMark = ({ className, tone = "gold" }: MarkProps) => {
+export const BarberFlowMark = ({ className, tone = "solid" }: MarkProps) => {
   const fill =
     tone === "gradient"
       ? "url(#bf-mark-gradient)"
       : tone === "current"
         ? "currentColor"
-        : "#C9A227"
+        : "#834CF1"
 
   return (
     <svg
@@ -52,10 +52,10 @@ export const BarberFlowMark = ({ className, tone = "gold" }: MarkProps) => {
       {tone === "gradient" && (
         <defs>
           <linearGradient id="bf-mark-gradient" x1="0" y1="0" x2="0.25" y2="1">
-            <stop offset="0" stopColor="#EFC65E" />
-            <stop offset="0.35" stopColor="#DCAF43" />
-            <stop offset="0.7" stopColor="#C9A227" />
-            <stop offset="1" stopColor="#9E7318" />
+            <stop offset="0" stopColor="#B79BFA" />
+            <stop offset="0.35" stopColor="#9B72F5" />
+            <stop offset="0.7" stopColor="#834CF1" />
+            <stop offset="1" stopColor="#5B2BC4" />
           </linearGradient>
         </defs>
       )}
@@ -84,7 +84,7 @@ const SIZES = {
 
 /**
  * Lockup horizontal (símbolo + nome) — cabeçalho, sidebar, login e rodapé.
- * "BARBER" vem no peso forte e "FLOW" em dourado e peso leve, como na folha
+ * "BARBER" vem no peso forte e "FLOW" em violeta e peso leve, como na folha
  * de marca: o contraste de peso é o que separa as duas palavras, não um
  * espaço.
  */
@@ -113,7 +113,7 @@ export const BarberFlowLogo = ({
             className={cn(
               "font-sans font-extrabold uppercase leading-none tracking-[-0.01em]",
               s.text,
-              variant === "dark" ? "text-[#F5F5F5]" : "text-[#0B0B0F]",
+              variant === "dark" ? "text-[#F5F5F5]" : "text-[#0E0D12]",
             )}
           >
             Barber<span className="font-light text-primary">Flow</span>

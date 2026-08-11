@@ -162,7 +162,7 @@ const BarberForm = ({ barbershopId, barber }: BarberFormProps) => {
               type="checkbox"
               checked={form.active}
               onChange={(e) => setForm({ ...form, active: e.target.checked })}
-              className="h-4 w-4 accent-[#C9A227]"
+              className="h-4 w-4 accent-[#834CF1]"
             />
             <Label htmlFor="barber-active" className="cursor-pointer">
               Ativo — aparece na escolha do agendamento

@@ -6,37 +6,48 @@
  * BarberFlow — design tokens
  *
  * Paleta base:
- *   Preto    #0B0B0F  ->  240 15% 5%
- *   Grafite  #15151C  ->  240 14% 10%
- *   Dourado  #C9A227  ->  46 68% 47%
+ *   Preto    #0E0D12  ->  258 16% 6%
+ *   Grafite  #18161D  ->  258 15% 10%
+ *   Violeta  #834CF1  ->  260 85% 62%
  *   Branco   #F5F5F5  ->  0 0% 96%
- *   Cinza    #8E8E99  ->  240 5% 58%
+ *   Cinza    #908E9B  ->  258 6% 58%
  *
  * O produto é dark-first: a superfície escura é a identidade da marca, e o
- * dourado aparece só em ações e acentos para não perder o peso premium.
+ * violeta aparece só em ações e acentos para não perder o peso premium.
+ *
+ * Os neutros carregam um pouco do matiz do violeta (258°) em saturação baixa.
+ * Cinza puro ao lado de um acento forte parece sujo; puxado de leve para a cor
+ * da marca, o fundo parece escolhido.
+ *
+ * Sobre o violeta escolhido: texto branco sobre ele fica em 4,9:1 e ele sobre
+ * o fundo escuro fica em 3,9:1 — passa em botão e em ícone. Um violeta mais
+ * claro seria mais vivo e reprovaria no branco por cima; um mais escuro
+ * sumiria contra o fundo.
  */
 @layer base {
   :root,
   .dark {
-    --background: 240 15% 5%;
+    --background: 258 16% 6%;
     --foreground: 0 0% 96%;
 
-    --card: 240 14% 10%;
+    --card: 258 15% 10%;
     --card-foreground: 0 0% 96%;
 
-    --popover: 240 14% 10%;
+    --popover: 258 15% 10%;
     --popover-foreground: 0 0% 96%;
 
-    --primary: 46 68% 47%;
-    --primary-foreground: 240 15% 5%;
+    --primary: 260 85% 62%;
+    /* Branco, e não o fundo escuro: o violeta é escuro demais para receber
+       texto preto, ao contrário do dourado que estava aqui antes. */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 12% 14%;
+    --secondary: 258 13% 14%;
     --secondary-foreground: 0 0% 96%;
 
-    --muted: 240 12% 14%;
-    --muted-foreground: 240 5% 58%;
+    --muted: 258 13% 14%;
+    --muted-foreground: 258 6% 58%;
 
-    --accent: 240 12% 16%;
+    --accent: 258 13% 16%;
     --accent-foreground: 0 0% 96%;
 
     --destructive: 0 72% 51%;
@@ -45,9 +56,9 @@
     --success: 152 55% 45%;
     --warning: 38 92% 55%;
 
-    --border: 240 10% 17%;
-    --input: 240 10% 17%;
-    --ring: 46 68% 47%;
+    --border: 258 11% 18%;
+    --input: 258 11% 18%;
+    --ring: 260 85% 62%;
 
     --radius: 0.875rem;
   }
@@ -88,9 +99,9 @@
     display: none;
   }
 
-  /* Texto em degradê dourado, usado em títulos de destaque. */
-  .text-gradient-gold {
-    @apply bg-gradient-to-br from-[#E7C65A] via-primary to-[#9C7B18] bg-clip-text text-transparent;
+  /* Texto em degradê da marca, usado em títulos de destaque. */
+  .text-gradient-brand {
+    @apply bg-gradient-to-br from-[#B79BFA] via-primary to-[#5B2BC4] bg-clip-text text-transparent;
   }
 
   /* Borda sutil que dá profundidade aos cards sobre fundo preto. */
@@ -103,10 +114,10 @@
   }
 
   /* Brilho radial usado atrás do hero. */
-  .glow-gold {
+  .glow-brand {
     background: radial-gradient(
       60% 60% at 50% 0%,
-      hsl(46 68% 47% / 0.16) 0%,
+      hsl(260 85% 62% / 0.16) 0%,
       transparent 70%
     );
   }

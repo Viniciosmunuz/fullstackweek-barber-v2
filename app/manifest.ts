@@ -17,8 +17,8 @@ const manifest = (): MetadataRoute.Manifest => ({
     "Agende horários nas melhores barbearias, organize sua equipe e ofereça uma experiência premium aos seus clientes em um único lugar.",
   start_url: "/",
   display: "standalone",
-  background_color: "#0B0B0F",
-  theme_color: "#0B0B0F",
+  background_color: "#0E0D12",
+  theme_color: "#0E0D12",
   lang: "pt-BR",
   icons: [
     {

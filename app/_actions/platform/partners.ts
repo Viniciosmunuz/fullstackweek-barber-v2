@@ -79,7 +79,7 @@ export async function createPartner(input: z.infer<typeof createSchema>) {
       imageUrl: "",
       phones: [],
       logoKey: "blackwood",
-      accentColor: "#C9A227",
+      accentColor: "#834CF1",
       isPublished: false,
     },
   })

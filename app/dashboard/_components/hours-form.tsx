@@ -92,7 +92,7 @@ const HoursForm = ({
                       : null,
                   })
                 }
-                className="h-4 w-4 accent-[#C9A227]"
+                className="h-4 w-4 accent-[#834CF1]"
               />
               Abre
             </label>

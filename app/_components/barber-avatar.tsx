@@ -44,7 +44,7 @@ const BarberAvatar = ({
       style={{
         color: accentColor ?? "hsl(var(--primary))",
         // O anel usa a cor da marca em baixa opacidade para não competir com o texto.
-        boxShadow: `inset 0 0 0 1px ${accentColor ?? "#C9A227"}40`,
+        boxShadow: `inset 0 0 0 1px ${accentColor ?? "#834CF1"}40`,
       }}
     >
       {getInitials(name)}
