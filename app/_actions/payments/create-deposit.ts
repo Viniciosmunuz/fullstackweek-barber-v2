@@ -183,8 +183,15 @@ export async function createBookingWithDeposit(
   } catch (error) {
     // Cobrança não nasceu: solta o horário na hora em vez de deixá-lo preso
     // até o prazo vencer por um erro que já é conhecido aqui.
-    await db.booking
-      .delete({ where: { id: booking.id } })
+    //
+    // A cobrança sai antes da reserva porque a chave estrangeira é `Restrict`.
+    // Aqui apagar é seguro e correto: este registro nunca chegou ao provedor,
+    // então não há dinheiro nem história para preservar.
+    await db
+      .$transaction(async (tx) => {
+        await tx.payment.deleteMany({ where: { bookingId: booking.id } })
+        await tx.booking.delete({ where: { id: booking.id } })
+      })
       .catch(() => undefined)
 
     console.error("Falha ao criar a cobrança do sinal:", error)

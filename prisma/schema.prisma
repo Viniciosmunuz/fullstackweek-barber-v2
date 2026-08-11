@@ -292,7 +292,11 @@ model Booking {
 model Payment {
   id          String        @id @default(uuid())
   bookingId   String        @unique
-  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  /// `Restrict`, e não `Cascade`: apagar uma reserva não pode levar junto o
+  /// registro do pagamento. Numa reserva já paga isso apagaria o rastro
+  /// financeiro — dinheiro que entrou sumindo do relatório. Destruir registro
+  /// de cobrança passou a exigir apagá-lo explicitamente antes.
+  booking     Booking       @relation(fields: [bookingId], references: [id], onDelete: Restrict)
   status      PaymentStatus @default(PENDING)
   method      PaymentMethod @default(PIX)
   /// Total cobrado do cliente
