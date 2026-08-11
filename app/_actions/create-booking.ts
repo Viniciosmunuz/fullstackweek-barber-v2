@@ -2,11 +2,10 @@
 
 import { revalidatePath } from "next/cache"
 import { getServerSession } from "next-auth"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
 import { db } from "../_lib/prisma"
 import { authOptions } from "../_lib/auth"
 import { activeBookingFilter } from "../_lib/booking-slot"
+import { notifyBarbershop } from "../_lib/notify-barbershop"
 
 interface CreateBookingParams {
   serviceId: string
@@ -67,48 +66,3 @@ export const createBooking = async ({
   revalidatePath("/dashboard/agendamentos")
 }
 
-interface NotifyParams {
-  barbershopId: string
-  clientName: string
-  serviceName: string
-  barberName: string | null
-  date: Date
-}
-
-/**
- * Avisa quem administra a barbearia sobre o agendamento novo.
- *
- * A falha do aviso não pode derrubar a reserva — para o cliente, o agendamento
- * já aconteceu. Por isso o erro é registrado e engolido, em vez de propagado.
- */
-async function notifyBarbershop({
-  barbershopId,
-  clientName,
-  serviceName,
-  barberName,
-  date,
-}: NotifyParams) {
-  try {
-    const managers = await db.barbershopManager.findMany({
-      where: { barbershopId },
-      select: { userId: true },
-    })
-
-    if (managers.length === 0) return
-
-    const quando = format(date, "dd/MM 'às' HH:mm", { locale: ptBR })
-
-    await db.notification.createMany({
-      data: managers.map((manager) => ({
-        userId: manager.userId,
-        title: "Novo agendamento",
-        body: barberName
-          ? `${clientName} · ${serviceName} · ${barberName} · ${quando}`
-          : `${clientName} · ${serviceName} · ${quando}`,
-        href: "/dashboard/agendamentos",
-      })),
-    })
-  } catch (error) {
-    console.error("Falha ao notificar a barbearia:", error)
-  }
-}
