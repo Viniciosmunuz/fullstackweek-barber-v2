@@ -186,6 +186,10 @@ model Barbershop {
   isPublished Boolean             @default(false)
   /// Identifica qual componente de logo SVG renderizar (ver _components/brand/barbershop-logo.tsx)
   logoKey     String
+  /// Logo real da barbearia, hospedada publicamente. Quando nula, o card cai
+  /// na silhueta de `logoKey` — barbearia recém-cadastrada precisa de alguma
+  /// marca antes de ter a dela pronta.
+  logoUrl     String?
   /// Cor de destaque da marca em hex, usada nos acentos do card e da página
   accentColor String
   rating      Decimal             @default(5.0) @db.Decimal(2, 1)

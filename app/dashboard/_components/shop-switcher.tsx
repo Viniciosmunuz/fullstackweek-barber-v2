@@ -8,6 +8,7 @@ interface Shop {
   name: string
   slug: string
   logoKey: string
+  logoUrl: string | null
   accentColor: string
 }
 
@@ -39,6 +40,7 @@ const ShopSwitcher = ({ shops, current }: ShopSwitcherProps) => {
       >
         <BarbershopLogo
           logoKey={current.logoKey}
+          logoUrl={current.logoUrl}
           accentColor={current.accentColor}
           className="h-5 w-5"
         />

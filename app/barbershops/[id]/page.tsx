@@ -143,6 +143,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             >
               <BarbershopLogo
                 logoKey={barbershop.logoKey}
+                logoUrl={barbershop.logoUrl}
                 accentColor={accent}
                 label={`Logo da ${barbershop.name}`}
                 className="h-10 w-10 sm:h-12 sm:w-12"

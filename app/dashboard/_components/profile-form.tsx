@@ -48,6 +48,7 @@ export interface ProfileFormData {
   phones: string[]
   imageUrl: string
   logoKey: string
+  logoUrl: string | null
   accentColor: string
 }
 
@@ -64,6 +65,8 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
     city: barbershop.city,
     imageUrl: barbershop.imageUrl,
     logoKey: barbershop.logoKey,
+    // Campo de texto não aceita null; o vazio volta a virar null no envio.
+    logoUrl: barbershop.logoUrl ?? "",
     accentColor: barbershop.accentColor,
   })
   const [phones, setPhones] = useState<string[]>(
@@ -80,6 +83,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
           // Campo vazio vira null: "sem bairro" e "bairro em branco" são a
           // mesma coisa para quem lê o card.
           neighborhood: form.neighborhood.trim() || null,
+          logoUrl: form.logoUrl.trim() || null,
           phones: phones.map((p) => p.trim()).filter(Boolean),
         })
         toast.success("Dados da barbearia salvos.")
@@ -231,9 +235,24 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
           hint="É a foto de capa que o cliente vê na busca e no topo da sua página. Prefira uma imagem larga, do ambiente."
         />
 
+        <ImageField
+          id="p-logo"
+          label="Logo da barbearia"
+          value={form.logoUrl}
+          onChange={(logoUrl) => setForm({ ...form, logoUrl })}
+          hint="A marca da sua casa, como ela é de verdade. PNG com fundo transparente fica melhor, porque aparece sobre fundos de cores diferentes. Deixe em branco para usar um dos símbolos abaixo."
+        />
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label>Símbolo da marca</Label>
+            <Label>
+              Símbolo da marca
+              {form.logoUrl.trim() && (
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  (não usado enquanto houver logo)
+                </span>
+              )}
+            </Label>
             <div className="flex flex-wrap gap-2">
               {LOGO_OPTIONS.map((option) => (
                 <button

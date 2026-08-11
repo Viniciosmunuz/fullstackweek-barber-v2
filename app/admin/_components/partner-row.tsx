@@ -55,6 +55,14 @@ function useAction() {
 
 interface PartnerActionsProps {
   barbershopId: string
+  /**
+   * O painel identifica a barbearia por slug, não por id.
+   *
+   * Mandar o id não dava erro — caía no caminho de fallback e abria sempre a
+   * primeira barbearia em ordem alfabética. Com uma parceira só ninguém nota;
+   * com seis, o botão mentia em cinco delas.
+   */
+  slug: string
   name: string
   isPublished: boolean
 }
@@ -62,6 +70,7 @@ interface PartnerActionsProps {
 /** Ações da barbearia: abrir o painel, publicar/despublicar e excluir. */
 export const PartnerActions = ({
   barbershopId,
+  slug,
   name,
   isPublished,
 }: PartnerActionsProps) => {
@@ -80,7 +89,7 @@ export const PartnerActions = ({
       </span>
 
       <Button variant="ghost" size="sm" asChild>
-        <Link href={`/dashboard?shop=${barbershopId}`}>Abrir painel</Link>
+        <Link href={`/dashboard?shop=${slug}`}>Abrir painel</Link>
       </Button>
 
       <Button

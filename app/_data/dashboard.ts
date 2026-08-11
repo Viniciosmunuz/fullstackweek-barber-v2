@@ -60,7 +60,14 @@ export async function getManagedBarbershops() {
 
   return db.barbershop.findMany({
     where: { id: { in: ids } },
-    select: { id: true, name: true, slug: true, accentColor: true, logoKey: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      accentColor: true,
+      logoKey: true,
+      logoUrl: true,
+    },
     orderBy: { name: "asc" },
   })
 }

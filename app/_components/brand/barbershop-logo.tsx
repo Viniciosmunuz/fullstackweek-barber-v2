@@ -227,6 +227,14 @@ const LOGOS: Record<string, LogoRenderer> = {
 interface BarbershopLogoProps {
   /** Chave gravada em `Barbershop.logoKey`. */
   logoKey: string
+  /**
+   * Logo de verdade da barbearia (`Barbershop.logoUrl`).
+   *
+   * Quando existe, ela ganha da silhueta: o desenho genérico sempre foi um
+   * substituto até a casa ter a marca dela. A silhueta continua sendo o padrão
+   * porque card vazio no catálogo é pior que símbolo genérico.
+   */
+  logoUrl?: string | null
   /** Hex da `Barbershop.accentColor`; quando ausente, herda a cor do texto. */
   accentColor?: string
   className?: string
@@ -240,10 +248,29 @@ interface BarbershopLogoProps {
  */
 const BarbershopLogo = ({
   logoKey,
+  logoUrl,
   accentColor,
   className,
   label,
 }: BarbershopLogoProps) => {
+  if (logoUrl) {
+    return (
+      /*
+       * `<img>` cru, e não `next/image`: a logo vem de um endereço que o dono
+       * digita e pode mudar a qualquer momento. No otimizador, um domínio não
+       * declarado em `next.config` vira erro de servidor e derruba a página
+       * inteira do catálogo — aqui, no máximo, não carrega a figura.
+       */
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img
+        src={logoUrl}
+        alt={label ?? ""}
+        className={cn("shrink-0 object-contain", className)}
+        aria-hidden={label ? undefined : true}
+      />
+    )
+  }
+
   const render = LOGOS[logoKey] ?? LOGOS.blackwood
 
   return (

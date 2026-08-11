@@ -81,6 +81,7 @@ const SettingsPage = async ({ searchParams }: PageProps) => {
               phones: barbershop.phones,
               imageUrl: barbershop.imageUrl,
               logoKey: barbershop.logoKey,
+              logoUrl: barbershop.logoUrl,
               accentColor: barbershop.accentColor,
             }}
           />

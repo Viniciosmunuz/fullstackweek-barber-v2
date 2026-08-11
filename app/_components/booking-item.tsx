@@ -51,6 +51,7 @@ export interface BookingItemData {
       city: string
       phones: string[]
       logoKey: string
+      logoUrl: string | null
       accentColor: string
     }
   }
@@ -110,6 +111,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               >
                 <BarbershopLogo
                   logoKey={barbershop.logoKey}
+                  logoUrl={barbershop.logoUrl}
                   accentColor={barbershop.accentColor}
                   className="h-4 w-4"
                 />
@@ -166,6 +168,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             >
               <BarbershopLogo
                 logoKey={barbershop.logoKey}
+                logoUrl={barbershop.logoUrl}
                 accentColor={barbershop.accentColor}
                 className="h-6 w-6"
               />

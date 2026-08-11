@@ -35,6 +35,7 @@ const BOOKING_SELECT = {
           city: true,
           phones: true,
           logoKey: true,
+          logoUrl: true,
           accentColor: true,
         },
       },

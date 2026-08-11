@@ -16,6 +16,7 @@ const CARD_SELECT = {
   city: true,
   imageUrl: true,
   logoKey: true,
+  logoUrl: true,
   accentColor: true,
   rating: true,
   reviewCount: true,
@@ -31,6 +32,7 @@ type Row = {
   city: string
   imageUrl: string
   logoKey: string
+  logoUrl: string | null
   accentColor: string
   rating: unknown
   reviewCount: number
@@ -54,6 +56,7 @@ function toCard(row: Row): BarbershopCardData & { minPrice: number } {
     city: row.city,
     imageUrl: row.imageUrl,
     logoKey: row.logoKey,
+    logoUrl: row.logoUrl,
     accentColor: row.accentColor,
     rating: Number(row.rating),
     reviewCount: row.reviewCount,

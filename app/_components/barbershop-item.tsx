@@ -17,6 +17,7 @@ export interface BarbershopCardData {
   city: string
   imageUrl: string
   logoKey: string
+  logoUrl: string | null
   accentColor: string
   rating: string | number
   reviewCount: number
@@ -89,6 +90,7 @@ const BarbershopItem = ({
         >
           <BarbershopLogo
             logoKey={barbershop.logoKey}
+            logoUrl={barbershop.logoUrl}
             accentColor={barbershop.accentColor}
             className="h-5 w-5"
           />

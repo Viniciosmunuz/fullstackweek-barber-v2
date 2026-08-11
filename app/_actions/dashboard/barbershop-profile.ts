@@ -22,6 +22,18 @@ const profileSchema = z.object({
     .max(3, "No máximo três telefones."),
   imageUrl: z.string().trim().url("Informe uma URL de imagem válida."),
   logoKey: z.string().trim().min(1),
+  /**
+   * Logo real da casa, ou `null` quando ela ainda usa o símbolo genérico.
+   *
+   * Só `null` representa "sem logo" — o formulário converte o campo vazio
+   * antes de enviar. Com `null` e `""` valendo a mesma coisa, cada leitura
+   * precisaria checar as duas.
+   */
+  logoUrl: z
+    .string()
+    .trim()
+    .url("Informe uma URL de imagem válida para a logo.")
+    .nullable(),
   accentColor: z
     .string()
     .trim()

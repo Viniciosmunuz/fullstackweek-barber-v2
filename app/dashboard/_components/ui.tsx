@@ -14,6 +14,7 @@ interface Shop {
   name: string
   slug: string
   logoKey: string
+  logoUrl: string | null
   accentColor: string
 }
 

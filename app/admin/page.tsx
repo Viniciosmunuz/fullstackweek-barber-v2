@@ -69,6 +69,7 @@ const AdminPage = async () => {
       slug: true,
       city: true,
       logoKey: true,
+      logoUrl: true,
       accentColor: true,
       isPublished: true,
       createdAt: true,
@@ -185,6 +186,7 @@ const AdminPage = async () => {
                     >
                       <BarbershopLogo
                         logoKey={shop.logoKey}
+                        logoUrl={shop.logoUrl}
                         accentColor={shop.accentColor}
                         className="h-6 w-6"
                       />
@@ -203,6 +205,7 @@ const AdminPage = async () => {
 
                   <PartnerActions
                     barbershopId={shop.id}
+                    slug={shop.slug}
                     name={shop.name}
                     isPublished={shop.isPublished}
                   />
