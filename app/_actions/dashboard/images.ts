@@ -17,7 +17,7 @@ import { requireOwner } from "./guard"
  * de alguém chamar a ação direto: server action é endereço acessível, e sem
  * teto viraria hospedagem de arquivo grátis.
  */
-const MAX_BYTES = 1_500_000
+const MAX_BYTES = 5_000_000
 
 const ALLOWED_TYPES = ["image/webp", "image/png", "image/jpeg"]
 
@@ -57,7 +57,7 @@ export async function uploadImage(
 
   if (bytes.length > MAX_BYTES) {
     return actionError(
-      "Imagem muito grande. Tente uma menor que 1,5 MB ou reduza antes de enviar.",
+      "Imagem muito grande, mesmo depois de reduzida. O limite é 5 MB.",
     )
   }
 

@@ -11,24 +11,47 @@ import { messageFrom } from "@/app/_lib/action-result"
 import { UPLOAD_PREFIX } from "@/app/_lib/image-source"
 import { cn } from "@/app/_lib/utils"
 
-/** Maior lado da imagem depois de reduzida. */
-const MAX_EDGE = 1280
+/**
+ * Maior lado da imagem depois de reduzida.
+ *
+ * 2400px cobre tela grande em densidade dupla — a capa da barbearia é o maior
+ * lugar onde essas imagens aparecem, e ali ela ocupa a largura toda.
+ */
+const MAX_EDGE = 2400
+
+/** Compressão do WebP. Alta o bastante para não serrilhar borda de logo. */
+const QUALITY = 0.9
 
 /**
- * Reduz a imagem no navegador antes de enviar.
+ * Abaixo disto e dentro do limite de tamanho, o arquivo sobe como veio.
  *
- * Foto de celular hoje passa de 4 MB, e nada na tela precisa disso: o maior
- * lugar onde essas imagens aparecem é a capa da barbearia. Reduzir aqui deixa o
- * envio rápido no 4G do dono, evita esbarrar no limite do servidor e mantém o
- * banco pequeno — que é o que torna guardar imagem nele defensável.
+ * Re-encodar uma imagem que já está pequena e bem comprimida só perde
+ * qualidade: cada passagem por JPEG ou WebP joga informação fora. PNG de logo
+ * é o caso típico — nítido, leve, e pior depois de passar pelo canvas.
+ */
+const PASSTHROUGH_BYTES = 600_000
+
+/**
+ * Prepara a imagem no navegador antes de enviar.
+ *
+ * Foto de celular hoje passa de 8 MB e nada na tela precisa disso. Reduzir aqui
+ * deixa o envio rápido no 4G do dono, evita esbarrar no limite do servidor e
+ * mantém o banco pequeno — que é o que torna guardar imagem nele defensável.
  *
  * WebP porque preserva transparência (logo com fundo vazado depende disso) e
  * comprime melhor que PNG. Navegador que não souber gerar WebP cai em JPEG.
  */
-async function shrink(file: File): Promise<Blob> {
+async function prepare(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file)
 
-  const scale = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height))
+  const longestEdge = Math.max(bitmap.width, bitmap.height)
+
+  if (longestEdge <= MAX_EDGE && file.size <= PASSTHROUGH_BYTES) {
+    bitmap.close()
+    return file
+  }
+
+  const scale = Math.min(1, MAX_EDGE / longestEdge)
   const width = Math.max(1, Math.round(bitmap.width * scale))
   const height = Math.max(1, Math.round(bitmap.height * scale))
 
@@ -43,7 +66,7 @@ async function shrink(file: File): Promise<Blob> {
   bitmap.close()
 
   const encode = (type: string) =>
-    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, 0.85))
+    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, QUALITY))
 
   const webp = await encode("image/webp")
   if (webp) return webp
@@ -119,10 +142,12 @@ const ImageField = ({
 
     startUpload(async () => {
       try {
-        const reduced = await shrink(file)
+        const prepared = await prepare(file)
 
         const body = new FormData()
-        body.append("file", reduced, "imagem.webp")
+        // O nome é cosmético — o servidor decide pelo tipo do arquivo —, mas a
+        // extensão certa evita confusão em log e em depuração.
+        body.append("file", prepared, `imagem.${prepared.type.split("/")[1]}`)
 
         const result = await uploadImage(barbershopId, body)
 
