@@ -211,8 +211,13 @@ model Barbershop {
   /// Taxa da plataforma por agendamento. Definida pela administração da
   /// plataforma, nunca pela barbearia — é receita de quem opera o produto, e
   /// deixar o lojista editar seria deixá-lo zerar a própria conta.
+  ///
+  /// Zero por decisão de produto: enquanto o BarberFlow estiver conquistando as
+  /// primeiras parceiras, o sinal inteiro vai para a barbearia. O campo existe e
+  /// o cálculo já sabe lidar com ele — ligar a taxa é mudar um número, não
+  /// escrever código.
   platformFeeType  FeeType  @default(PERCENT)
-  platformFeeValue Decimal  @default(10) @db.Decimal(10, 2)
+  platformFeeValue Decimal  @default(0) @db.Decimal(10, 2)
 
   openingHours OpeningHour[]
   images      ImageAsset[]

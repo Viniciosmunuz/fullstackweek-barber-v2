@@ -1,7 +1,5 @@
-import { getServerSession } from "next-auth"
 import { subDays, subMonths, startOfDay, endOfDay, startOfMonth } from "date-fns"
 import { db } from "../_lib/prisma"
-import { authOptions } from "../_lib/auth"
 import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
 
 /** Janelas de tempo aceitas pelos relatórios. */
@@ -29,23 +27,22 @@ export function resolvePeriod(period: Period): { from: Date; to: Date } {
   }
 }
 
-/**
- * Restrição de privacidade do painel.
+/*
+ * Aqui existia um filtro que só deixava passar agendamentos de clientes de
+ * demonstração e do próprio usuário logado.
  *
- * O catálogo é público e qualquer pessoa autenticada alcança o painel, então a
- * consulta nunca pode devolver agendamentos de outros usuários reais: só entram
- * os clientes de demonstração e os do próprio usuário logado. Sem isso, nome,
- * e-mail e histórico de quem entrasse com a conta Google ficariam visíveis para
- * estranhos.
+ * Ele fazia sentido enquanto qualquer pessoa autenticada alcançava o painel: o
+ * catálogo é público, e sem o filtro o nome e o telefone de quem entrasse com
+ * uma conta Google ficariam à vista de estranhos.
+ *
+ * Deixou de fazer quando o acesso passou a exigir vínculo com a barbearia. A
+ * partir daí ele só atrapalhava, e do pior jeito: cliente de verdade agendava e
+ * a agenda da barbearia não mostrava. A casa nunca saberia que alguém vem.
+ *
+ * Quem limita agora é o escopo — toda consulta já filtra por `barbershopId`, e
+ * quem chega até aqui provou ser gestor daquela casa. Ver os clientes da
+ * própria barbearia é exatamente o trabalho.
  */
-async function visibilityFilter() {
-  const session = await getServerSession(authOptions)
-  const userId = (session?.user as { id?: string } | undefined)?.id
-
-  return {
-    OR: [{ user: { isDemo: true } }, ...(userId ? [{ userId }] : [])],
-  }
-}
 
 /**
  * Barbearias que o usuário administra — é o que alimenta o seletor do painel.
@@ -99,14 +96,11 @@ interface ScopeArgs {
   to: Date
 }
 
-/** Agendamentos da barbearia no período, já filtrados por visibilidade. */
+/** Agendamentos da barbearia no período. */
 async function findBookings({ barbershopId, from, to }: ScopeArgs) {
-  const visibility = await visibilityFilter()
-
   return db.booking.findMany({
     where: {
       AND: [
-        visibility,
         { service: { barbershopId } },
         { date: { gte: from, lte: to } },
       ],
@@ -202,12 +196,10 @@ export interface ClientSummary {
   lastVisit: Date | null
 }
 
-/** Clientes agregados a partir do histórico visível. */
+/** Clientes agregados a partir do histórico da barbearia. */
 export async function getClients(barbershopId: string): Promise<ClientSummary[]> {
-  const visibility = await visibilityFilter()
-
   const rows = await db.booking.findMany({
-    where: { AND: [visibility, { service: { barbershopId } }] },
+    where: { service: { barbershopId } },
     select: {
       date: true,
       status: true,
