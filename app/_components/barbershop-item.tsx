@@ -58,7 +58,11 @@ const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
         className,
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      {/*
+        Quadrado, e não 4:3, porque a logo é gravada quadrada no enquadramento.
+        Assim ela preenche o painel inteiro em vez de flutuar no meio dele.
+      */}
+      <div className="relative aspect-square w-full overflow-hidden">
         {/*
           Fundo tingido com a cor da própria casa. Sem a foto, é o que impede a
           grade de virar uma fileira de retângulos iguais.
@@ -71,44 +75,48 @@ const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
         />
 
         {/*
-          Medida em porcentagem, não em pixel: o card tem 168px de largura no
-          celular e passa de 260px na grade de cinco colunas. Um teto fixo dava
-          logo espremida numa ponta e logo perdida no meio da outra — aqui ela
-          ocupa sempre a mesma fatia do card, com folga igual em volta.
+          Sem margem: logo quadrada encosta nas quatro bordas. Só a que não for
+          quadrada — as enviadas antes do enquadramento existir, e as silhuetas
+          — é que sobra folga, e aí o `object-contain` centraliza sem cortar.
         */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <BarbershopLogo
-            logoKey={barbershop.logoKey}
-            logoUrl={barbershop.logoUrl}
-            accentColor={barbershop.accentColor}
-            className="h-[62%] w-[62%] object-contain transition-transform duration-500 group-hover:scale-[1.06]"
-          />
-        </div>
-
-        {/*
-          Sem avaliação, o selo diz "Nova" em vez de mostrar uma nota. Antes
-          toda barbearia nascia com 5,0 e exibia isso como se alguém tivesse
-          dado — o que enganava o cliente e ainda ordenava o catálogo.
-        */}
-        {barbershop.reviewCount > 0 ? (
-          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm">
-            <Star size={10} className="fill-primary text-primary" />
-            {Number(barbershop.rating).toFixed(1).replace(".", ",")}
-            <span className="font-normal text-muted-foreground">
-              ({barbershop.reviewCount})
-            </span>
-          </span>
-        ) : (
-          <span className="absolute left-2 top-2 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-medium text-muted-foreground backdrop-blur-sm">
-            Nova
-          </span>
-        )}
+        <BarbershopLogo
+          logoKey={barbershop.logoKey}
+          logoUrl={barbershop.logoUrl}
+          accentColor={barbershop.accentColor}
+          className="absolute inset-0 h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.04]"
+        />
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="truncate font-display text-[13px] font-bold leading-tight sm:text-sm">
-          {barbershop.name}
-        </h3>
+        {/*
+          A nota saiu de cima da imagem quando a logo passou a ocupar o painel
+          inteiro: selo flutuante ali significa tapar justamente o canto da
+          marca que a barbearia escolheu mostrar.
+        */}
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="truncate font-display text-[13px] font-bold leading-tight sm:text-sm">
+            {barbershop.name}
+          </h3>
+
+          {/*
+            Sem avaliação, diz "Nova" em vez de mostrar uma nota. Antes toda
+            barbearia nascia com 5,0 e exibia isso como se alguém tivesse dado
+            — o que enganava o cliente e ainda ordenava o catálogo.
+          */}
+          {barbershop.reviewCount > 0 ? (
+            <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold">
+              <Star size={10} className="fill-primary text-primary" />
+              {Number(barbershop.rating).toFixed(1).replace(".", ",")}
+              <span className="font-normal text-muted-foreground">
+                ({barbershop.reviewCount})
+              </span>
+            </span>
+          ) : (
+            <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
+              Nova
+            </span>
+          )}
+        </div>
 
         {services.length > 0 && (
           <p className="truncate text-[11px] text-muted-foreground">
