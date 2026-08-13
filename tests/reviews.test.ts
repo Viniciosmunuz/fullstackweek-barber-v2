@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest"
 
-import { isValidRating, summarizeRatings } from "../app/_lib/reviews"
+import {
+  MIN_REVIEWS_TO_RATE,
+  isValidRating,
+  publicRating,
+  summarizeRatings,
+} from "../app/_lib/reviews"
 
 /**
  * A nota de uma barbearia.
@@ -69,5 +74,25 @@ describe("isValidRating", () => {
     // A interface oferece cinco estrelas inteiras; aceitar 4,5 aqui criaria
     // um valor que nenhuma tela sabe desenhar.
     expect(isValidRating(4.5)).toBe(false)
+  })
+})
+
+describe("publicRating", () => {
+  it("esconde a nota enquanto faltar base", () => {
+    for (let count = 0; count < MIN_REVIEWS_TO_RATE; count++) {
+      expect(publicRating(5, count)).toBeNull()
+    }
+  })
+
+  it("mostra a nota ao atingir o mínimo", () => {
+    expect(publicRating(4.7, MIN_REVIEWS_TO_RATE)).toBe(4.7)
+    expect(publicRating(4.7, MIN_REVIEWS_TO_RATE + 100)).toBe(4.7)
+  })
+
+  it("esconde tanto a nota alta quanto a baixa", () => {
+    // O corte não é para proteger a barbearia de uma nota ruim, e sim para não
+    // apresentar como média o que ainda é a opinião de uma pessoa só.
+    expect(publicRating(1, 1)).toBeNull()
+    expect(publicRating(5, 1)).toBeNull()
   })
 })

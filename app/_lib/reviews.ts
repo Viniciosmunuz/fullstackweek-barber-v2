@@ -10,6 +10,35 @@
 export const MIN_RATING = 1
 export const MAX_RATING = 5
 
+/**
+ * Quantas avaliações uma barbearia precisa juntar antes de a nota virar número
+ * na tela.
+ *
+ * Com uma avaliação só, a nota não é uma medida — é a opinião de uma pessoa
+ * exibida com a autoridade de uma média. Um cliente irritado num dia ruim
+ * afunda a casa para 1,0; um amigo do dono a coloca em 5,0 e no topo da busca.
+ * Nos dois casos quem chega depois decide com base em nada.
+ *
+ * Três é o menor número em que a média já não é refém de um voto isolado.
+ * Abaixo disso a tela mostra quantas avaliações existem, sem inventar uma nota
+ * — e as avaliações em si continuam visíveis na página, para quem quiser ler.
+ */
+export const MIN_REVIEWS_TO_RATE = 3
+
+/**
+ * A nota que pode ser exibida, ou `null` quando ainda não há base para ela.
+ *
+ * Existe para que card, página e ordenação façam a mesma pergunta em um lugar
+ * só. Espalhar `count >= 3` pelas telas era garantir que uma delas acabasse
+ * ficando para trás numa mudança futura.
+ */
+export function publicRating(
+  rating: number,
+  reviewCount: number,
+): number | null {
+  return reviewCount >= MIN_REVIEWS_TO_RATE ? rating : null
+}
+
 export interface RatingSummary {
   /** Média com uma casa decimal. Zero quando ainda não há avaliação. */
   average: number

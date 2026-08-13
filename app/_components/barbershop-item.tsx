@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { MapPin, Star } from "lucide-react"
 import BarbershopLogo from "./brand/barbershop-logo"
+import { publicRating } from "@/app/_lib/reviews"
 import { cn } from "@/app/_lib/utils"
 
 /**
@@ -48,6 +49,7 @@ interface BarbershopItemProps {
 const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
   const services = barbershop.services?.slice(0, 2) ?? []
   const place = barbershop.neighborhood || barbershop.city
+  const nota = publicRating(Number(barbershop.rating), barbershop.reviewCount)
 
   return (
     <Link
@@ -99,21 +101,24 @@ const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
           </h3>
 
           {/*
-            Sem avaliação, diz "Nova" em vez de mostrar uma nota. Antes toda
-            barbearia nascia com 5,0 e exibia isso como se alguém tivesse dado
-            — o que enganava o cliente e ainda ordenava o catálogo.
+            Três estados, e cada um diz uma verdade diferente: sem avaliação
+            nenhuma, com poucas demais para virar média, e com base suficiente.
+            Antes toda barbearia nascia com 5,0 e exibia isso como se alguém
+            tivesse dado — o que enganava o cliente e ainda ordenava o catálogo.
           */}
-          {barbershop.reviewCount > 0 ? (
+          {nota !== null ? (
             <span className="flex shrink-0 items-center gap-0.5 text-[11px] font-semibold">
               <Star size={10} className="fill-primary text-primary" />
-              {Number(barbershop.rating).toFixed(1).replace(".", ",")}
+              {nota.toFixed(1).replace(".", ",")}
               <span className="font-normal text-muted-foreground">
                 ({barbershop.reviewCount})
               </span>
             </span>
           ) : (
             <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
-              Nova
+              {barbershop.reviewCount > 0
+                ? `${barbershop.reviewCount} ${barbershop.reviewCount === 1 ? "avaliação" : "avaliações"}`
+                : "Nova"}
             </span>
           )}
         </div>

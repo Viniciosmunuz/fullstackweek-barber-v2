@@ -1,4 +1,5 @@
 import { db } from "../_lib/prisma"
+import { publicRating } from "../_lib/reviews"
 import type { BarbershopCardData } from "../_components/barbershop-item"
 import type { SortValue } from "../_constants/search"
 
@@ -111,7 +112,22 @@ export async function getBarbershops({
 
   switch (sort) {
     case "rating":
-      return cards.sort((a, b) => Number(b.rating) - Number(a.rating))
+      /*
+       * "Melhor avaliadas" só pode ordenar por nota quem tem nota. Uma casa
+       * com uma única avaliação 5,0 apareceria na frente de outra com 4,8 e
+       * cem — e é justamente a barbearia nova, sem histórico, que mais tem a
+       * ganhar com isso. Quem ainda não juntou base vai para depois, na ordem
+       * de relevância, em vez de sumir do resultado.
+       */
+      return cards.sort((a, b) => {
+        const notaA = publicRating(Number(a.rating), a.reviewCount)
+        const notaB = publicRating(Number(b.rating), b.reviewCount)
+
+        if (notaA !== null && notaB !== null) return notaB - notaA
+        if (notaA !== null) return -1
+        if (notaB !== null) return 1
+        return relevancia(b) - relevancia(a)
+      })
     case "popular":
       return cards.sort((a, b) => b.reviewCount - a.reviewCount)
     case "price":
@@ -124,14 +140,16 @@ export async function getBarbershops({
           (a.neighborhood ?? "").localeCompare(b.neighborhood ?? "", "pt-BR"),
       )
     default:
-      // "Relevantes" combina nota e volume de avaliações para não deixar uma
-      // casa com nota 5,0 e 3 avaliações na frente de uma 4,8 com 600.
-      return cards.sort(
-        (a, b) =>
-          Number(b.rating) * Math.log10(b.reviewCount + 10) -
-          Number(a.rating) * Math.log10(a.reviewCount + 10),
-      )
+      return cards.sort((a, b) => relevancia(b) - relevancia(a))
   }
+}
+
+/**
+ * Combina nota e volume de avaliações para não deixar uma casa com 5,0 e três
+ * avaliações na frente de uma 4,8 com seiscentas.
+ */
+function relevancia(card: { rating: string | number; reviewCount: number }) {
+  return Number(card.rating) * Math.log10(card.reviewCount + 10)
 }
 
 /** Destaques da home: as mais bem avaliadas, com corte de quantidade. */

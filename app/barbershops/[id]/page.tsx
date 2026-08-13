@@ -20,6 +20,7 @@ import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
 import { db } from "@/app/_lib/prisma"
 import { getInitials, getWeekdayLabel } from "@/app/_lib/utils"
 import { getSessionRole } from "@/app/_lib/roles"
+import { MIN_REVIEWS_TO_RATE, publicRating } from "@/app/_lib/reviews"
 import { splitDeposit, toReais } from "@/app/_lib/payments/policy"
 import { isPaymentsConfigured } from "@/app/_lib/config"
 
@@ -78,6 +79,7 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
   const accent = barbershop.accentColor
   const today = new Date().getDay()
+  const nota = publicRating(Number(barbershop.rating), barbershop.reviewCount)
 
   // Três condições, e nenhuma é redundante: a instalação precisa ter chave do
   // provedor, a casa precisa aceitar, e precisa existir carteira para onde o
@@ -193,11 +195,11 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
         <div className="min-w-0">
           {/* METADADOS */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-white/[0.06] pb-6 text-sm">
-            {barbershop.reviewCount > 0 ? (
+            {nota !== null ? (
               <span className="flex items-center gap-1.5">
                 <Star size={16} className="fill-primary text-primary" />
                 <strong className="font-semibold">
-                  {Number(barbershop.rating).toFixed(1).replace(".", ",")}
+                  {nota.toFixed(1).replace(".", ",")}
                 </strong>
                 <span className="text-muted-foreground">
                   ({barbershop.reviewCount}{" "}
@@ -207,7 +209,9 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             ) : (
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <Star size={16} />
-                Ainda sem avaliações
+                {barbershop.reviewCount > 0
+                  ? `${barbershop.reviewCount} ${barbershop.reviewCount === 1 ? "avaliação" : "avaliações"} — nota a partir de ${MIN_REVIEWS_TO_RATE}`
+                  : "Ainda sem avaliações"}
               </span>
             )}
             <span className="flex items-center gap-1.5 text-muted-foreground">
