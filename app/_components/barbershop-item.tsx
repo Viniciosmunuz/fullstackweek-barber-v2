@@ -70,12 +70,18 @@ const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
           }}
         />
 
-        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+        {/*
+          Medida em porcentagem, não em pixel: o card tem 168px de largura no
+          celular e passa de 260px na grade de cinco colunas. Um teto fixo dava
+          logo espremida numa ponta e logo perdida no meio da outra — aqui ela
+          ocupa sempre a mesma fatia do card, com folga igual em volta.
+        */}
+        <div className="absolute inset-0 flex items-center justify-center">
           <BarbershopLogo
             logoKey={barbershop.logoKey}
             logoUrl={barbershop.logoUrl}
             accentColor={barbershop.accentColor}
-            className="h-full max-h-[104px] w-full max-w-[104px] object-contain transition-transform duration-500 group-hover:scale-[1.06]"
+            className="h-[62%] w-[62%] object-contain transition-transform duration-500 group-hover:scale-[1.06]"
           />
         </div>
 
