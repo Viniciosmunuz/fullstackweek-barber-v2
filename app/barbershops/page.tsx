@@ -73,12 +73,8 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
 
           {barbershops.length > 0 ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:gap-4 2xl:grid-cols-5">
-              {barbershops.map((barbershop, index) => (
-                <BarbershopItem
-                  key={barbershop.id}
-                  barbershop={barbershop}
-                  priority={index < 4}
-                />
+              {barbershops.map((barbershop) => (
+                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
               ))}
             </div>
           ) : (

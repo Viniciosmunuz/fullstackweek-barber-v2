@@ -1,4 +1,3 @@
-import Image from "next/image"
 import Link from "next/link"
 import { MapPin, Star } from "lucide-react"
 import BarbershopLogo from "./brand/barbershop-logo"
@@ -26,8 +25,6 @@ export interface BarbershopCardData {
 
 interface BarbershopItemProps {
   barbershop: BarbershopCardData
-  /** `priority` só na primeira fileira, para não competir com o resto. */
-  priority?: boolean
   className?: string
 }
 
@@ -36,17 +33,19 @@ interface BarbershopItemProps {
  *
  * A versão anterior era um bloco alto e largo, um por linha, que empurrava a
  * segunda barbearia para fora da tela no celular. Aqui a informação foi cortada
- * ao essencial — foto, nota, nome, localidade e dois serviços — para caberem
+ * ao essencial — marca, nota, nome, localidade e dois serviços — para caberem
  * dois cards lado a lado em 375px sem apertar o texto.
+ *
+ * Quem ocupa o topo é a logo, não a foto do ambiente. Numa grade de vinte
+ * cards, foto de barbearia toda parece a mesma coisa — espelho, cadeira,
+ * parede escura — e a marca, que é o que distingue uma casa da outra, ficava
+ * num selo de 20px no canto. A foto continua existindo: aparece grande assim
+ * que o cliente abre a barbearia.
  *
  * O cartão inteiro é o link: em tela de toque, mirar um botão pequeno dentro do
  * card é pior do que tocar em qualquer lugar dele.
  */
-const BarbershopItem = ({
-  barbershop,
-  priority = false,
-  className,
-}: BarbershopItemProps) => {
+const BarbershopItem = ({ barbershop, className }: BarbershopItemProps) => {
   const services = barbershop.services?.slice(0, 2) ?? []
   const place = barbershop.neighborhood || barbershop.city
 
@@ -60,21 +59,25 @@ const BarbershopItem = ({
       )}
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden">
-        {barbershop.imageUrl ? (
-          <Image
-            alt={`Ambiente da ${barbershop.name}`}
-            src={barbershop.imageUrl}
-            fill
-            priority={priority}
-            /* Dois cards por linha no celular, quatro no desktop. */
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-white/[0.06] to-transparent" />
-        )}
+        {/*
+          Fundo tingido com a cor da própria casa. Sem a foto, é o que impede a
+          grade de virar uma fileira de retângulos iguais.
+        */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(120% 120% at 50% 0%, ${barbershop.accentColor}26, transparent 68%)`,
+          }}
+        />
 
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6">
+          <BarbershopLogo
+            logoKey={barbershop.logoKey}
+            logoUrl={barbershop.logoUrl}
+            accentColor={barbershop.accentColor}
+            className="h-full max-h-[104px] w-full max-w-[104px] object-contain transition-transform duration-500 group-hover:scale-[1.06]"
+          />
+        </div>
 
         {/*
           Sem avaliação, o selo diz "Nova" em vez de mostrar uma nota. Antes
@@ -94,18 +97,6 @@ const BarbershopItem = ({
             Nova
           </span>
         )}
-
-        <span
-          className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-md bg-background/90 backdrop-blur-sm"
-          style={{ boxShadow: `inset 0 0 0 1px ${barbershop.accentColor}33` }}
-        >
-          <BarbershopLogo
-            logoKey={barbershop.logoKey}
-            logoUrl={barbershop.logoUrl}
-            accentColor={barbershop.accentColor}
-            className="h-5 w-5"
-          />
-        </span>
       </div>
 
       <div className="flex flex-1 flex-col gap-1 p-3">
