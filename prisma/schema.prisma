@@ -28,6 +28,7 @@ model User {
   bookings      Booking[]
   manages       BarbershopManager[]
   notifications Notification[]
+  reviews       Review[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -192,8 +193,20 @@ model Barbershop {
   logoUrl     String?
   /// Cor de destaque da marca em hex, usada nos acentos do card e da página
   accentColor String
-  rating      Decimal             @default(5.0) @db.Decimal(2, 1)
+  /// Média das avaliações, recalculada a cada nova nota.
+  ///
+  /// Denormalizada de propósito: o catálogo lista todas as barbearias e ordena
+  /// por nota, e fazer a média por agregação a cada listagem custaria caro. Não
+  /// corre risco de divergir porque é recalculada do zero — média de todas as
+  /// avaliações — dentro da mesma transação que grava a nota, nunca somando de
+  /// forma incremental.
+  ///
+  /// Zero significa "ainda não avaliada", e é o que `reviewCount` confirma. O
+  /// padrão era 5.0, então toda barbearia nascia com nota máxima sem ninguém
+  /// ter ido lá.
+  rating      Decimal             @default(0) @db.Decimal(2, 1)
   reviewCount Int                 @default(0)
+  reviews     Review[]
 
   /// ---------------------------------------------------------------------
   /// Cobrança do sinal
@@ -227,6 +240,36 @@ model Barbershop {
   services    BarbershopService[]
   createdAt   DateTime            @default(now())
   updatedAt   DateTime            @updatedAt
+}
+
+/// Avaliação de um atendimento.
+///
+/// Presa ao **agendamento**, e não à barbearia, e é essa escolha que faz a nota
+/// valer alguma coisa: só avalia quem tem um atendimento concluído ali. Uma
+/// avaliação solta na barbearia seria caixa de opinião de quem nunca foi —
+/// inclusive de concorrente, e sem custo nenhum para difamar.
+///
+/// Uma por agendamento, não uma por barbearia: quem corta o cabelo todo mês
+/// avalia todo mês, e cada nota corresponde a uma visita real. É também o que
+/// permite editar sem apagar histórico — a nota daquela visita muda, as outras
+/// ficam.
+model Review {
+  id           String     @id @default(uuid())
+  /// De 1 a 5. Validado na ação; o banco guarda inteiro por simplicidade.
+  rating       Int
+  comment      String?
+  bookingId    String     @unique
+  booking      Booking    @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  /// Redundante em relação ao agendamento, mas evita duas junções para listar
+  /// as avaliações de uma casa — que é a consulta mais frequente aqui.
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([barbershopId, createdAt])
 }
 
 /// Imagem enviada do dispositivo, guardada no próprio banco.
@@ -346,6 +389,7 @@ model Booking {
   /// esta reserva; vencido, volta para a lista sem precisar apagar o registro
   /// — o histórico de tentativa de pagamento continua auditável.
   expiresAt DateTime?
+  review    Review?
   /// Quando o lembrete da véspera saiu.
   ///
   /// Sem essa marca a varredura diária reenviaria o mesmo lembrete a cada

@@ -30,6 +30,7 @@ import {
 import PhoneItem from "./phone-item"
 import BookingSummary from "./booking-summary"
 import BarbershopLogo from "./brand/barbershop-logo"
+import ReviewForm, { type ExistingReview } from "./review-form"
 import { deleteBooking } from "../_actions/delete-booking"
 import { formatCurrency } from "@/app/_lib/utils"
 
@@ -41,6 +42,14 @@ import { formatCurrency } from "@/app/_lib/utils"
 export interface BookingItemData {
   id: string
   date: string | Date
+  /**
+   * A barbearia marcou o atendimento como concluído.
+   *
+   * Data no passado não basta: o cliente pode ter faltado, e quem confirma que
+   * a visita aconteceu é a casa.
+   */
+  canReview: boolean
+  review: ExistingReview | null
   barber: { name: string; specialty: string } | null
   service: {
     name: string
@@ -250,6 +259,22 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+          )}
+
+          {/*
+            Avaliar aparece no lugar de cancelar, porque um exclui o outro:
+            atendimento futuro se cancela, atendimento passado se avalia.
+            Só faz sentido depois que a barbearia marcou como concluído — é o
+            que prova que a visita aconteceu, e o servidor recusa antes disso.
+          */}
+          {!isConfirmed && booking.canReview && (
+            <div className="w-full">
+              <ReviewForm
+                bookingId={booking.id}
+                barbershopName={barbershop.name}
+                review={booking.review}
+              />
+            </div>
           )}
         </SheetFooter>
       </SheetContent>

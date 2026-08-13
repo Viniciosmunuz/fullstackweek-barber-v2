@@ -76,13 +76,24 @@ const BarbershopItem = ({
 
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
 
-        <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm">
-          <Star size={10} className="fill-primary text-primary" />
-          {Number(barbershop.rating).toFixed(1).replace(".", ",")}
-          <span className="font-normal text-muted-foreground">
-            ({barbershop.reviewCount})
+        {/*
+          Sem avaliação, o selo diz "Nova" em vez de mostrar uma nota. Antes
+          toda barbearia nascia com 5,0 e exibia isso como se alguém tivesse
+          dado — o que enganava o cliente e ainda ordenava o catálogo.
+        */}
+        {barbershop.reviewCount > 0 ? (
+          <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-semibold backdrop-blur-sm">
+            <Star size={10} className="fill-primary text-primary" />
+            {Number(barbershop.rating).toFixed(1).replace(".", ",")}
+            <span className="font-normal text-muted-foreground">
+              ({barbershop.reviewCount})
+            </span>
           </span>
-        </span>
+        ) : (
+          <span className="absolute left-2 top-2 rounded-full bg-background/85 px-2 py-0.5 text-[11px] font-medium text-muted-foreground backdrop-blur-sm">
+            Nova
+          </span>
+        )}
 
         <span
           className="absolute bottom-2 left-2 flex h-8 w-8 items-center justify-center rounded-md bg-background/90 backdrop-blur-sm"

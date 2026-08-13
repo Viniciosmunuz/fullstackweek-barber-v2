@@ -2,16 +2,23 @@ import type { Metadata } from "next"
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
 import { ChevronLeftIcon, MapPin, MenuIcon, Star } from "lucide-react"
 import PhoneItem from "@/app/_components/phone-item"
 import ServiceItem from "@/app/_components/service-item"
 import SidebarSheet from "@/app/_components/sidebar-sheet"
 import BarbershopLogo from "@/app/_components/brand/barbershop-logo"
 import BarberAvatar from "@/app/_components/barber-avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/_components/ui/avatar"
 import { Button } from "@/app/_components/ui/button"
 import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet"
 import { db } from "@/app/_lib/prisma"
-import { getWeekdayLabel } from "@/app/_lib/utils"
+import { getInitials, getWeekdayLabel } from "@/app/_lib/utils"
 import { getSessionRole } from "@/app/_lib/roles"
 import { splitDeposit, toReais } from "@/app/_lib/payments/policy"
 import { isPaymentsConfigured } from "@/app/_lib/config"
@@ -28,6 +35,19 @@ async function getBarbershop(id: string) {
       // Profissional inativo não aparece para agendar, mas segue no histórico.
       barbers: { where: { active: true }, orderBy: { name: "asc" } },
       openingHours: { orderBy: { weekday: "asc" } },
+      // As mais recentes primeiro, e um teto: a pagina nao e um arquivo de
+      // avaliacoes, e ninguem rola cem comentarios antes de escolher horario.
+      reviews: {
+        orderBy: { createdAt: "desc" },
+        take: 10,
+        select: {
+          id: true,
+          rating: true,
+          comment: true,
+          createdAt: true,
+          user: { select: { name: true, image: true } },
+        },
+      },
     },
   })
 }
@@ -71,12 +91,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
   // O documento é pedido uma vez. Quem já informou não repete a cada
   // agendamento — e o valor nunca vem do cliente, sempre do banco.
   const savedDocument = userId
-    ? (
+    ? ((
         await db.user.findUnique({
           where: { id: userId },
           select: { cpfCnpj: true },
         })
-      )?.cpfCnpj ?? null
+      )?.cpfCnpj ?? null)
     : null
 
   // Decimal do Prisma não atravessa para Client Component: converte aqui.
@@ -114,7 +134,12 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
 
         <div className="container relative flex h-full flex-col">
           <div className="flex items-center justify-between pt-5">
-            <Button size="icon" variant="outline" className="bg-background/60" asChild>
+            <Button
+              size="icon"
+              variant="outline"
+              className="bg-background/60"
+              asChild
+            >
               <Link href="/barbershops" aria-label="Voltar para a busca">
                 <ChevronLeftIcon size={18} />
               </Link>
@@ -168,15 +193,23 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
         <div className="min-w-0">
           {/* METADADOS */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-white/[0.06] pb-6 text-sm">
-            <span className="flex items-center gap-1.5">
-              <Star size={16} className="fill-primary text-primary" />
-              <strong className="font-semibold">
-                {Number(barbershop.rating).toFixed(1).replace(".", ",")}
-              </strong>
-              <span className="text-muted-foreground">
-                ({barbershop.reviewCount} avaliações)
+            {barbershop.reviewCount > 0 ? (
+              <span className="flex items-center gap-1.5">
+                <Star size={16} className="fill-primary text-primary" />
+                <strong className="font-semibold">
+                  {Number(barbershop.rating).toFixed(1).replace(".", ",")}
+                </strong>
+                <span className="text-muted-foreground">
+                  ({barbershop.reviewCount}{" "}
+                  {barbershop.reviewCount === 1 ? "avaliação" : "avaliações"})
+                </span>
               </span>
-            </span>
+            ) : (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <Star size={16} />
+                Ainda sem avaliações
+              </span>
+            )}
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <MapPin size={15} />
               {barbershop.address} · {barbershop.city}
@@ -254,6 +287,65 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
               ))}
             </div>
           </section>
+
+          {/* AVALIAÇÕES */}
+          {barbershop.reviews.length > 0 && (
+            <section className="border-t border-white/[0.06] py-6">
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                O que os clientes dizem
+              </h2>
+
+              <ul className="mt-4 space-y-4">
+                {barbershop.reviews.map((review) => (
+                  <li key={review.id} className="surface rounded-lg p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7">
+                          <AvatarImage src={review.user.image ?? ""} alt="" />
+                          <AvatarFallback className="text-[10px]">
+                            {getInitials(review.user.name ?? "Cliente")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-medium">
+                          {review.user.name ?? "Cliente"}
+                        </span>
+                      </span>
+
+                      <span
+                        className="flex shrink-0 items-center gap-0.5"
+                        aria-label={`${review.rating} de 5`}
+                      >
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <Star
+                            key={index}
+                            size={12}
+                            aria-hidden="true"
+                            className={
+                              index < review.rating
+                                ? "fill-primary text-primary"
+                                : "text-muted-foreground/40"
+                            }
+                          />
+                        ))}
+                      </span>
+                    </div>
+
+                    {review.comment && (
+                      <p className="mt-2.5 text-sm leading-relaxed text-muted-foreground">
+                        {review.comment}
+                      </p>
+                    )}
+
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {format(review.createdAt, "dd 'de' MMMM 'de' yyyy", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </div>
 
         {/* -------------------------------------------------------------- */}

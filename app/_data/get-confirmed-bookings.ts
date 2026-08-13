@@ -22,6 +22,8 @@ const REAL_BOOKING = {
 const BOOKING_SELECT = {
   id: true,
   date: true,
+  status: true,
+  review: { select: { rating: true, comment: true } },
   barber: { select: { name: true, specialty: true } },
   service: {
     select: {
@@ -51,6 +53,8 @@ const BOOKING_SELECT = {
 function toBookingItem(row: {
   id: string
   date: Date
+  status: string
+  review: { rating: number; comment: string | null } | null
   barber: { name: string; specialty: string } | null
   service: {
     name: string
@@ -62,6 +66,10 @@ function toBookingItem(row: {
   return {
     id: row.id,
     date: row.date,
+    // Data no passado não basta para avaliar: o cliente pode ter faltado, e
+    // quem confirma que a visita aconteceu é a barbearia, marcando concluído.
+    canReview: row.status === "COMPLETED",
+    review: row.review,
     barber: row.barber,
     service: {
       name: row.service.name,
@@ -88,7 +96,9 @@ export const getConfirmedBookings = async (): Promise<BookingItemData[]> => {
   return rows.map(toBookingItem)
 }
 
-export const getConcludedBookingsData = async (): Promise<BookingItemData[]> => {
+export const getConcludedBookingsData = async (): Promise<
+  BookingItemData[]
+> => {
   const session = await getServerSession(authOptions)
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) return []
