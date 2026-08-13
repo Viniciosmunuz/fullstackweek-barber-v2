@@ -31,6 +31,74 @@ const QUALITY = 0.9
  */
 const PASSTHROUGH_BYTES = 600_000
 
+/** Formatos que o servidor guarda como vieram, sem passar pelo canvas. */
+const PASSTHROUGH_TYPES = ["image/webp", "image/png", "image/jpeg"]
+
+/**
+ * Tamanho assumido para SVG sem dimensão própria.
+ *
+ * Muitos SVG só trazem `viewBox`, e aí o navegador reporta largura zero. Zero
+ * viraria um canvas vazio — uma imagem "enviada com sucesso" e invisível, que é
+ * pior que um erro.
+ */
+const VECTOR_FALLBACK = 1024
+
+interface Decoded {
+  source: CanvasImageSource
+  width: number
+  height: number
+  release: () => void
+}
+
+/**
+ * Lê o arquivo, por dois caminhos.
+ *
+ * `createImageBitmap` é o rápido e o preferido, mas recusa formatos que a tag
+ * `<img>` aceita sem reclamar — SVG é o caso comum, e Safari mais antigo também
+ * cai aqui. Tentar o segundo caminho antes de desistir é o que faz "essa imagem
+ * não sobe" virar "sobe".
+ */
+async function decode(file: File): Promise<Decoded> {
+  try {
+    const bitmap = await createImageBitmap(file)
+    return {
+      source: bitmap,
+      width: bitmap.width,
+      height: bitmap.height,
+      release: () => bitmap.close(),
+    }
+  } catch {
+    return decodeWithTag(file)
+  }
+}
+
+function decodeWithTag(file: File): Promise<Decoded> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const image = new Image()
+
+    image.onload = () => {
+      resolve({
+        source: image,
+        width: image.naturalWidth || VECTOR_FALLBACK,
+        height: image.naturalHeight || VECTOR_FALLBACK,
+        release: () => URL.revokeObjectURL(url),
+      })
+    }
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(
+        new Error(
+          "Não foi possível ler este arquivo. Se veio de um iPhone, abra a foto, toque em compartilhar e salve como JPG antes de enviar.",
+        ),
+      )
+    }
+
+    image.src = url
+  })
+}
+
 /**
  * Prepara a imagem no navegador antes de enviar.
  *
@@ -38,43 +106,55 @@ const PASSTHROUGH_BYTES = 600_000
  * deixa o envio rápido no 4G do dono, evita esbarrar no limite do servidor e
  * mantém o banco pequeno — que é o que torna guardar imagem nele defensável.
  *
+ * Tudo que não for PNG, JPG ou WebP é convertido, inclusive SVG. Além de
+ * uniformizar o que o servidor precisa aceitar, isso desarma o SVG: rasterizado,
+ * o que era um documento capaz de rodar script vira pixel.
+ *
  * WebP porque preserva transparência (logo com fundo vazado depende disso) e
  * comprime melhor que PNG. Navegador que não souber gerar WebP cai em JPEG.
  */
 async function prepare(file: File): Promise<Blob> {
-  const bitmap = await createImageBitmap(file)
+  const decoded = await decode(file)
 
-  const longestEdge = Math.max(bitmap.width, bitmap.height)
+  try {
+    const longestEdge = Math.max(decoded.width, decoded.height)
 
-  if (longestEdge <= MAX_EDGE && file.size <= PASSTHROUGH_BYTES) {
-    bitmap.close()
-    return file
+    if (
+      PASSTHROUGH_TYPES.includes(file.type) &&
+      longestEdge <= MAX_EDGE &&
+      file.size <= PASSTHROUGH_BYTES
+    ) {
+      return file
+    }
+
+    const scale = Math.min(1, MAX_EDGE / longestEdge)
+    const width = Math.max(1, Math.round(decoded.width * scale))
+    const height = Math.max(1, Math.round(decoded.height * scale))
+
+    const canvas = document.createElement("canvas")
+    canvas.width = width
+    canvas.height = height
+
+    const context = canvas.getContext("2d")
+    if (!context) throw new Error("Não foi possível preparar a imagem.")
+
+    context.drawImage(decoded.source, 0, 0, width, height)
+
+    const encode = (type: string) =>
+      new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, type, QUALITY),
+      )
+
+    const webp = await encode("image/webp")
+    if (webp && webp.size > 0) return webp
+
+    const jpeg = await encode("image/jpeg")
+    if (jpeg && jpeg.size > 0) return jpeg
+
+    throw new Error("Não foi possível converter esta imagem.")
+  } finally {
+    decoded.release()
   }
-
-  const scale = Math.min(1, MAX_EDGE / longestEdge)
-  const width = Math.max(1, Math.round(bitmap.width * scale))
-  const height = Math.max(1, Math.round(bitmap.height * scale))
-
-  const canvas = document.createElement("canvas")
-  canvas.width = width
-  canvas.height = height
-
-  const context = canvas.getContext("2d")
-  if (!context) throw new Error("Não foi possível preparar a imagem.")
-
-  context.drawImage(bitmap, 0, 0, width, height)
-  bitmap.close()
-
-  const encode = (type: string) =>
-    new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, type, QUALITY))
-
-  const webp = await encode("image/webp")
-  if (webp) return webp
-
-  const jpeg = await encode("image/jpeg")
-  if (jpeg) return jpeg
-
-  throw new Error("Não foi possível preparar a imagem.")
 }
 
 interface ImageFieldProps {
@@ -218,7 +298,13 @@ const ImageField = ({
         <input
           ref={fileInput}
           type="file"
-          accept="image/png,image/jpeg,image/webp"
+          /*
+           * `image/*` e não a lista fechada: no iPhone a lista restrita esconde
+           * metade da galeria, porque a foto está em HEIC. Aberto, o próprio
+           * iOS entrega uma versão JPG na hora de escolher — e o que não der
+           * para ler cai numa mensagem que diz o que fazer.
+           */
+          accept="image/*"
           className="hidden"
           onChange={(e) => handleFile(e.target.files?.[0])}
           aria-hidden="true"
