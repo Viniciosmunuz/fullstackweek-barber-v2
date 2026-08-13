@@ -63,6 +63,18 @@ export function getAsaasWebhookToken(): string {
   return process.env["ASAAS_WEBHOOK_TOKEN"]?.trim() ?? ""
 }
 
+/**
+ * Segredo que protege as rotas disparadas por agendador.
+ *
+ * A Vercel manda o valor de `CRON_SECRET` como `Bearer` ao acionar o cron. Sem
+ * segredo definido a rota fica fechada, e não aberta: aberta, qualquer pessoa
+ * dispararia a varredura de lembretes à vontade — e como cada agendamento só é
+ * avisado uma vez, isso queimaria o lembrete de todo mundo sem entregar nada.
+ */
+export function getCronSecret(): string {
+  return process.env["CRON_SECRET"]?.trim() ?? ""
+}
+
 export function isPaymentsConfigured(): boolean {
   return getAsaasApiKey().length > 0
 }

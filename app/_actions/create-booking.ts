@@ -6,6 +6,7 @@ import { db } from "../_lib/prisma"
 import { authOptions } from "../_lib/auth"
 import { activeBookingFilter } from "../_lib/booking-slot"
 import { notifyBarbershop } from "../_lib/notify-barbershop"
+import { notifyClient } from "../_lib/notify-client"
 import { UserFacingError, runAction } from "../_lib/action-result"
 
 interface CreateBookingParams {
@@ -49,8 +50,13 @@ const doCreateBooking = async ({
     select: {
       id: true,
       barber: { select: { name: true } },
+      user: { select: { email: true } },
       service: {
-        select: { name: true, barbershopId: true },
+        select: {
+          name: true,
+          barbershopId: true,
+          barbershop: { select: { name: true, address: true } },
+        },
       },
     },
   })
@@ -61,6 +67,18 @@ const doCreateBooking = async ({
     serviceName: booking.service.name,
     barberName: booking.barber?.name ?? null,
     date,
+  })
+
+  // O cliente também precisa saber, e até aqui só a barbearia era avisada.
+  await notifyClient({
+    kind: "CONFIRMED",
+    email: booking.user.email,
+    clientName: user.name ?? "Cliente",
+    barbershopName: booking.service.barbershop.name,
+    serviceName: booking.service.name,
+    barberName: booking.barber?.name ?? null,
+    date,
+    address: booking.service.barbershop.address,
   })
 
   revalidatePath("/barbershops/[id]", "page")

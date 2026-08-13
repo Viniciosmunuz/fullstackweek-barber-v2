@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { db } from "../_lib/prisma"
 import { UserFacingError, runAction } from "../_lib/action-result"
+import { notifyClient } from "../_lib/notify-client"
 import { requireSession } from "./dashboard/guard"
 import { isPlatformAdminEmail } from "../_lib/config"
 
@@ -32,7 +33,16 @@ const doDeleteBooking = async (bookingId: string) => {
     select: {
       id: true,
       userId: true,
-      service: { select: { barbershopId: true } },
+      date: true,
+      user: { select: { name: true, email: true } },
+      barber: { select: { name: true } },
+      service: {
+        select: {
+          name: true,
+          barbershopId: true,
+          barbershop: { select: { name: true } },
+        },
+      },
       payment: { select: { id: true, status: true } },
     },
   })
@@ -84,6 +94,21 @@ const doDeleteBooking = async (bookingId: string) => {
         await tx.payment.delete({ where: { id: pagamento.id } })
       }
       await tx.booking.delete({ where: { id: booking!.id } })
+    })
+  }
+
+  // Avisa o cliente só quando quem cancelou foi a barbearia. Cancelar o
+  // próprio horário e receber um e-mail dizendo que ele foi cancelado é ruído,
+  // e ainda assusta quem já esqueceu que clicou.
+  if (!ehDono) {
+    await notifyClient({
+      kind: "CANCELLED",
+      email: booking!.user.email,
+      clientName: booking!.user.name ?? "Cliente",
+      barbershopName: booking!.service.barbershop.name,
+      serviceName: booking!.service.name,
+      barberName: booking!.barber?.name ?? null,
+      date: booking!.date,
     })
   }
 

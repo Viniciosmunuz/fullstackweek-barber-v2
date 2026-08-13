@@ -346,6 +346,12 @@ model Booking {
   /// esta reserva; vencido, volta para a lista sem precisar apagar o registro
   /// — o histórico de tentativa de pagamento continua auditável.
   expiresAt DateTime?
+  /// Quando o lembrete da véspera saiu.
+  ///
+  /// Sem essa marca a varredura diária reenviaria o mesmo lembrete a cada
+  /// execução, e o cliente receberia o aviso repetido — jeito rápido de ensinar
+  /// alguém a ignorar os e-mails do produto.
+  reminderSentAt DateTime?
   payment   Payment?
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
@@ -353,6 +359,7 @@ model Booking {
   @@index([date])
   @@index([barberId, date])
   @@index([status, expiresAt])
+  @@index([date, reminderSentAt])
 }
 
 /// Sinal de um agendamento.

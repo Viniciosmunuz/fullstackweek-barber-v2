@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/app/_lib/prisma"
 import { getAsaasWebhookToken } from "@/app/_lib/config"
 import { notifyBarbershop } from "@/app/_lib/notify-barbershop"
+import { notifyClient } from "@/app/_lib/notify-client"
 
 /**
  * Recebe do provedor o aviso de que o sinal caiu.
@@ -135,9 +136,15 @@ async function confirmBooking(paymentId: string, bookingId: string) {
     where: { id: booking.id },
     select: {
       date: true,
-      user: { select: { name: true } },
+      user: { select: { name: true, email: true } },
       barber: { select: { name: true } },
-      service: { select: { name: true, barbershopId: true } },
+      service: {
+        select: {
+          name: true,
+          barbershopId: true,
+          barbershop: { select: { name: true, address: true } },
+        },
+      },
     },
   })
 
@@ -150,5 +157,18 @@ async function confirmBooking(paymentId: string, bookingId: string) {
     barberName: full.barber?.name ?? null,
     date: full.date,
     paid: true,
+  })
+
+  // Quem pagou o sinal só tem a tela como prova. A confirmação por e-mail é o
+  // comprovante que fica.
+  await notifyClient({
+    kind: "CONFIRMED",
+    email: full.user.email,
+    clientName: full.user.name ?? "Cliente",
+    barbershopName: full.service.barbershop.name,
+    serviceName: full.service.name,
+    barberName: full.barber?.name ?? null,
+    date: full.date,
+    address: full.service.barbershop.address,
   })
 }

@@ -4,6 +4,7 @@ const TOKEN = "token-secreto"
 
 const getAsaasWebhookToken = vi.fn(() => TOKEN)
 const notifyBarbershop = vi.fn()
+const notifyClient = vi.fn()
 
 const db = {
   payment: { findUnique: vi.fn(), update: vi.fn() },
@@ -15,6 +16,7 @@ const db = {
 vi.mock("@/app/_lib/prisma", () => ({ db }))
 vi.mock("@/app/_lib/config", () => ({ getAsaasWebhookToken }))
 vi.mock("@/app/_lib/notify-barbershop", () => ({ notifyBarbershop }))
+vi.mock("@/app/_lib/notify-client", () => ({ notifyClient }))
 
 const { POST } = await import("@/app/api/webhooks/asaas/route")
 
@@ -52,9 +54,13 @@ beforeEach(() => {
   db.payment.update.mockResolvedValue({ id: "pay-1" })
   db.booking.findUnique.mockResolvedValue({
     date: new Date("2026-08-12T14:00:00.000Z"),
-    user: { name: "Cliente" },
+    user: { name: "Cliente", email: "cliente@exemplo.com" },
     barber: { name: "Barbeiro" },
-    service: { name: "Corte", barbershopId: "shop-1" },
+    service: {
+      name: "Corte",
+      barbershopId: "shop-1",
+      barbershop: { name: "Barbearia Modelo", address: "Rua Exemplo, 123" },
+    },
   })
 })
 
@@ -212,6 +218,21 @@ describe("aplicação do evento", () => {
 
     expect(notifyBarbershop).toHaveBeenCalledWith(
       expect.objectContaining({ barbershopId: "shop-1", paid: true }),
+    )
+  })
+
+  it("manda ao cliente a confirmação do que ele pagou", async () => {
+    // Quem pagou o sinal só tem a tela como prova; o e-mail é o comprovante
+    // que fica.
+    db.payment.findUnique.mockResolvedValue(PAGAMENTO)
+
+    await POST(evento(CORPO))
+
+    expect(notifyClient).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "CONFIRMED",
+        email: "cliente@exemplo.com",
+      }),
     )
   })
 
