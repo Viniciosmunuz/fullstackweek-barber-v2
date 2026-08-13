@@ -88,7 +88,17 @@ export const getConfirmedBookings = async (): Promise<BookingItemData[]> => {
   await expireStaleHolds()
 
   const rows = await db.booking.findMany({
-    where: { userId, date: { gte: new Date() }, ...REAL_BOOKING },
+    where: {
+      userId,
+      AND: [
+        REAL_BOOKING,
+        { date: { gte: new Date() } },
+        // Concluído sai daqui mesmo com data futura: a barbearia pode encerrar
+        // o atendimento antes da hora marcada, e deixá-lo em "próximos" faria
+        // o cliente achar que ainda vai acontecer de novo.
+        { status: { not: "COMPLETED" as const } },
+      ],
+    },
     select: BOOKING_SELECT,
     orderBy: { date: "asc" },
   })
@@ -104,7 +114,17 @@ export const getConcludedBookingsData = async (): Promise<
   if (!userId) return []
 
   const rows = await db.booking.findMany({
-    where: { userId, date: { lt: new Date() }, ...REAL_BOOKING },
+    where: {
+      userId,
+      AND: [
+        REAL_BOOKING,
+        // Duas formas de estar concluído: a hora passou, ou a barbearia
+        // encerrou. A segunda é a que libera a avaliação.
+        {
+          OR: [{ date: { lt: new Date() } }, { status: "COMPLETED" as const }],
+        },
+      ],
+    },
     select: BOOKING_SELECT,
     orderBy: { date: "desc" },
   })

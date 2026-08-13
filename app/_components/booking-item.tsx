@@ -77,7 +77,19 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
   const { barbershop } = booking.service
   const date = new Date(booking.date)
-  const isConfirmed = isFuture(date)
+
+  /**
+   * O atendimento já aconteceu.
+   *
+   * Basta a barbearia ter marcado como concluído — não é preciso a data ter
+   * passado também. Exigir as duas coisas escondia o botão de avaliar de quem
+   * foi atendido num horário de hoje mais cedo do que o relógio, ou num
+   * atendimento que a casa encerrou adiantado.
+   *
+   * A data ainda conta para o caso oposto: horário que passou e a barbearia
+   * nunca marcou nada continua saindo da lista de próximos.
+   */
+  const concluded = booking.canReview || !isFuture(date)
 
   const handleCancelBooking = async () => {
     setCancelling(true)
@@ -103,9 +115,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           <div className="flex min-w-0 flex-1 flex-col gap-2 p-4">
             <Badge
               className="w-fit"
-              variant={isConfirmed ? "default" : "secondary"}
+              variant={concluded ? "secondary" : "default"}
             >
-              {isConfirmed ? "Confirmado" : "Concluído"}
+              {concluded ? "Concluído" : "Confirmado"}
             </Badge>
 
             <h3 className="truncate font-display font-bold">
@@ -197,9 +209,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         <div className="mt-6">
           <Badge
             className="w-fit"
-            variant={isConfirmed ? "default" : "secondary"}
+            variant={concluded ? "secondary" : "default"}
           >
-            {isConfirmed ? "Confirmado" : "Concluído"}
+            {concluded ? "Concluído" : "Confirmado"}
           </Badge>
 
           <div className="mb-4 mt-4">
@@ -227,7 +239,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </Button>
           </SheetClose>
 
-          {isConfirmed && (
+          {!concluded && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="destructive" className="w-full">
@@ -267,7 +279,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             Só faz sentido depois que a barbearia marcou como concluído — é o
             que prova que a visita aconteceu, e o servidor recusa antes disso.
           */}
-          {!isConfirmed && booking.canReview && (
+          {booking.canReview && (
             <div className="w-full">
               <ReviewForm
                 bookingId={booking.id}
