@@ -8,6 +8,7 @@ import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { inviteTeamMember } from "@/app/_actions/dashboard/team"
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
+import { reportInvite } from "@/app/_lib/invite-feedback"
 
 /**
  * Libera um e-mail para o painel.
@@ -32,17 +33,7 @@ const TeamInviteForm = ({ barbershopId }: { barbershopId: string }) => {
 
         // O acesso já está liberado mesmo quando o e-mail não sai. Dizer isso
         // evita que o dono ache que precisa convidar de novo.
-        if (result.email.status === "sent") {
-          toast.success(`Acesso liberado. Convite enviado para ${email}.`)
-        } else if (result.email.status === "skipped") {
-          toast.info(
-            "Acesso liberado. O envio de e-mail não está configurado — copie o convite na linha.",
-          )
-        } else {
-          toast.warning(
-            `Acesso liberado, mas o e-mail não saiu: ${result.email.reason}`,
-          )
-        }
+        reportInvite(result.email, `Acesso liberado para ${email}.`)
 
         setEmail("")
         setRole("STAFF")

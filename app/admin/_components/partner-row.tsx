@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
+import { reportInvite } from "@/app/_lib/invite-feedback"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -141,10 +142,31 @@ export const InviteButton = ({
   barbershopId: string
   name: string
 }) => {
-  const { pending, run } = useAction()
+  const router = useRouter()
+  const [pending, startTransition] = useTransition()
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [role, setRole] = useState<"OWNER" | "STAFF">("STAFF")
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+
+    startTransition(async () => {
+      try {
+        const result = await unwrap(
+          invitePartnerManager({ barbershopId, email, role }),
+        )
+
+        reportInvite(result.email, `${email} liberado para ${name}.`)
+
+        setEmail("")
+        setOpen(false)
+        router.refresh()
+      } catch (error) {
+        toast.error(messageFrom(error, "Não foi possível liberar o acesso."))
+      }
+    })
+  }
 
   if (!open) {
     return (
@@ -156,18 +178,7 @@ export const InviteButton = ({
   }
 
   return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault()
-        run(
-          () => unwrap(invitePartnerManager({ barbershopId, email, role })),
-          `${email} liberado para ${name}.`,
-        )
-        setEmail("")
-        setOpen(false)
-      }}
-      className="flex flex-wrap items-center gap-2"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
       <Input
         required
         type="email"
@@ -233,13 +244,7 @@ export const InviteActions = ({
       try {
         const result = await unwrap(resendInvite(inviteId))
 
-        if (result.email.status === "sent") {
-          toast.success(`Convite reenviado para ${email}.`)
-        } else if (result.email.status === "skipped") {
-          toast.info("Envio de e-mail não configurado. Copie a mensagem.")
-        } else {
-          toast.error(`O provedor recusou: ${result.email.reason}`)
-        }
+        reportInvite(result.email, `Convite de ${email} reenviado.`)
       } catch (error) {
         toast.error(messageFrom(error, "Não foi possível reenviar."))
       }

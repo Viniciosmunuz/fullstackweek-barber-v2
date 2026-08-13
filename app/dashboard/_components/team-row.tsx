@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
+import { reportInvite } from "@/app/_lib/invite-feedback"
 import { useRouter } from "next/navigation"
 import { Copy, Loader2, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -88,13 +89,7 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
           resendTeamInvite(barbershopId, member.inviteId),
         )
 
-        if (result.email.status === "sent") {
-          toast.success(`Convite reenviado para ${member.email}.`)
-        } else if (result.email.status === "skipped") {
-          toast.info("Envio de e-mail não configurado. Copie o convite.")
-        } else {
-          toast.error(`O provedor recusou: ${result.email.reason}`)
-        }
+        reportInvite(result.email, `Convite de ${member.email} reenviado.`)
       } catch (error) {
         toast.error(messageFrom(error, "Não foi possível reenviar."))
       }

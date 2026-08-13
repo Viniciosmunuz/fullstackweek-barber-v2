@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react"
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
+import { reportInvite } from "@/app/_lib/invite-feedback"
 import { useRouter } from "next/navigation"
 import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -32,17 +33,7 @@ const NewPartnerForm = () => {
 
         // O cadastro já está feito; o e-mail é o extra. A mensagem diz qual dos
         // dois aconteceu para o administrador saber se precisa avisar à mão.
-        if (result.email.status === "sent") {
-          toast.success(`${form.name} cadastrada. Convite enviado por e-mail.`)
-        } else if (result.email.status === "skipped") {
-          toast.success(`${form.name} cadastrada.`, {
-            description: "Envio de e-mail não configurado — copie o convite.",
-          })
-        } else {
-          toast.warning(`${form.name} cadastrada, mas o e-mail falhou.`, {
-            description: "Use o botão de copiar convite.",
-          })
-        }
+        reportInvite(result.email, `${form.name} cadastrada.`)
 
         setForm({ name: "", city: "", ownerEmail: "" })
         setOpen(false)
