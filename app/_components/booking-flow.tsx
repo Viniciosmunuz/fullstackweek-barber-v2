@@ -3,6 +3,7 @@
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { ptBR } from "date-fns/locale"
 import { format, set } from "date-fns"
 import { Check, ChevronLeft, Loader2 } from "lucide-react"
@@ -499,6 +500,32 @@ const BookingFlow = ({
           </div>
         )}
       </div>
+
+      {/* No passo da confirmação o nome do cliente e o contato passam a ser
+          da barbearia. É onde o aviso precisa estar, não numa página que
+          ninguém abre. */}
+      {step === 3 && (
+        <p className="border-t border-white/[0.06] px-5 pt-4 text-[11px] leading-relaxed text-muted-foreground">
+          Ao confirmar, seus dados de contato ficam visíveis para esta
+          barbearia. Veja os{" "}
+          <Link
+            href="/termos"
+            target="_blank"
+            className="text-primary underline underline-offset-2"
+          >
+            Termos
+          </Link>{" "}
+          e a{" "}
+          <Link
+            href="/privacidade"
+            target="_blank"
+            className="text-primary underline underline-offset-2"
+          >
+            Política de Privacidade
+          </Link>
+          .
+        </p>
+      )}
 
       {/* Rodapé de navegação */}
       <div className="flex gap-2 border-t border-white/[0.06] p-5">

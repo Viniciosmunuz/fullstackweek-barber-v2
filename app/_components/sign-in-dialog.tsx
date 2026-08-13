@@ -1,5 +1,6 @@
 import { signIn } from "next-auth/react"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "./ui/button"
 import { DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog"
 import { BarberFlowMark } from "./brand/logo"
@@ -37,8 +38,26 @@ const SignInDialog = () => {
         Continuar com o Google
       </Button>
 
-      <p className="text-center text-xs text-muted-foreground">
-        Usamos sua conta apenas para identificar seus agendamentos.
+      {/* O aviso fica aqui, e não escondido no rodapé: é neste botão que a
+          conta passa a existir, então é aqui que a pessoa tem de saber ao que
+          está concordando. */}
+      <p className="text-center text-xs leading-relaxed text-muted-foreground">
+        Usamos sua conta apenas para identificar seus agendamentos. Ao
+        continuar, você concorda com os{" "}
+        <Link
+          href="/termos"
+          className="text-primary underline underline-offset-2"
+        >
+          Termos de Uso
+        </Link>{" "}
+        e a{" "}
+        <Link
+          href="/privacidade"
+          className="text-primary underline underline-offset-2"
+        >
+          Política de Privacidade
+        </Link>
+        .
       </p>
     </>
   )
