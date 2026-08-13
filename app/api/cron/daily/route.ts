@@ -3,6 +3,7 @@ import { addDays, endOfDay, startOfDay } from "date-fns"
 import { db } from "@/app/_lib/prisma"
 import { notifyClient } from "@/app/_lib/notify-client"
 import { getCronSecret } from "@/app/_lib/config"
+import { cleanupOrphanImages } from "@/app/_lib/cleanup-images"
 
 /** Prisma não roda no runtime de edge. */
 export const runtime = "nodejs"
@@ -12,16 +13,21 @@ export const dynamic = "force-dynamic"
 const BATCH = 200
 
 /**
- * Lembrete da véspera.
+ * Manutenção diária.
  *
- * Roda uma vez por dia e avisa quem tem horário marcado para amanhã. É o aviso
- * que mais muda o resultado do negócio: falta sem avisar é o problema que o
- * sinal existe para resolver, e cobrar sinal sem lembrar do horário ataca o
- * sintoma em vez da causa.
+ * Uma rota só para as duas tarefas que rodam sem ninguém pedir, porque o
+ * agendador gratuito da Vercel é limitado e não vale gastar duas vagas no que
+ * cabe numa passada.
  *
- * Uma vez por dia, e não uma hora antes, por dois motivos: cabe no agendador
- * gratuito da Vercel, e a véspera é quando o cliente ainda consegue remanejar o
- * dia — uma hora antes ele só descobre que vai se atrasar.
+ * **Lembrete da véspera.** Avisa quem tem horário marcado para amanhã. É o
+ * aviso que mais muda o resultado do negócio: falta sem avisar é o problema que
+ * o sinal existe para resolver, e cobrar sinal sem lembrar do horário ataca o
+ * sintoma. Diário, e não "uma hora antes", porque a véspera é quando o cliente
+ * ainda consegue remanejar o dia.
+ *
+ * **Limpeza de imagens.** Trocar a logo deixa a anterior sem dono, e enviar um
+ * arquivo sem salvar o formulário cria um órfão de nascença. Como as imagens
+ * moram no próprio banco, isso é espaço que só cresce.
  *
  * A rota é protegida por segredo. Aberta, qualquer pessoa dispararia a
  * varredura à vontade; e como cada agendamento só é avisado uma vez, isso
@@ -99,5 +105,13 @@ export async function GET(request: Request) {
     })
   }
 
-  return NextResponse.json({ ok: true, encontrados: bookings.length, enviados })
+  // A limpeza roda depois, e separada: se o envio de lembrete falhar, não há
+  // motivo para o espaço do banco ficar crescendo junto.
+  const imagensApagadas = await cleanupOrphanImages()
+
+  return NextResponse.json({
+    ok: true,
+    lembretes: { encontrados: bookings.length, enviados },
+    imagensApagadas,
+  })
 }
