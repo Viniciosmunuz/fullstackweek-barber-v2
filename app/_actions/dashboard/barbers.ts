@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 
 const barberSchema = z.object({
@@ -22,18 +23,20 @@ export async function createBarber(
   barbershopId: string,
   input: z.infer<typeof barberSchema>,
 ) {
-  await requireOwner(barbershopId)
+  return runAction(async () => {
+    await requireOwner(barbershopId)
 
-  const parsed = barberSchema.safeParse(input)
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
-  }
+    const parsed = barberSchema.safeParse(input)
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
 
-  await db.barber.create({
-    data: { ...parsed.data, imageUrl: "", barbershopId },
+    await db.barber.create({
+      data: { ...parsed.data, imageUrl: "", barbershopId },
+    })
+
+    revalidate()
   })
-
-  revalidate()
 }
 
 /**
@@ -46,7 +49,7 @@ async function authorizeBarber(barberId: string) {
     select: { barbershopId: true },
   })
 
-  if (!barber) throw new Error("Profissional não encontrado.")
+  if (!barber) throw new UserFacingError("Profissional não encontrado.")
 
   await requireOwner(barber.barbershopId)
 }
@@ -55,16 +58,18 @@ export async function updateBarber(
   barberId: string,
   input: z.infer<typeof barberSchema>,
 ) {
-  await authorizeBarber(barberId)
+  return runAction(async () => {
+    await authorizeBarber(barberId)
 
-  const parsed = barberSchema.safeParse(input)
-  if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
-  }
+    const parsed = barberSchema.safeParse(input)
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
 
-  await db.barber.update({ where: { id: barberId }, data: parsed.data })
+    await db.barber.update({ where: { id: barberId }, data: parsed.data })
 
-  revalidate()
+    revalidate()
+  })
 }
 
 /**
@@ -75,17 +80,19 @@ export async function updateBarber(
  * desativar: some da escolha no agendamento e o passado continua íntegro.
  */
 export async function deleteBarber(barberId: string) {
-  await authorizeBarber(barberId)
+  return runAction(async () => {
+    await authorizeBarber(barberId)
 
-  const bookings = await db.booking.count({ where: { barberId } })
+    const bookings = await db.booking.count({ where: { barberId } })
 
-  if (bookings > 0) {
-    throw new Error(
-      `Este profissional tem ${bookings} atendimentos no histórico. Desative em vez de excluir.`,
-    )
-  }
+    if (bookings > 0) {
+      throw new UserFacingError(
+        `Este profissional tem ${bookings} atendimentos no histórico. Desative em vez de excluir.`,
+      )
+    }
 
-  await db.barber.delete({ where: { id: barberId } })
+    await db.barber.delete({ where: { id: barberId } })
 
-  revalidate()
+    revalidate()
+  })
 }

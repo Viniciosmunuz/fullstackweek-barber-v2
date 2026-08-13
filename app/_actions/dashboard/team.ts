@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
 import { buildInviteMessage } from "@/app/_lib/email"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 import { dashboardUrl, notifyInvite } from "./invite-mail"
 
@@ -34,7 +35,8 @@ async function loadInvite(barbershopId: string, inviteId: string) {
     select: { id: true, email: true, role: true },
   })
 
-  if (!invite) throw new Error("Acesso não encontrado nesta barbearia.")
+  if (!invite)
+    throw new UserFacingError("Acesso não encontrado nesta barbearia.")
 
   return invite
 }
@@ -54,7 +56,7 @@ async function assertNotLastOwner(barbershopId: string, targetRole: string) {
   })
 
   if (owners <= 1) {
-    throw new Error(
+    throw new UserFacingError(
       "Esta é a única pessoa responsável pela barbearia. Libere outro responsável antes.",
     )
   }
@@ -67,10 +69,10 @@ async function assertNotLastOwner(barbershopId: string, targetRole: string) {
  * a posse do endereço pelo login do Google, então não há token para vazar nem
  * link que continue valendo depois de encaminhado por engano.
  */
-export async function inviteTeamMember(input: z.infer<typeof inviteSchema>) {
+async function doInviteTeamMember(input: z.infer<typeof inviteSchema>) {
   const parsed = inviteSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    throw new UserFacingError(parsed.error.issues[0].message)
   }
 
   const { barbershopId, email, role } = parsed.data
@@ -89,9 +91,9 @@ export async function inviteTeamMember(input: z.infer<typeof inviteSchema>) {
   ])
 
   if (existing) {
-    throw new Error("Este e-mail já tem acesso a esta barbearia.")
+    throw new UserFacingError("Este e-mail já tem acesso a esta barbearia.")
   }
-  if (!barbershop) throw new Error("Barbearia não encontrada.")
+  if (!barbershop) throw new UserFacingError("Barbearia não encontrada.")
 
   await db.barbershopInvite.create({ data: { email, barbershopId, role } })
 
@@ -105,7 +107,7 @@ export async function inviteTeamMember(input: z.infer<typeof inviteSchema>) {
 }
 
 /** Manda o convite de novo, para quem perdeu ou não recebeu. */
-export async function resendTeamInvite(barbershopId: string, inviteId: string) {
+async function doResendTeamInvite(barbershopId: string, inviteId: string) {
   await requireOwner(barbershopId)
 
   const invite = await loadInvite(barbershopId, inviteId)
@@ -115,7 +117,7 @@ export async function resendTeamInvite(barbershopId: string, inviteId: string) {
     select: { name: true },
   })
 
-  if (!barbershop) throw new Error("Barbearia não encontrada.")
+  if (!barbershop) throw new UserFacingError("Barbearia não encontrada.")
 
   return {
     email: await notifyInvite(invite.email, barbershop.name, invite.role),
@@ -130,10 +132,7 @@ export async function resendTeamInvite(barbershopId: string, inviteId: string) {
  * WhatsApp de qualquer jeito. O conteúdo é o mesmo do envio automático, então
  * a instrução não muda conforme o canal.
  */
-export async function getTeamInviteText(
-  barbershopId: string,
-  inviteId: string,
-) {
+async function doGetTeamInviteText(barbershopId: string, inviteId: string) {
   await requireOwner(barbershopId)
 
   const invite = await loadInvite(barbershopId, inviteId)
@@ -143,7 +142,7 @@ export async function getTeamInviteText(
     select: { name: true },
   })
 
-  if (!barbershop) throw new Error("Barbearia não encontrada.")
+  if (!barbershop) throw new UserFacingError("Barbearia não encontrada.")
 
   const { text } = buildInviteMessage({
     barbershopName: barbershop.name,
@@ -162,10 +161,10 @@ const roleChangeSchema = z.object({
 })
 
 /** Promove a responsável ou devolve a equipe. */
-export async function updateTeamRole(input: z.infer<typeof roleChangeSchema>) {
+async function doUpdateTeamRole(input: z.infer<typeof roleChangeSchema>) {
   const parsed = roleChangeSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    throw new UserFacingError(parsed.error.issues[0].message)
   }
 
   const { barbershopId, inviteId, role } = parsed.data
@@ -178,7 +177,7 @@ export async function updateTeamRole(input: z.infer<typeof roleChangeSchema>) {
   // Rebaixar a si mesmo tira o próprio acesso à tela onde se está: fecharia a
   // porta por dentro, e nem sempre há outro dono para reabrir.
   if (viewer && viewer.toLowerCase() === invite.email.toLowerCase()) {
-    throw new Error("Você não pode mudar o seu próprio papel.")
+    throw new UserFacingError("Você não pode mudar o seu próprio papel.")
   }
 
   await assertNotLastOwner(barbershopId, invite.role)
@@ -220,10 +219,10 @@ const revokeSchema = z.object({
  * tocado: barbeiro é ficha da barbearia, e o histórico de atendimentos
  * continua íntegro mesmo quando quem atendeu perde o acesso ao painel.
  */
-export async function revokeTeamMember(input: z.infer<typeof revokeSchema>) {
+async function doRevokeTeamMember(input: z.infer<typeof revokeSchema>) {
   const parsed = revokeSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    throw new UserFacingError(parsed.error.issues[0].message)
   }
 
   const { barbershopId, inviteId } = parsed.data
@@ -232,7 +231,7 @@ export async function revokeTeamMember(input: z.infer<typeof revokeSchema>) {
   const invite = await loadInvite(barbershopId, inviteId)
 
   if (viewer && viewer.toLowerCase() === invite.email.toLowerCase()) {
-    throw new Error("Você não pode remover o seu próprio acesso.")
+    throw new UserFacingError("Você não pode remover o seu próprio acesso.")
   }
 
   await assertNotLastOwner(barbershopId, invite.role)
@@ -255,4 +254,41 @@ export async function revokeTeamMember(input: z.infer<typeof revokeSchema>) {
 
   revalidatePath("/dashboard/equipe")
   revalidatePath("/dashboard")
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fronteira das ações                                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * As funções acima lançam `UserFacingError` com o motivo da recusa — "esta é a
+ * única pessoa responsável", "você não pode remover o seu próprio acesso". São
+ * exatamente as mensagens que o dono precisa ler, e o Next as apagaria no
+ * caminho de volta se elas saíssem daqui como exceção.
+ *
+ * `runAction` converte cada uma em valor de retorno. O corpo fica em função
+ * separada, e não indentado dentro do envelope, para o diff continuar legível.
+ */
+
+export async function inviteTeamMember(input: z.infer<typeof inviteSchema>) {
+  return runAction(() => doInviteTeamMember(input))
+}
+
+export async function resendTeamInvite(barbershopId: string, inviteId: string) {
+  return runAction(() => doResendTeamInvite(barbershopId, inviteId))
+}
+
+export async function getTeamInviteText(
+  barbershopId: string,
+  inviteId: string,
+) {
+  return runAction(() => doGetTeamInviteText(barbershopId, inviteId))
+}
+
+export async function updateTeamRole(input: z.infer<typeof roleChangeSchema>) {
+  return runAction(() => doUpdateTeamRole(input))
+}
+
+export async function revokeTeamMember(input: z.infer<typeof revokeSchema>) {
+  return runAction(() => doRevokeTeamMember(input))
 }

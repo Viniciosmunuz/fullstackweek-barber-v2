@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -44,9 +45,7 @@ function useAction() {
         toast.success(success)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível concluir.",
-        )
+        toast.error(messageFrom(error, "Não foi possível concluir."))
       }
     })
 
@@ -109,7 +108,7 @@ export const PartnerActions = ({
         disabled={pending}
         onClick={() =>
           run(
-            () => setPartnerPublished(barbershopId, !isPublished),
+            () => unwrap(setPartnerPublished(barbershopId, !isPublished)),
             isPublished ? "Removida do catálogo." : "Publicada no catálogo.",
           )
         }
@@ -124,7 +123,7 @@ export const PartnerActions = ({
         disabled={pending}
         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
         onClick={() =>
-          run(() => deletePartner(barbershopId), `${name} removida.`)
+          run(() => unwrap(deletePartner(barbershopId)), `${name} removida.`)
         }
       >
         <Trash2 size={14} />
@@ -161,7 +160,7 @@ export const InviteButton = ({
       onSubmit={(event) => {
         event.preventDefault()
         run(
-          () => invitePartnerManager({ barbershopId, email, role }),
+          () => unwrap(invitePartnerManager({ barbershopId, email, role })),
           `${email} liberado para ${name}.`,
         )
         setEmail("")
@@ -232,7 +231,7 @@ export const InviteActions = ({
   const handleResend = () =>
     startTransition(async () => {
       try {
-        const result = await resendInvite(inviteId)
+        const result = await unwrap(resendInvite(inviteId))
 
         if (result.email.status === "sent") {
           toast.success(`Convite reenviado para ${email}.`)
@@ -242,16 +241,14 @@ export const InviteActions = ({
           toast.error(`O provedor recusou: ${result.email.reason}`)
         }
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível reenviar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível reenviar."))
       }
     })
 
   const handleCopy = () =>
     startTransition(async () => {
       try {
-        const text = await getInviteText(inviteId)
+        const text = await unwrap(getInviteText(inviteId))
         await navigator.clipboard.writeText(text)
         toast.success("Convite copiado. Cole no WhatsApp ou no seu e-mail.")
       } catch {
@@ -306,7 +303,7 @@ export const RevokeButton = ({
       aria-label={`Revogar acesso de ${email}`}
       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
       onClick={() =>
-        run(() => revokePartnerAccess(inviteId), "Acesso revogado.")
+        run(() => unwrap(revokePartnerAccess(inviteId)), "Acesso revogado.")
       }
     >
       <X size={14} />

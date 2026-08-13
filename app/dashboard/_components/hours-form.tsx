@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import { Loader2, Save } from "lucide-react"
 import { toast } from "sonner"
@@ -51,13 +52,11 @@ const HoursForm = ({
 
     startTransition(async () => {
       try {
-        await updateOpeningHours(barbershopId, week)
+        await unwrap(updateOpeningHours(barbershopId, week))
         toast.success("Horários salvos.")
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível salvar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível salvar."))
       }
     })
   }

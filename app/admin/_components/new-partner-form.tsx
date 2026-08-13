@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import { Loader2, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -27,7 +28,7 @@ const NewPartnerForm = () => {
 
     startTransition(async () => {
       try {
-        const result = await createPartner(form)
+        const result = await unwrap(createPartner(form))
 
         // O cadastro já está feito; o e-mail é o extra. A mensagem diz qual dos
         // dois aconteceu para o administrador saber se precisa avisar à mão.
@@ -47,9 +48,7 @@ const NewPartnerForm = () => {
         setOpen(false)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível cadastrar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível cadastrar."))
       }
     })
   }

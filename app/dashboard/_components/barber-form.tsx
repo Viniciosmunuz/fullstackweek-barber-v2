@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import { Loader2, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -56,19 +57,17 @@ const BarberForm = ({ barbershopId, barber }: BarberFormProps) => {
     startTransition(async () => {
       try {
         if (barber) {
-          await updateBarber(barber.id, form)
+          await unwrap(updateBarber(barber.id, form))
           toast.success("Profissional atualizado.")
         } else {
-          await createBarber(barbershopId, form)
+          await unwrap(createBarber(barbershopId, form))
           toast.success("Profissional adicionado.")
           setForm({ name: "", specialty: "", bio: "", active: true })
         }
         setOpen(false)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível salvar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível salvar."))
       }
     })
   }
@@ -78,14 +77,12 @@ const BarberForm = ({ barbershopId, barber }: BarberFormProps) => {
 
     startTransition(async () => {
       try {
-        await deleteBarber(barber.id)
+        await unwrap(deleteBarber(barber.id))
         toast.success("Profissional removido.")
         setOpen(false)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível remover.",
-        )
+        toast.error(messageFrom(error, "Não foi possível remover."))
       }
     })
   }
@@ -94,7 +91,11 @@ const BarberForm = ({ barbershopId, barber }: BarberFormProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEdit ? (
-          <Button variant="ghost" size="sm" aria-label={`Editar ${barber?.name}`}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Editar ${barber?.name}`}
+          >
             <Pencil size={14} />
             Editar
           </Button>

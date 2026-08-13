@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requirePlatformAdmin } from "../dashboard/guard"
 import { notifyInvite } from "../dashboard/invite-mail"
 
@@ -24,14 +25,16 @@ const ACCENT_MARKS = /[\u0300-\u036f]/g
 
 /** "Barbearia do Zé" -> "barbearia-do-ze" */
 function slugify(value: string) {
-  return value
-    .normalize("NFD")
-    // Tira os acentos que o NFD separou das letras.
-    .replace(ACCENT_MARKS, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60)
+  return (
+    value
+      .normalize("NFD")
+      // Tira os acentos que o NFD separou das letras.
+      .replace(ACCENT_MARKS, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60)
+  )
 }
 
 /** Garante unicidade acrescentando sufixo numérico quando o slug já existe. */
@@ -57,12 +60,12 @@ async function uniqueSlug(base: string) {
  * preenche endereço, contato e descrição é o próprio dono, que conhece o
  * negócio. Enquanto isso ela não aparece para os clientes.
  */
-export async function createPartner(input: z.infer<typeof createSchema>) {
+async function doCreatePartner(input: z.infer<typeof createSchema>) {
   await requirePlatformAdmin()
 
   const parsed = createSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    throw new UserFacingError(parsed.error.issues[0].message)
   }
 
   const { name, ownerEmail, city } = parsed.data
@@ -104,12 +107,12 @@ const inviteSchema = z.object({
 })
 
 /** Libera mais um e-mail para administrar uma barbearia já cadastrada. */
-export async function invitePartnerManager(input: z.infer<typeof inviteSchema>) {
+async function doInvitePartnerManager(input: z.infer<typeof inviteSchema>) {
   await requirePlatformAdmin()
 
   const parsed = inviteSchema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0].message)
+    throw new UserFacingError(parsed.error.issues[0].message)
   }
 
   const { barbershopId, email, role } = parsed.data
@@ -126,9 +129,11 @@ export async function invitePartnerManager(input: z.infer<typeof inviteSchema>) 
   ])
 
   if (existing) {
-    throw new Error("Este e-mail já está liberado para esta barbearia.")
+    throw new UserFacingError(
+      "Este e-mail já está liberado para esta barbearia.",
+    )
   }
-  if (!barbershop) throw new Error("Barbearia não encontrada.")
+  if (!barbershop) throw new UserFacingError("Barbearia não encontrada.")
 
   await db.barbershopInvite.create({ data: { email, barbershopId, role } })
 
@@ -140,7 +145,7 @@ export async function invitePartnerManager(input: z.infer<typeof inviteSchema>) 
 }
 
 /** Reenvia o convite de um e-mail já liberado. */
-export async function resendInvite(inviteId: string) {
+async function doResendInvite(inviteId: string) {
   await requirePlatformAdmin()
 
   const invite = await db.barbershopInvite.findUnique({
@@ -148,7 +153,7 @@ export async function resendInvite(inviteId: string) {
     select: { email: true, role: true, barbershop: { select: { name: true } } },
   })
 
-  if (!invite) throw new Error("Convite não encontrado.")
+  if (!invite) throw new UserFacingError("Convite não encontrado.")
 
   return {
     email: await notifyInvite(
@@ -165,7 +170,7 @@ export async function resendInvite(inviteId: string) {
  * Remove o convite e também o vínculo já aceito — só apagar o convite deixaria
  * quem já entrou continuar entrando.
  */
-export async function revokePartnerAccess(inviteId: string) {
+async function doRevokePartnerAccess(inviteId: string) {
   await requirePlatformAdmin()
 
   const invite = await db.barbershopInvite.findUnique({
@@ -173,7 +178,7 @@ export async function revokePartnerAccess(inviteId: string) {
     select: { email: true, barbershopId: true },
   })
 
-  if (!invite) throw new Error("Convite não encontrado.")
+  if (!invite) throw new UserFacingError("Convite não encontrado.")
 
   const user = await db.user.findUnique({
     where: { email: invite.email },
@@ -195,7 +200,7 @@ export async function revokePartnerAccess(inviteId: string) {
 }
 
 /** Remove a barbearia e tudo que depende dela. */
-export async function deletePartner(barbershopId: string) {
+async function doDeletePartner(barbershopId: string) {
   await requirePlatformAdmin()
 
   const bookings = await db.booking.count({
@@ -203,7 +208,7 @@ export async function deletePartner(barbershopId: string) {
   })
 
   if (bookings > 0) {
-    throw new Error(
+    throw new UserFacingError(
       `Esta barbearia tem ${bookings} agendamentos registrados. Despublique em vez de excluir.`,
     )
   }
@@ -214,7 +219,7 @@ export async function deletePartner(barbershopId: string) {
 }
 
 /** Tira do ar ou devolve ao catálogo sem apagar nada. */
-export async function setPartnerPublished(
+async function doSetPartnerPublished(
   barbershopId: string,
   isPublished: boolean,
 ) {
@@ -227,4 +232,43 @@ export async function setPartnerPublished(
 
   revalidatePath("/admin")
   revalidatePath("/barbershops")
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fronteira das ações                                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Mesmo motivo do painel da barbearia: recusa prevista — "este e-mail já está
+ * liberado", "esta barbearia tem 12 agendamentos registrados" — precisa chegar
+ * inteira na tela, e o Next apaga a mensagem de exceção lançada por ação.
+ */
+
+export async function createPartner(input: z.infer<typeof createSchema>) {
+  return runAction(() => doCreatePartner(input))
+}
+
+export async function invitePartnerManager(
+  input: z.infer<typeof inviteSchema>,
+) {
+  return runAction(() => doInvitePartnerManager(input))
+}
+
+export async function resendInvite(inviteId: string) {
+  return runAction(() => doResendInvite(inviteId))
+}
+
+export async function revokePartnerAccess(inviteId: string) {
+  return runAction(() => doRevokePartnerAccess(inviteId))
+}
+
+export async function deletePartner(barbershopId: string) {
+  return runAction(() => doDeletePartner(barbershopId))
+}
+
+export async function setPartnerPublished(
+  barbershopId: string,
+  isPublished: boolean,
+) {
+  return runAction(() => doSetPartnerPublished(barbershopId, isPublished))
 }

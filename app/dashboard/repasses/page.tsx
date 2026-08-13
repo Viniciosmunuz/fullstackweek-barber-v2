@@ -52,7 +52,7 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
     <>
       <PageHeader
         title="Repasses"
-        description={`Sinais recebidos pela ${barbershop.name}.`}
+        description={`Dinheiro que entrou de verdade na conta da ${barbershop.name}, por sinal pago.`}
         shops={shops}
         current={barbershop}
       >
@@ -108,13 +108,22 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
                     <th scope="col" className="px-4 py-2 font-medium">
                       Serviço
                     </th>
-                    <th scope="col" className="px-4 py-2 text-right font-medium">
+                    <th
+                      scope="col"
+                      className="px-4 py-2 text-right font-medium"
+                    >
                       Sinal
                     </th>
-                    <th scope="col" className="px-4 py-2 text-right font-medium">
+                    <th
+                      scope="col"
+                      className="px-4 py-2 text-right font-medium"
+                    >
                       Taxa
                     </th>
-                    <th scope="col" className="px-4 py-2 text-right font-medium">
+                    <th
+                      scope="col"
+                      className="px-4 py-2 text-right font-medium"
+                    >
                       Você recebeu
                     </th>
                   </tr>
@@ -122,9 +131,14 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
 
                 <tbody className="divide-y divide-white/[0.04]">
                   {payouts.rows.map((row) => (
-                    <tr key={row.id} className={row.refunded ? "opacity-55" : undefined}>
+                    <tr
+                      key={row.id}
+                      className={row.refunded ? "opacity-55" : undefined}
+                    >
                       <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                        {format(row.paidAt, "dd/MM 'às' HH:mm", { locale: ptBR })}
+                        {format(row.paidAt, "dd/MM 'às' HH:mm", {
+                          locale: ptBR,
+                        })}
                       </td>
                       <td className="px-4 py-2.5">
                         {row.serviceName}

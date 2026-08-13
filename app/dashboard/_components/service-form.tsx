@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/app/_components/ui/dialog"
 import ImageField from "./image-field"
-import { messageFrom } from "@/app/_lib/action-result"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import {
   createService,
   deleteService,
@@ -106,14 +106,12 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
 
     startTransition(async () => {
       try {
-        await deleteService(service.id)
+        await unwrap(deleteService(service.id))
         toast.success("Serviço removido.")
         setOpen(false)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível remover.",
-        )
+        toast.error(messageFrom(error, "Não foi possível remover."))
       }
     })
   }
@@ -122,7 +120,11 @@ const ServiceForm = ({ barbershopId, service }: ServiceFormProps) => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {isEdit ? (
-          <Button variant="ghost" size="sm" aria-label={`Editar ${service?.name}`}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={`Editar ${service?.name}`}
+          >
             <Pencil size={14} />
             Editar
           </Button>

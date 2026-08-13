@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requireManager } from "./guard"
 
 const schema = z.object({
@@ -17,9 +18,17 @@ const schema = z.object({
  * ação recalcula as telas que dependem disso.
  */
 export async function updateBookingStatus(input: z.infer<typeof schema>) {
+  return runAction(async () => {
+    await applyBookingStatus(input)
+  })
+}
+
+async function applyBookingStatus(input: z.infer<typeof schema>) {
   const parsed = schema.safeParse(input)
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Dados inválidos.")
+    throw new UserFacingError(
+      parsed.error.issues[0]?.message ?? "Dados inválidos.",
+    )
   }
 
   const { bookingId, status } = parsed.data
@@ -36,7 +45,7 @@ export async function updateBookingStatus(input: z.infer<typeof schema>) {
   })
 
   if (!booking) {
-    throw new Error("Agendamento não encontrado.")
+    throw new UserFacingError("Agendamento não encontrado.")
   }
 
   await requireManager(booking.service.barbershopId)

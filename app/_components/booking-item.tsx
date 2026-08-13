@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { unwrap } from "@/app/_lib/action-result"
 import Image from "next/image"
 import { format, isFuture } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -72,7 +73,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   const handleCancelBooking = async () => {
     setCancelling(true)
     try {
-      await deleteBooking(booking.id)
+      await unwrap(deleteBooking(booking.id))
       setIsSheetOpen(false)
       toast.success("Agendamento cancelado.")
     } catch (error) {

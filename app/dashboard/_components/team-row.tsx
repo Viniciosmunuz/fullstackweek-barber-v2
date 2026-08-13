@@ -1,10 +1,15 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import { Copy, Loader2, Send, Trash2 } from "lucide-react"
 import { toast } from "sonner"
-import { Avatar, AvatarFallback, AvatarImage } from "@/app/_components/ui/avatar"
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/app/_components/ui/avatar"
 import { Button } from "@/app/_components/ui/button"
 import {
   getTeamInviteText,
@@ -46,9 +51,7 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
         toast.success(success)
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível concluir.",
-        )
+        toast.error(messageFrom(error, "Não foi possível concluir."))
       }
     })
 
@@ -58,11 +61,13 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
 
     startTransition(async () => {
       try {
-        await updateTeamRole({
-          barbershopId,
-          inviteId: member.inviteId,
-          role: next,
-        })
+        await unwrap(
+          updateTeamRole({
+            barbershopId,
+            inviteId: member.inviteId,
+            role: next,
+          }),
+        )
         toast.success(
           next === "OWNER"
             ? `${label} agora responde pela barbearia.`
@@ -71,11 +76,7 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
         router.refresh()
       } catch (error) {
         setRole(previous)
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Não foi possível mudar o papel.",
-        )
+        toast.error(messageFrom(error, "Não foi possível mudar o papel."))
       }
     })
   }
@@ -83,7 +84,9 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
   const handleResend = () =>
     startTransition(async () => {
       try {
-        const result = await resendTeamInvite(barbershopId, member.inviteId)
+        const result = await unwrap(
+          resendTeamInvite(barbershopId, member.inviteId),
+        )
 
         if (result.email.status === "sent") {
           toast.success(`Convite reenviado para ${member.email}.`)
@@ -93,16 +96,16 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
           toast.error(`O provedor recusou: ${result.email.reason}`)
         }
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível reenviar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível reenviar."))
       }
     })
 
   const handleCopy = () =>
     startTransition(async () => {
       try {
-        const text = await getTeamInviteText(barbershopId, member.inviteId)
+        const text = await unwrap(
+          getTeamInviteText(barbershopId, member.inviteId),
+        )
         await navigator.clipboard.writeText(text)
         toast.success("Convite copiado. Cole no WhatsApp.")
       } catch {
@@ -192,10 +195,12 @@ const TeamRow = ({ barbershopId, member, emailConfigured }: TeamRowProps) => {
                 onClick={() =>
                   run(
                     () =>
-                      revokeTeamMember({
-                        barbershopId,
-                        inviteId: member.inviteId,
-                      }),
+                      unwrap(
+                        revokeTeamMember({
+                          barbershopId,
+                          inviteId: member.inviteId,
+                        }),
+                      ),
                     `${label} não tem mais acesso.`,
                   )
                 }

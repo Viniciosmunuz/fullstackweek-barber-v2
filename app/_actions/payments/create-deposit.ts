@@ -12,6 +12,7 @@ import {
   getPixQrCode,
 } from "@/app/_lib/payments/asaas"
 import { isPaymentsConfigured } from "@/app/_lib/config"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import type { DepositResult } from "./types"
 
 /**
@@ -36,7 +37,7 @@ const schema = z.object({
     }),
 })
 
-export async function createBookingWithDeposit(
+async function doCreateBookingWithDeposit(
   input: z.infer<typeof schema>,
 ): Promise<DepositResult> {
   const { serviceId, barberId, date, cpfCnpj } = schema.parse(input)
@@ -47,13 +48,13 @@ export async function createBookingWithDeposit(
     | undefined
 
   if (!user?.id) {
-    throw new Error("Entre na sua conta para agendar.")
+    throw new UserFacingError("Entre na sua conta para agendar.")
   }
 
   const userId = user.id
 
   if (!isPaymentsConfigured()) {
-    throw new Error("Pagamento online indisponível no momento.")
+    throw new UserFacingError("Pagamento online indisponível no momento.")
   }
 
   // O preço e a política vêm do banco, nunca do cliente: o valor cobrado não
@@ -80,13 +81,15 @@ export async function createBookingWithDeposit(
   })
 
   if (!service) {
-    throw new Error("Serviço não encontrado.")
+    throw new UserFacingError("Serviço não encontrado.")
   }
 
   const shop = service.barbershop
 
   if (!shop.paymentsEnabled || !shop.payoutWalletId) {
-    throw new Error("Esta barbearia ainda não aceita pagamento pelo aplicativo.")
+    throw new UserFacingError(
+      "Esta barbearia ainda não aceita pagamento pelo aplicativo.",
+    )
   }
 
   const barber = await db.barber.findFirst({
@@ -95,7 +98,7 @@ export async function createBookingWithDeposit(
   })
 
   if (!barber) {
-    throw new Error("Profissional indisponível.")
+    throw new UserFacingError("Profissional indisponível.")
   }
 
   const conflict = await db.booking.findFirst({
@@ -104,7 +107,9 @@ export async function createBookingWithDeposit(
   })
 
   if (conflict) {
-    throw new Error("Este horário acabou de ser reservado. Escolha outro.")
+    throw new UserFacingError(
+      "Este horário acabou de ser reservado. Escolha outro.",
+    )
   }
 
   const breakdown = splitDeposit(service.price, {
@@ -115,7 +120,7 @@ export async function createBookingWithDeposit(
   })
 
   if (breakdown.amountCents <= 0) {
-    throw new Error("Sinal indisponível para este serviço.")
+    throw new UserFacingError("Sinal indisponível para este serviço.")
   }
 
   const expiresAt = holdDeadline()
@@ -195,8 +200,18 @@ export async function createBookingWithDeposit(
       .catch(() => undefined)
 
     console.error("Falha ao criar a cobrança do sinal:", error)
-    throw new Error(
+    throw new UserFacingError(
       "Não foi possível gerar o PIX agora. Tente de novo em instantes.",
     )
   }
+}
+
+/*
+ * Esta é a única ação que o cliente final dispara com dinheiro em jogo, e as
+ * recusas dela são as mais importantes de chegarem legíveis: "este horário
+ * acabou de ser reservado", "entre na sua conta para agendar". Um texto
+ * genérico aqui faz a pessoa tentar de novo sem saber o que mudar.
+ */
+export async function createBookingWithDeposit(input: z.infer<typeof schema>) {
+  return runAction(() => doCreateBookingWithDeposit(input))
 }

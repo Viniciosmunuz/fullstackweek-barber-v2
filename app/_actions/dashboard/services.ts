@@ -4,11 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
 import { IMAGE_SOURCE_MESSAGE, isImageSource } from "@/app/_lib/image-source"
-import {
-  actionError,
-  actionOk,
-  type ActionResult,
-} from "@/app/_lib/action-result"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 
 const serviceSchema = z.object({
@@ -40,21 +36,21 @@ function revalidate() {
 export async function createService(
   barbershopId: string,
   input: z.infer<typeof serviceSchema>,
-): Promise<ActionResult> {
-  await requireOwner(barbershopId)
+) {
+  return runAction(async () => {
+    await requireOwner(barbershopId)
 
-  const parsed = serviceSchema.safeParse(input)
-  if (!parsed.success) {
-    return actionError(parsed.error.issues[0].message)
-  }
+    const parsed = serviceSchema.safeParse(input)
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
 
-  await db.barbershopService.create({
-    data: { ...parsed.data, barbershopId },
+    await db.barbershopService.create({
+      data: { ...parsed.data, barbershopId },
+    })
+
+    revalidate()
   })
-
-  revalidate()
-
-  return actionOk()
 }
 
 /** A barbearia é derivada do serviço, nunca aceita do cliente. */
@@ -64,7 +60,7 @@ async function authorizeService(serviceId: string) {
     select: { barbershopId: true },
   })
 
-  if (!service) throw new Error("Serviço não encontrado.")
+  if (!service) throw new UserFacingError("Serviço não encontrado.")
 
   await requireOwner(service.barbershopId)
 }
@@ -72,22 +68,22 @@ async function authorizeService(serviceId: string) {
 export async function updateService(
   serviceId: string,
   input: z.infer<typeof serviceSchema>,
-): Promise<ActionResult> {
-  await authorizeService(serviceId)
+) {
+  return runAction(async () => {
+    await authorizeService(serviceId)
 
-  const parsed = serviceSchema.safeParse(input)
-  if (!parsed.success) {
-    return actionError(parsed.error.issues[0].message)
-  }
+    const parsed = serviceSchema.safeParse(input)
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
 
-  await db.barbershopService.update({
-    where: { id: serviceId },
-    data: parsed.data,
+    await db.barbershopService.update({
+      where: { id: serviceId },
+      data: parsed.data,
+    })
+
+    revalidate()
   })
-
-  revalidate()
-
-  return actionOk()
 }
 
 /**
@@ -100,17 +96,19 @@ export async function updateService(
  * apenas se o preço não mudar. Vale ter isso em mente ao reajustar tabela.
  */
 export async function deleteService(serviceId: string) {
-  await authorizeService(serviceId)
+  return runAction(async () => {
+    await authorizeService(serviceId)
 
-  const bookings = await db.booking.count({ where: { serviceId } })
+    const bookings = await db.booking.count({ where: { serviceId } })
 
-  if (bookings > 0) {
-    throw new Error(
-      `Este serviço tem ${bookings} agendamentos no histórico e não pode ser excluído.`,
-    )
-  }
+    if (bookings > 0) {
+      throw new UserFacingError(
+        `Este serviço tem ${bookings} agendamentos no histórico e não pode ser excluído.`,
+      )
+    }
 
-  await db.barbershopService.delete({ where: { id: serviceId } })
+    await db.barbershopService.delete({ where: { id: serviceId } })
 
-  revalidate()
+    revalidate()
+  })
 }

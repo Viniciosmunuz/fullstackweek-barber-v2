@@ -1,5 +1,6 @@
 "use client"
 
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ptBR } from "date-fns/locale"
@@ -53,10 +54,29 @@ type PayMode = "SHOP" | "DEPOSIT"
 const STEPS = ["Profissional", "Data", "Horário", "Confirmação"] as const
 
 const TIME_SLOTS = [
-  "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
-  "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-  "14:00", "14:30", "15:00", "15:30", "16:00", "16:30",
-  "17:00", "17:30", "18:00", "18:30", "19:00",
+  "08:00",
+  "08:30",
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "13:00",
+  "13:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+  "18:00",
+  "18:30",
+  "19:00",
 ]
 
 /**
@@ -157,23 +177,27 @@ const BookingFlow = ({
     setSubmitting(true)
     try {
       if (payMode === "DEPOSIT") {
-        const result = await createBookingWithDeposit({
-          serviceId: service.id,
-          barberId: barber.id,
-          date: selectedDate,
-          cpfCnpj: document,
-        })
+        const result = await unwrap(
+          createBookingWithDeposit({
+            serviceId: service.id,
+            barberId: barber.id,
+            date: selectedDate,
+            cpfCnpj: document,
+          }),
+        )
 
         // A reserva já existe segurando o horário; agora é esperar o PIX.
         setDeposit(result)
         return
       }
 
-      await createBooking({
-        serviceId: service.id,
-        barberId: barber.id,
-        date: selectedDate,
-      })
+      await unwrap(
+        createBooking({
+          serviceId: service.id,
+          barberId: barber.id,
+          date: selectedDate,
+        }),
+      )
 
       toast.success("Agendamento confirmado!", {
         description: `${service.name} · ${format(selectedDate, "dd/MM 'às' HH:mm", { locale: ptBR })}`,
@@ -186,9 +210,7 @@ const BookingFlow = ({
       router.refresh()
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Não foi possível concluir o agendamento.",
+        messageFrom(error, "Não foi possível concluir o agendamento."),
       )
       // Um conflito invalida o horário escolhido: volta para a escolha.
       setTime(undefined)

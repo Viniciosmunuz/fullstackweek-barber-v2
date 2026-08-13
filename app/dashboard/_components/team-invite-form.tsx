@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button } from "@/app/_components/ui/button"
 import { Input } from "@/app/_components/ui/input"
 import { inviteTeamMember } from "@/app/_actions/dashboard/team"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 
 /**
  * Libera um e-mail para o painel.
@@ -25,7 +26,9 @@ const TeamInviteForm = ({ barbershopId }: { barbershopId: string }) => {
 
     startTransition(async () => {
       try {
-        const result = await inviteTeamMember({ barbershopId, email, role })
+        const result = await unwrap(
+          inviteTeamMember({ barbershopId, email, role }),
+        )
 
         // O acesso já está liberado mesmo quando o e-mail não sai. Dizer isso
         // evita que o dono ache que precisa convidar de novo.
@@ -45,11 +48,7 @@ const TeamInviteForm = ({ barbershopId }: { barbershopId: string }) => {
         setRole("STAFF")
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Não foi possível liberar o acesso.",
-        )
+        toast.error(messageFrom(error, "Não foi possível liberar o acesso."))
       }
     })
   }
@@ -75,9 +74,7 @@ const TeamInviteForm = ({ barbershopId }: { barbershopId: string }) => {
       <select
         id="team-role"
         value={role}
-        onChange={(event) =>
-          setRole(event.target.value as "OWNER" | "STAFF")
-        }
+        onChange={(event) => setRole(event.target.value as "OWNER" | "STAFF")}
         className="h-9 rounded-md border border-white/10 bg-transparent px-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <option value="STAFF" className="bg-card">

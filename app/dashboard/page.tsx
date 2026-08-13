@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -96,10 +97,17 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
             icon={Users}
           />
           {isOwner && (
+            /*
+             * "Valor atendido", e não "Faturamento": isto soma o preço dos
+             * serviços concluídos, o que a casa produziu. O que de fato entrou
+             * por PIX está em Repasses, e é outro número — menor, porque só o
+             * sinal passa por aqui. Chamar os dois de faturamento faria o
+             * lojista comparar e concluir que o sistema erra.
+             */
             <MetricCard
-              label="Faturamento"
+              label="Valor atendido"
               value={formatCurrency(overview.revenue)}
-              hint="Somente atendimentos concluídos"
+              hint="Preço dos serviços concluídos"
               icon={CircleDollarSign}
             />
           )}
@@ -115,12 +123,22 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
           />
         </div>
 
-        <div className={cn("grid gap-6", isOwner && "xl:grid-cols-[1.4fr_1fr]")}>
+        <div
+          className={cn("grid gap-6", isOwner && "xl:grid-cols-[1.4fr_1fr]")}
+        >
           {isOwner && (
             <section className="surface rounded-lg p-5">
-              <h2 className="font-display font-bold">Faturamento por mês</h2>
+              <h2 className="font-display font-bold">Valor atendido por mês</h2>
               <p className="mb-5 text-xs text-muted-foreground">
-                Últimos 12 meses, considerando atendimentos concluídos.
+                Últimos 12 meses, somando o preço dos serviços concluídos. Não é
+                o que entrou em dinheiro — isso está em{" "}
+                <Link
+                  href={`/dashboard/repasses?shop=${barbershop.slug}`}
+                  className="text-primary hover:underline"
+                >
+                  Repasses
+                </Link>
+                .
               </p>
               <BarChart data={monthly} />
             </section>
@@ -169,7 +187,9 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
 
         <div className={cn("grid gap-6", isOwner && "lg:grid-cols-2")}>
           <section className="surface rounded-lg p-5">
-            <h2 className="mb-4 font-display font-bold">Serviços mais pedidos</h2>
+            <h2 className="mb-4 font-display font-bold">
+              Serviços mais pedidos
+            </h2>
             {performance.services.length > 0 ? (
               <ul className="space-y-3">
                 {performance.services.slice(0, 6).map((service) => {
@@ -224,7 +244,9 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
                         <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
                           <div
                             className="h-full rounded-full bg-primary/70"
-                            style={{ width: `${(barber.revenue / max) * 100}%` }}
+                            style={{
+                              width: `${(barber.revenue / max) * 100}%`,
+                            }}
                           />
                         </div>
                       </li>

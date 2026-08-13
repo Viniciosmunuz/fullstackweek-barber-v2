@@ -2,6 +2,7 @@
 
 import { db } from "@/app/_lib/prisma"
 import { buildInviteMessage } from "@/app/_lib/email"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requirePlatformAdmin } from "../dashboard/guard"
 import { dashboardUrl } from "../dashboard/invite-mail"
 
@@ -11,7 +12,7 @@ import { dashboardUrl } from "../dashboard/invite-mail"
  * É o mesmo conteúdo que o envio automático usaria, então o parceiro recebe a
  * mesma instrução independentemente do canal.
  */
-export async function getInviteText(inviteId: string) {
+async function doGetInviteText(inviteId: string) {
   await requirePlatformAdmin()
 
   const invite = await db.barbershopInvite.findUnique({
@@ -19,7 +20,7 @@ export async function getInviteText(inviteId: string) {
     select: { email: true, role: true, barbershop: { select: { name: true } } },
   })
 
-  if (!invite) throw new Error("Convite não encontrado.")
+  if (!invite) throw new UserFacingError("Convite não encontrado.")
 
   const { text } = buildInviteMessage({
     barbershopName: invite.barbershop.name,
@@ -29,4 +30,8 @@ export async function getInviteText(inviteId: string) {
   })
 
   return text
+}
+
+export async function getInviteText(inviteId: string) {
+  return runAction(() => doGetInviteText(inviteId))
 }

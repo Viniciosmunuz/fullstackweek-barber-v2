@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Check, Circle, Eye, EyeOff, Loader2 } from "lucide-react"
@@ -54,7 +55,7 @@ const PublishCard = ({
   const handleToggle = () => {
     startTransition(async () => {
       try {
-        await publishBarbershop(barbershopId, !isPublished)
+        await unwrap(publishBarbershop(barbershopId, !isPublished))
         toast.success(
           isPublished
             ? "Barbearia removida do catálogo."
@@ -62,9 +63,7 @@ const PublishCard = ({
         )
         router.refresh()
       } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Não foi possível publicar.",
-        )
+        toast.error(messageFrom(error, "Não foi possível publicar."))
       }
     })
   }

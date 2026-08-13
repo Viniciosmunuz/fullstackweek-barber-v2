@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -46,18 +47,14 @@ const StatusSelect = ({ bookingId, status, clientName }: StatusSelectProps) => {
 
     startTransition(async () => {
       try {
-        await updateBookingStatus({ bookingId, status: next })
+        await unwrap(updateBookingStatus({ bookingId, status: next }))
         toast.success(
           `${clientName}: ${OPTIONS.find((o) => o.value === next)?.label.toLowerCase()}.`,
         )
         router.refresh()
       } catch (error) {
         setValue(previous)
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : "Não foi possível atualizar o status.",
-        )
+        toast.error(messageFrom(error, "Não foi possível atualizar o status."))
       }
     })
   }
@@ -78,7 +75,11 @@ const StatusSelect = ({ bookingId, status, clientName }: StatusSelectProps) => {
         )}
       >
         {OPTIONS.map((option) => (
-          <option key={option.value} value={option.value} className="bg-card text-foreground">
+          <option
+            key={option.value}
+            value={option.value}
+            className="bg-card text-foreground"
+          >
             {option.label}
           </option>
         ))}

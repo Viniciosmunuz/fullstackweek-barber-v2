@@ -73,7 +73,7 @@ const ReportsPage = async ({ searchParams }: PageProps) => {
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
-            label="Faturamento"
+            label="Valor atendido"
             value={formatCurrency(overview.revenue)}
             hint={PERIOD_LABELS[period]}
             icon={CircleDollarSign}
@@ -99,7 +99,7 @@ const ReportsPage = async ({ searchParams }: PageProps) => {
         </div>
 
         <section className="surface rounded-lg p-5">
-          <h2 className="font-display font-bold">Evolução do faturamento</h2>
+          <h2 className="font-display font-bold">Evolução do valor atendido</h2>
           <p className="mb-5 text-xs text-muted-foreground">
             Últimos 12 meses, independente do período selecionado acima.
           </p>

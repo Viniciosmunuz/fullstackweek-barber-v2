@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/app/_lib/auth"
 import { db } from "@/app/_lib/prisma"
 import { isPlatformAdminEmail } from "@/app/_lib/config"
+import { UserFacingError } from "@/app/_lib/action-result"
 
 interface SessionUser {
   id?: string
@@ -19,7 +20,9 @@ export async function requireSession() {
   const { userId, email } = await currentUser()
 
   if (!userId) {
-    throw new Error("Sessão expirada. Entre novamente para continuar.")
+    throw new UserFacingError(
+      "Sessão expirada. Entre novamente para continuar.",
+    )
   }
 
   return { userId, email }
@@ -30,7 +33,9 @@ export async function requirePlatformAdmin() {
   const { userId, email } = await requireSession()
 
   if (!isPlatformAdminEmail(email)) {
-    throw new Error("Esta área é restrita à administração da plataforma.")
+    throw new UserFacingError(
+      "Esta área é restrita à administração da plataforma.",
+    )
   }
 
   return { userId, email }
@@ -112,7 +117,9 @@ export async function requireManager(barbershopId: string) {
   })
 
   if (!link) {
-    throw new Error("Você não tem permissão para gerenciar esta barbearia.")
+    throw new UserFacingError(
+      "Você não tem permissão para gerenciar esta barbearia.",
+    )
   }
 
   return { userId, email, role: link.role as ShopRole }
@@ -130,7 +137,7 @@ export async function requireOwner(barbershopId: string) {
   const manager = await requireManager(barbershopId)
 
   if (manager.role !== "OWNER") {
-    throw new Error(
+    throw new UserFacingError(
       "Só quem responde pela barbearia pode alterar isto. Fale com o responsável.",
     )
   }

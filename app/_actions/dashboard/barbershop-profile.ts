@@ -4,11 +4,7 @@ import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
 import { IMAGE_SOURCE_MESSAGE, isImageSource } from "@/app/_lib/image-source"
-import {
-  actionError,
-  actionOk,
-  type ActionResult,
-} from "@/app/_lib/action-result"
+import { UserFacingError, runAction } from "@/app/_lib/action-result"
 import { requireOwner } from "./guard"
 
 const profileSchema = z.object({
@@ -51,33 +47,37 @@ export type BarbershopProfileInput = z.infer<typeof profileSchema>
 export async function updateBarbershopProfile(
   barbershopId: string,
   input: BarbershopProfileInput,
-): Promise<ActionResult> {
-  await requireOwner(barbershopId)
+) {
+  return runAction(async () => {
+    await requireOwner(barbershopId)
 
-  const parsed = profileSchema.safeParse(input)
-  if (!parsed.success) {
-    // Devolvida, não lançada: em produção o Next apagaria esta mensagem, e ela
-    // é exatamente o que a pessoa precisa ler para corrigir o campo.
-    return actionError(parsed.error.issues[0].message)
-  }
+    const parsed = profileSchema.safeParse(input)
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
 
-  await db.barbershop.update({
-    where: { id: barbershopId },
-    data: parsed.data,
+    await db.barbershop.update({
+      where: { id: barbershopId },
+      data: parsed.data,
+    })
+
+    revalidatePath("/dashboard/configuracoes")
+    revalidatePath("/barbershops")
+    revalidatePath(`/barbershops/${barbershopId}`)
   })
-
-  revalidatePath("/dashboard/configuracoes")
-  revalidatePath("/barbershops")
-  revalidatePath(`/barbershops/${barbershopId}`)
-
-  return actionOk()
 }
 
 const hourSchema = z.object({
   weekday: z.number().int().min(0).max(6),
   closed: z.boolean(),
-  opensAt: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
-  closesAt: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
+  opensAt: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
+  closesAt: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/)
+    .nullable(),
 })
 
 /** Substitui a grade de horários da semana inteira. */
@@ -85,33 +85,37 @@ export async function updateOpeningHours(
   barbershopId: string,
   hours: z.infer<typeof hourSchema>[],
 ) {
-  await requireOwner(barbershopId)
+  return runAction(async () => {
+    await requireOwner(barbershopId)
 
-  const parsed = z.array(hourSchema).length(7).safeParse(hours)
-  if (!parsed.success) {
-    throw new Error("Horários inválidos.")
-  }
-
-  for (const hour of parsed.data) {
-    if (!hour.closed && (!hour.opensAt || !hour.closesAt)) {
-      throw new Error("Informe abertura e fechamento nos dias em que abre.")
+    const parsed = z.array(hourSchema).length(7).safeParse(hours)
+    if (!parsed.success) {
+      throw new UserFacingError("Horários inválidos.")
     }
-    if (!hour.closed && hour.opensAt! >= hour.closesAt!) {
-      throw new Error("O fechamento deve ser depois da abertura.")
+
+    for (const hour of parsed.data) {
+      if (!hour.closed && (!hour.opensAt || !hour.closesAt)) {
+        throw new UserFacingError(
+          "Informe abertura e fechamento nos dias em que abre.",
+        )
+      }
+      if (!hour.closed && hour.opensAt! >= hour.closesAt!) {
+        throw new UserFacingError("O fechamento deve ser depois da abertura.")
+      }
     }
-  }
 
-  // A grade é reescrita por inteiro: mais simples e sem risco de sobrar um dia
-  // antigo quando a barbearia muda o funcionamento.
-  await db.$transaction([
-    db.openingHour.deleteMany({ where: { barbershopId } }),
-    db.openingHour.createMany({
-      data: parsed.data.map((hour) => ({ ...hour, barbershopId })),
-    }),
-  ])
+    // A grade é reescrita por inteiro: mais simples e sem risco de sobrar um
+    // dia antigo quando a barbearia muda o funcionamento.
+    await db.$transaction([
+      db.openingHour.deleteMany({ where: { barbershopId } }),
+      db.openingHour.createMany({
+        data: parsed.data.map((hour) => ({ ...hour, barbershopId })),
+      }),
+    ])
 
-  revalidatePath("/dashboard/configuracoes")
-  revalidatePath(`/barbershops/${barbershopId}`)
+    revalidatePath("/dashboard/configuracoes")
+    revalidatePath(`/barbershops/${barbershopId}`)
+  })
 }
 
 /**
@@ -120,41 +124,48 @@ export async function updateOpeningHours(
  * Exige que o cadastro esteja completo — publicar uma ficha vazia daria ao
  * cliente uma página sem endereço nem contato.
  */
-export async function publishBarbershop(barbershopId: string, publish: boolean) {
-  await requireOwner(barbershopId)
+export async function publishBarbershop(
+  barbershopId: string,
+  publish: boolean,
+) {
+  return runAction(async () => {
+    await requireOwner(barbershopId)
 
-  if (publish) {
-    const shop = await db.barbershop.findUnique({
+    if (publish) {
+      const shop = await db.barbershop.findUnique({
+        where: { id: barbershopId },
+        select: {
+          address: true,
+          description: true,
+          imageUrl: true,
+          phones: true,
+          _count: { select: { services: true, barbers: true } },
+        },
+      })
+
+      if (!shop) throw new UserFacingError("Barbearia não encontrada.")
+
+      const missing: string[] = []
+      if (!shop.address) missing.push("endereço")
+      if (!shop.description) missing.push("descrição")
+      if (!shop.imageUrl) missing.push("foto")
+      if (shop.phones.length === 0) missing.push("telefone")
+      if (shop._count.services === 0) missing.push("ao menos um serviço")
+      if (shop._count.barbers === 0) missing.push("ao menos um profissional")
+
+      if (missing.length > 0) {
+        throw new UserFacingError(
+          `Antes de publicar, preencha: ${missing.join(", ")}.`,
+        )
+      }
+    }
+
+    await db.barbershop.update({
       where: { id: barbershopId },
-      select: {
-        address: true,
-        description: true,
-        imageUrl: true,
-        phones: true,
-        _count: { select: { services: true, barbers: true } },
-      },
+      data: { isPublished: publish },
     })
 
-    if (!shop) throw new Error("Barbearia não encontrada.")
-
-    const missing: string[] = []
-    if (!shop.address) missing.push("endereço")
-    if (!shop.description) missing.push("descrição")
-    if (!shop.imageUrl) missing.push("foto")
-    if (shop.phones.length === 0) missing.push("telefone")
-    if (shop._count.services === 0) missing.push("ao menos um serviço")
-    if (shop._count.barbers === 0) missing.push("ao menos um profissional")
-
-    if (missing.length > 0) {
-      throw new Error(`Antes de publicar, preencha: ${missing.join(", ")}.`)
-    }
-  }
-
-  await db.barbershop.update({
-    where: { id: barbershopId },
-    data: { isPublished: publish },
+    revalidatePath("/dashboard/configuracoes")
+    revalidatePath("/barbershops")
   })
-
-  revalidatePath("/dashboard/configuracoes")
-  revalidatePath("/barbershops")
 }

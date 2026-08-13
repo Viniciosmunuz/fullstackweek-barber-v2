@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { db } from "../_lib/prisma"
+import { UserFacingError, runAction } from "../_lib/action-result"
 import { requireSession } from "./dashboard/guard"
 import { isPlatformAdminEmail } from "../_lib/config"
 
@@ -23,7 +24,7 @@ import { isPlatformAdminEmail } from "../_lib/config"
  * vira `CANCELLED` e continua existindo; reserva sem pagamento concluído pode
  * sair do banco, porque não há história a preservar.
  */
-export const deleteBooking = async (bookingId: string) => {
+const doDeleteBooking = async (bookingId: string) => {
   const { userId, email } = await requireSession()
 
   const booking = await db.booking.findUnique({
@@ -39,7 +40,7 @@ export const deleteBooking = async (bookingId: string) => {
   // Mesma mensagem para "não existe" e "não é seu": diferenciar as duas
   // contaria a quem tentasse adivinhar ids quais deles são reais.
   const negar = () => {
-    throw new Error("Não foi possível cancelar este agendamento.")
+    throw new UserFacingError("Não foi possível cancelar este agendamento.")
   }
 
   if (!booking) negar()
@@ -90,3 +91,6 @@ export const deleteBooking = async (bookingId: string) => {
   revalidatePath("/dashboard")
   revalidatePath("/dashboard/agendamentos")
 }
+
+export const deleteBooking = async (bookingId: string) =>
+  runAction(() => doDeleteBooking(bookingId))

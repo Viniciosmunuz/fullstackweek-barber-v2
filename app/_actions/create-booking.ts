@@ -6,6 +6,7 @@ import { db } from "../_lib/prisma"
 import { authOptions } from "../_lib/auth"
 import { activeBookingFilter } from "../_lib/booking-slot"
 import { notifyBarbershop } from "../_lib/notify-barbershop"
+import { UserFacingError, runAction } from "../_lib/action-result"
 
 interface CreateBookingParams {
   serviceId: string
@@ -13,7 +14,7 @@ interface CreateBookingParams {
   date: Date
 }
 
-export const createBooking = async ({
+const doCreateBooking = async ({
   serviceId,
   barberId,
   date,
@@ -24,7 +25,7 @@ export const createBooking = async ({
     | undefined
 
   if (!user?.id) {
-    throw new Error("Usuário não autenticado")
+    throw new UserFacingError("Usuário não autenticado")
   }
 
   // A lista de horários já esconde o que está ocupado, mas duas pessoas podem
@@ -38,7 +39,9 @@ export const createBooking = async ({
   })
 
   if (conflict) {
-    throw new Error("Este horário acabou de ser reservado. Escolha outro.")
+    throw new UserFacingError(
+      "Este horário acabou de ser reservado. Escolha outro.",
+    )
   }
 
   const booking = await db.booking.create({
@@ -66,3 +69,5 @@ export const createBooking = async ({
   revalidatePath("/dashboard/agendamentos")
 }
 
+export const createBooking = async (params: CreateBookingParams) =>
+  runAction(() => doCreateBooking(params))
