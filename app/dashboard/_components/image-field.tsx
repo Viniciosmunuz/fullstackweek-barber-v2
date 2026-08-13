@@ -10,6 +10,7 @@ import { uploadImage } from "@/app/_actions/dashboard/images"
 import { messageFrom } from "@/app/_lib/action-result"
 import { UPLOAD_PREFIX } from "@/app/_lib/image-source"
 import { cn } from "@/app/_lib/utils"
+import LogoCropper from "./logo-cropper"
 
 /**
  * Maior lado da imagem depois de reduzida.
@@ -58,7 +59,7 @@ interface Decoded {
  * cai aqui. Tentar o segundo caminho antes de desistir é o que faz "essa imagem
  * não sobe" virar "sobe".
  */
-async function decode(file: File): Promise<Decoded> {
+async function decode(file: Blob): Promise<Decoded> {
   try {
     const bitmap = await createImageBitmap(file)
     return {
@@ -72,7 +73,7 @@ async function decode(file: File): Promise<Decoded> {
   }
 }
 
-function decodeWithTag(file: File): Promise<Decoded> {
+function decodeWithTag(file: Blob): Promise<Decoded> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const image = new Image()
@@ -113,7 +114,7 @@ function decodeWithTag(file: File): Promise<Decoded> {
  * WebP porque preserva transparência (logo com fundo vazado depende disso) e
  * comprime melhor que PNG. Navegador que não souber gerar WebP cai em JPEG.
  */
-async function prepare(file: File): Promise<Blob> {
+async function prepare(file: Blob): Promise<Blob> {
   const decoded = await decode(file)
 
   try {
@@ -170,6 +171,14 @@ interface ImageFieldProps {
   onChange: (value: string) => void
   /** Barbearia dona da imagem — é ela que autoriza o envio no servidor. */
   barbershopId: string
+  /**
+   * Abre o enquadramento antes de enviar e grava a imagem já quadrada.
+   *
+   * Vale para a logo, que aparece sempre em espaços quadrados e pequenos. A
+   * foto de capa não usa: ela ocupa uma faixa larga, e forçá-la a um quadrado
+   * jogaria fora justamente o ambiente que ela mostra.
+   */
+  square?: boolean
   hint?: string
   required?: boolean
 }
@@ -193,6 +202,7 @@ const ImageField = ({
   value,
   onChange,
   barbershopId,
+  square = false,
   hint,
   required,
 }: ImageFieldProps) => {
@@ -217,9 +227,26 @@ const ImageField = ({
     setStatus(debounced ? "loading" : "idle")
   }, [debounced])
 
-  const handleFile = (file: File | undefined) => {
+  /**
+   * Escolher o arquivo e enviá-lo são passos separados quando há enquadramento.
+   *
+   * Sem isso a logo subiria como veio e só depois o dono descobriria, olhando o
+   * site, que ela ficou torta ou cortada — sem entender o que fazer a respeito.
+   */
+  const [toCrop, setToCrop] = useState<File | null>(null)
+
+  const handlePicked = (file: File | undefined) => {
     if (!file) return
 
+    if (square) {
+      setToCrop(file)
+      return
+    }
+
+    upload(file)
+  }
+
+  const upload = (file: Blob) => {
     startUpload(async () => {
       try {
         const prepared = await prepare(file)
@@ -306,7 +333,7 @@ const ImageField = ({
            */
           accept="image/*"
           className="hidden"
-          onChange={(e) => handleFile(e.target.files?.[0])}
+          onChange={(e) => handlePicked(e.target.files?.[0])}
           aria-hidden="true"
           tabIndex={-1}
         />
@@ -331,7 +358,11 @@ const ImageField = ({
       <div className="flex items-start gap-3 pt-1">
         <div
           className={cn(
-            "relative flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md border",
+            "relative flex shrink-0 items-center justify-center overflow-hidden rounded-md border",
+            // A prévia tem a forma do lugar de destino: quadrada para a logo,
+            // larga para a capa. Mostrar as duas no mesmo retângulo fazia a
+            // logo parecer bem enquadrada aqui e torta no site.
+            square ? "h-20 w-20" : "h-20 w-32",
             status === "error" ? "border-destructive/40" : "border-white/10",
           )}
         >
@@ -355,7 +386,11 @@ const ImageField = ({
               onLoad={() => setStatus("ok")}
               onError={() => setStatus("error")}
               className={cn(
-                "absolute inset-0 h-full w-full object-cover transition-opacity",
+                "absolute inset-0 h-full w-full transition-opacity",
+                // A logo é exibida inteira, como no site. `object-cover` aqui
+                // cortava a prévia de um jeito que nenhuma tela reproduzia — o
+                // dono aprovava um recorte que não existia.
+                square ? "object-contain" : "object-cover",
                 status === "ok" ? "opacity-100" : "opacity-0",
               )}
             />
@@ -374,6 +409,15 @@ const ImageField = ({
           )}
         </p>
       </div>
+
+      <LogoCropper
+        file={toCrop}
+        onCancel={() => setToCrop(null)}
+        onConfirm={(cropped) => {
+          setToCrop(null)
+          upload(cropped)
+        }}
+      />
     </div>
   )
 }

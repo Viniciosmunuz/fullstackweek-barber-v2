@@ -211,7 +211,9 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
                   variant="ghost"
                   size="icon"
                   aria-label={`Remover telefone ${index + 1}`}
-                  onClick={() => setPhones(phones.filter((_, i) => i !== index))}
+                  onClick={() =>
+                    setPhones(phones.filter((_, i) => i !== index))
+                  }
                 >
                   <Trash2 size={15} />
                 </Button>
@@ -244,6 +246,7 @@ const ProfileForm = ({ barbershop }: { barbershop: ProfileFormData }) => {
         <ImageField
           id="p-logo"
           barbershopId={barbershop.id}
+          square
           label="Logo da barbearia"
           value={form.logoUrl}
           onChange={(logoUrl) => setForm({ ...form, logoUrl })}
