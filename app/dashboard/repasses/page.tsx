@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ArrowDownLeft, Landmark, Percent, Wallet } from "lucide-react"
+import { ArrowDownLeft, Landmark, Percent, Receipt, Wallet } from "lucide-react"
 import {
   EmptyState,
   MetricCard,
@@ -64,7 +64,7 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
       </PageHeader>
 
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <MetricCard
             label="Recebido dos clientes"
             value={formatCurrency(payouts.gross)}
@@ -76,6 +76,17 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
             value={formatCurrency(payouts.fees)}
             hint="Retida automaticamente no pagamento"
             icon={Percent}
+          />
+          {/*
+           * Separado da taxa de propósito: este valor não é receita de
+           * ninguém, some na tarifa do PIX. Somá-lo à taxa faria o lojista
+           * achar que paga comissão quando não paga.
+           */}
+          <MetricCard
+            label="Custo do PIX"
+            value={formatCurrency(payouts.providerCost)}
+            hint="Tarifa do banco, não fica com a plataforma"
+            icon={Receipt}
           />
           <MetricCard
             label="Repassado a você"

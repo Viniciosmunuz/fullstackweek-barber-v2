@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  PROVIDER_FEE_CENTS,
   splitDeposit,
   toCents,
   toReais,
@@ -59,20 +60,37 @@ describe("toCents", () => {
 })
 
 describe("splitDeposit — sem taxa da plataforma", () => {
-  it("repassa o sinal inteiro à barbearia", () => {
+  it("repassa tudo menos o custo da transação", () => {
+    // O provedor desconta a tarifa dele antes de qualquer split. Mandar
+    // repassar o valor cheio é recusado com "o valor total do Split excede o
+    // valor a receber" — foi o que quebrou o PIX em 12/08/2026.
     const result = splitDeposit(45, policy())
 
     expect(result.amountCents).toBe(1350)
     expect(result.platformFeeCents).toBe(0)
-    expect(result.shopAmountCents).toBe(1350)
+    expect(result.providerFeeCents).toBe(PROVIDER_FEE_CENTS)
+    expect(result.shopAmountCents).toBe(1350 - PROVIDER_FEE_CENTS)
   })
 
-  it("mantém a soma fechada: taxa + repasse = cobrado", () => {
+  it("mantém a soma fechada: taxa + provedor + repasse = cobrado", () => {
     const result = splitDeposit("89.90", policy())
 
-    expect(result.platformFeeCents + result.shopAmountCents).toBe(
-      result.amountCents,
-    )
+    expect(
+      result.platformFeeCents +
+        result.providerFeeCents +
+        result.shopAmountCents,
+    ).toBe(result.amountCents)
+  })
+
+  it("nunca pede split maior do que o provedor aceita", () => {
+    // A regra do Asaas: split <= valor da cobrança menos a tarifa dele.
+    for (const preco of [10, 30, 45, 89.9, 250]) {
+      const result = splitDeposit(preco, policy())
+
+      expect(result.shopAmountCents).toBeLessThanOrEqual(
+        result.amountCents - PROVIDER_FEE_CENTS,
+      )
+    }
   })
 })
 
@@ -97,16 +115,49 @@ describe("splitDeposit — formas de calcular", () => {
   })
 })
 
+describe("splitDeposit — custo da transação", () => {
+  it("levanta o sinal até cobrir o custo, em vez de repassar negativo", () => {
+    // Serviço de R$ 2 com sinal de 30% daria R$ 0,60, menos que a tarifa de
+    // R$ 0,99. Cobrar isso faria a barbearia receber menos que zero.
+    const result = splitDeposit(2, policy())
+
+    expect(result.amountCents).toBe(PROVIDER_FEE_CENTS)
+    expect(result.shopAmountCents).toBe(0)
+  })
+
+  it("não cobra mais que o serviço nem para cobrir o custo", () => {
+    // Serviço mais barato que a própria tarifa: a cobrança fica no preço e o
+    // repasse é zero. Quem decide se vale a pena é a barbearia, no cadastro.
+    const result = splitDeposit("0.50", policy())
+
+    expect(result.amountCents).toBe(50)
+    expect(result.providerFeeCents).toBe(50)
+    expect(result.shopAmountCents).toBe(0)
+  })
+
+  it("soma taxa da plataforma e custo do provedor no piso", () => {
+    const result = splitDeposit(
+      100,
+      policy({ depositType: "FIXED", depositValue: 1, platformFeeValue: 10 }),
+    )
+
+    // Sinal pedido de R$ 1 é menor que taxa (R$ 10) + tarifa (R$ 0,99).
+    expect(result.amountCents).toBe(1000 + PROVIDER_FEE_CENTS)
+    expect(result.shopAmountCents).toBe(0)
+  })
+})
+
 describe("splitDeposit — as duas travas", () => {
-  it("nunca cobra menos que a taxa, senão a plataforma pagaria para trabalhar", () => {
-    // Sinal de 5% (R$ 2,25) contra taxa de 10% (R$ 4,50): repassar o combinado
-    // faria a plataforma entregar R$ 4,50 tendo recebido R$ 2,25.
+  it("nunca cobra menos que o retido, senão a plataforma pagaria para trabalhar", () => {
+    // Sinal de 5% (R$ 2,25) contra taxa de 10% (R$ 4,50) mais a tarifa do
+    // provedor: repassar o combinado faria a plataforma entregar mais do que
+    // recebeu.
     const result = splitDeposit(
       45,
       policy({ depositValue: 5, platformFeeValue: 10 }),
     )
 
-    expect(result.amountCents).toBe(450)
+    expect(result.amountCents).toBe(450 + PROVIDER_FEE_CENTS)
     expect(result.platformFeeCents).toBe(450)
     expect(result.shopAmountCents).toBe(0)
   })
@@ -118,7 +169,7 @@ describe("splitDeposit — as duas travas", () => {
     )
 
     expect(result.amountCents).toBe(4500)
-    expect(result.shopAmountCents).toBe(4500)
+    expect(result.shopAmountCents).toBe(4500 - PROVIDER_FEE_CENTS)
   })
 
   it("limita também a taxa ao preço do serviço", () => {

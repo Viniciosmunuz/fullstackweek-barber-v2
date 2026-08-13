@@ -39,6 +39,15 @@ export interface PayoutSummary {
   gross: number
   /** Total retido pela plataforma. */
   fees: number
+  /**
+   * Custo do provedor no período.
+   *
+   * Derivado, e não gravado: é o que sobra entre o cobrado, a taxa e o
+   * repasse. Aparece separado porque não é receita de ninguém — some na
+   * tarifa do PIX — e confundi-lo com a taxa da plataforma faria o lojista
+   * achar que está pagando comissão quando não está.
+   */
+  providerCost: number
   /** Total repassado à barbearia. */
   net: number
   /** Quantos sinais foram pagos no período. */
@@ -116,6 +125,7 @@ export async function getPayouts(
     rows: mapped,
     gross: toReais(grossCents),
     fees: toReais(feeCents),
+    providerCost: toReais(grossCents - feeCents - netCents),
     net: toReais(netCents),
     refunded: toReais(refundedCents),
     count: mapped.filter((r) => !r.refunded).length,
