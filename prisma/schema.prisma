@@ -277,8 +277,46 @@ model Barber {
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   bookings     Booking[]
+  schedule     BarberSchedule[]
+  timeOff      BarberTimeOff[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+}
+
+/// Grade semanal própria de um profissional.
+///
+/// Sem nenhuma linha aqui, ele segue o horário da casa — que é o caso da
+/// maioria e evita obrigar o dono a preencher a mesma coisa para cada barbeiro.
+/// Havendo linhas, elas substituem a grade da casa por inteiro: meia mistura
+/// ("abre com a casa, fecha com ele") seria impossível de explicar na tela.
+model BarberSchedule {
+  id       String  @id @default(uuid())
+  /// 0 = domingo ... 6 = sábado
+  weekday  Int
+  closed   Boolean @default(false)
+  opensAt  String?
+  closesAt String?
+  barberId String
+  barber   Barber  @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, weekday])
+}
+
+/// Ausência de um profissional: folga, férias, compromisso.
+///
+/// Guardada como intervalo, e não como dia, porque metade das ausências reais
+/// são de algumas horas — dentista de manhã, sai mais cedo na sexta. Um dia
+/// inteiro é só um intervalo que começa e termina na virada.
+model BarberTimeOff {
+  id       String   @id @default(uuid())
+  startsAt DateTime
+  endsAt   DateTime
+  /// Aparece só para a barbearia, nunca para o cliente.
+  reason   String?
+  barberId String
+  barber   Barber   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, startsAt])
 }
 
 model BarbershopService {

@@ -4,7 +4,7 @@ import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ptBR } from "date-fns/locale"
-import { format, isPast, isToday, set } from "date-fns"
+import { format, set } from "date-fns"
 import { Check, ChevronLeft, Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "./ui/button"
@@ -14,7 +14,7 @@ import DepositPayment from "./deposit-payment"
 import { createBooking } from "../_actions/create-booking"
 import { createBookingWithDeposit } from "../_actions/payments/create-deposit"
 import type { DepositResult } from "../_actions/payments/types"
-import { getBookings } from "../_actions/get-bookings"
+import { getAvailableSlots } from "../_actions/available-slots"
 import { cn, formatCurrency, formatDuration } from "@/app/_lib/utils"
 
 export interface FlowService {
@@ -53,64 +53,18 @@ type PayMode = "SHOP" | "DEPOSIT"
 
 const STEPS = ["Profissional", "Data", "Horário", "Confirmação"] as const
 
-const TIME_SLOTS = [
-  "08:00",
-  "08:30",
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "12:00",
-  "12:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-  "18:00",
-  "18:30",
-  "19:00",
-]
-
-/**
- * Remove horários já passados (quando o dia é hoje) e os que colidem com a
- * agenda do profissional, considerando a duração do serviço: um corte de 40
- * minutos às 15:00 também inviabiliza as 15:30.
+/*
+ * Aqui viviam uma lista fixa de 08:00 às 19:00 e a conta de disponibilidade.
+ *
+ * Uma faixa fixa não tem como estar certa para duas barbearias diferentes: a
+ * casa que abre às 10h e fecha domingo recebia agendamento às 8h de domingo. E
+ * a conta feita no navegador não enxerga a escala do profissional nem as
+ * ausências dele.
+ *
+ * Agora quem responde é o servidor, em `getAvailableSlots`. O navegador só
+ * mostra o que recebeu — e passa a concordar com a checagem que roda na hora de
+ * confirmar, que é o que evita o cliente escolher um horário e levar um erro.
  */
-function getAvailableSlots(
-  bookings: { date: Date }[],
-  selectedDay: Date,
-  durationMinutes: number,
-) {
-  const busy = bookings.map((b) => {
-    const start = new Date(b.date).getTime()
-    return { start, end: start + durationMinutes * 60_000 }
-  })
-
-  return TIME_SLOTS.filter((time) => {
-    const [hours, minutes] = time.split(":").map(Number)
-    const slotStart = set(selectedDay, {
-      hours,
-      minutes,
-      seconds: 0,
-      milliseconds: 0,
-    })
-
-    if (isToday(selectedDay) && isPast(slotStart)) return false
-
-    const start = slotStart.getTime()
-    const end = start + durationMinutes * 60_000
-
-    return !busy.some((b) => start < b.end && end > b.start)
-  })
-}
 
 const BookingFlow = ({
   service,
@@ -127,7 +81,7 @@ const BookingFlow = ({
   const [barber, setBarber] = useState<FlowBarber | null>(null)
   const [day, setDay] = useState<Date | undefined>()
   const [time, setTime] = useState<string | undefined>()
-  const [dayBookings, setDayBookings] = useState<{ date: Date }[]>([])
+  const [slots, setSlots] = useState<string[]>([])
   const [loadingSlots, setLoadingSlots] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
@@ -137,16 +91,16 @@ const BookingFlow = ({
   const [document, setDocument] = useState(savedDocument ?? "")
   const [deposit, setDeposit] = useState<DepositResult | null>(null)
 
-  // Recarrega a agenda sempre que o par (profissional, dia) muda.
+  // Recarrega os horários sempre que o par (profissional, dia) muda.
   useEffect(() => {
     if (!barber || !day) return
 
     let cancelled = false
     setLoadingSlots(true)
 
-    getBookings({ barberId: barber.id, date: day })
-      .then((bookings) => {
-        if (!cancelled) setDayBookings(bookings)
+    getAvailableSlots({ barberId: barber.id, serviceId: service.id, date: day })
+      .then((available) => {
+        if (!cancelled) setSlots(available)
       })
       .catch(() => {
         if (!cancelled) toast.error("Não foi possível carregar os horários.")
@@ -158,12 +112,7 @@ const BookingFlow = ({
     return () => {
       cancelled = true
     }
-  }, [barber, day])
-
-  const slots = useMemo(() => {
-    if (!day) return []
-    return getAvailableSlots(dayBookings, day, service.durationMinutes)
-  }, [dayBookings, day, service.durationMinutes])
+  }, [barber, day, service.id])
 
   const selectedDate = useMemo(() => {
     if (!day || !time) return undefined

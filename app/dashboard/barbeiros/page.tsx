@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { UserSquare2 } from "lucide-react"
 import { EmptyState, OwnerOnly, PageHeader } from "../_components/ui"
 import BarberForm from "../_components/barber-form"
+import BarberScheduleForm from "../_components/barber-schedule-form"
 import { isOwnerOf } from "@/app/_actions/dashboard/guard"
 import BarberAvatar from "@/app/_components/barber-avatar"
 import { db } from "@/app/_lib/prisma"
@@ -34,22 +35,48 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
     db.barber.findMany({
       where: { barbershopId: barbershop.id },
       orderBy: { name: "asc" },
+      include: {
+        schedule: { orderBy: { weekday: "asc" } },
+        // Só o que ainda vale: folga do mês passado não interessa a ninguém.
+        timeOff: {
+          where: { endsAt: { gte: new Date() } },
+          orderBy: { startsAt: "asc" },
+        },
+      },
     }),
     db.openingHour.findMany({
-      where: { barbershopId: barbershop.id, closed: false },
+      where: { barbershopId: barbershop.id },
       orderBy: { weekday: "asc" },
     }),
     getPerformance(barbershop.id, "30d"),
   ])
 
-  // A escala segue o horário da casa; o painel mostra a faixa em que o
-  // profissional pode receber agendamento.
-  const workingDays = openingHours
-    .map((h) => getWeekdayLabel(h.weekday).slice(0, 3))
-    .join(", ")
-  const shift = openingHours[0]
-    ? `${openingHours[0].opensAt} – ${openingHours[0].closesAt}`
-    : "—"
+  const shopWeek = openingHours.map((hour) => ({
+    weekday: hour.weekday,
+    closed: hour.closed,
+    opensAt: hour.opensAt,
+    closesAt: hour.closesAt,
+  }))
+
+  /**
+   * Resume a escala do profissional em uma linha.
+   *
+   * Sem grade própria ele segue a casa, e é isso que o card diz — antes esta
+   * tela afirmava o horário da casa para todo mundo, o que passou a ser mentira
+   * assim que a escala própria existiu.
+   */
+  const summarize = (week: typeof shopWeek) => {
+    const open = week.filter((day) => !day.closed)
+
+    if (open.length === 0) return { days: "—", shift: "—" }
+
+    return {
+      days: open
+        .map((day) => getWeekdayLabel(day.weekday).slice(0, 3))
+        .join(", "),
+      shift: `${open[0].opensAt} – ${open[0].closesAt}`,
+    }
+  }
 
   return (
     <>
@@ -66,7 +93,19 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
         {barbers.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {barbers.map((barber) => {
-              const stats = performance.barbers.find((b) => b.name === barber.name)
+              const stats = performance.barbers.find(
+                (b) => b.name === barber.name,
+              )
+
+              const ownWeek = barber.schedule.map((day) => ({
+                weekday: day.weekday,
+                closed: day.closed,
+                opensAt: day.opensAt,
+                closesAt: day.closesAt,
+              }))
+
+              const hasOwn = ownWeek.length === 7
+              const summary = summarize(hasOwn ? ownWeek : shopWeek)
 
               return (
                 <article key={barber.id} className="surface rounded-lg p-5">
@@ -107,26 +146,53 @@ const BarbersPage = async ({ searchParams }: PageProps) => {
 
                   <dl className="mt-4 space-y-2 border-t border-white/[0.06] pt-4 text-sm">
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Escala</dt>
-                      <dd className="text-right font-medium">{workingDays}</dd>
+                      <dt className="text-muted-foreground">
+                        Escala
+                        {!hasOwn && (
+                          <span className="block text-[11px]">
+                            segue a barbearia
+                          </span>
+                        )}
+                      </dt>
+                      <dd className="text-right font-medium">{summary.days}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
                       <dt className="text-muted-foreground">Horário</dt>
-                      <dd className="font-medium">{shift}</dd>
+                      <dd className="font-medium">{summary.shift}</dd>
                     </div>
+                    {barber.timeOff.length > 0 && (
+                      <div className="flex justify-between gap-3">
+                        <dt className="text-muted-foreground">Ausências</dt>
+                        <dd className="font-medium">
+                          {barber.timeOff.length} marcada
+                          {barber.timeOff.length > 1 ? "s" : ""}
+                        </dd>
+                      </div>
+                    )}
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Atendimentos (30d)</dt>
+                      <dt className="text-muted-foreground">
+                        Atendimentos (30d)
+                      </dt>
                       <dd className="font-medium">{stats?.count ?? 0}</dd>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <dt className="text-muted-foreground">Faturamento (30d)</dt>
+                      <dt className="text-muted-foreground">
+                        Valor atendido (30d)
+                      </dt>
                       <dd className="font-medium">
                         {formatCurrency(stats?.revenue ?? 0)}
                       </dd>
                     </div>
                   </dl>
 
-                  <div className="mt-3 flex justify-end border-t border-white/[0.06] pt-3">
+                  <div className="mt-3 flex justify-end gap-1 border-t border-white/[0.06] pt-3">
+                    <BarberScheduleForm
+                      barberId={barber.id}
+                      barberName={barber.name}
+                      schedule={ownWeek}
+                      timeOff={barber.timeOff}
+                      shopHours={shopWeek}
+                    />
                     <BarberForm
                       barbershopId={barbershop.id}
                       barber={{
