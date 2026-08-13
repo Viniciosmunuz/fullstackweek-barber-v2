@@ -22,5 +22,6 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "//exclude": "tests/ fica fora do typecheck do next build de proposito: os testes importam o vitest, que e dependencia de desenvolvimento e pode nao estar instalada no ambiente de build. Sem isso, um deploy quebraria por causa de um import que nao afeta o site. O vitest transpila os arquivos por conta propria e nao depende deste include.",
+  "exclude": ["node_modules", "tests"]
 }
