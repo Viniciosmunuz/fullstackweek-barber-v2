@@ -5,6 +5,7 @@ import { z } from "zod"
 import { db } from "@/app/_lib/prisma"
 import { IMAGE_SOURCE_MESSAGE, isImageSource } from "@/app/_lib/image-source"
 import { UserFacingError, runAction } from "@/app/_lib/action-result"
+import { MAX_CANCEL_WINDOW_HOURS } from "@/app/_lib/cancel-policy"
 import { requireOwner } from "./guard"
 
 const profileSchema = z.object({
@@ -64,6 +65,41 @@ export async function updateBarbershopProfile(
     revalidatePath("/dashboard/configuracoes")
     revalidatePath("/barbershops")
     revalidatePath(`/barbershops/${barbershopId}`)
+  })
+}
+
+/**
+ * Antecedência mínima para o cliente cancelar sozinho.
+ *
+ * Ação própria, e não mais um campo do perfil, porque não é dado de vitrine —
+ * é regra de atendimento. Misturá-la ali faria uma correção de slogan salvar
+ * silenciosamente uma política de cancelamento.
+ */
+export async function updateCancelWindow(barbershopId: string, hours: number) {
+  return runAction(async () => {
+    await requireOwner(barbershopId)
+
+    const parsed = z
+      .number()
+      .int("Informe um número inteiro de horas.")
+      .min(0, "O prazo não pode ser negativo.")
+      .max(
+        MAX_CANCEL_WINDOW_HOURS,
+        "O prazo máximo é de sete dias — acima disso o cliente não teria como desmarcar.",
+      )
+      .safeParse(hours)
+
+    if (!parsed.success) {
+      throw new UserFacingError(parsed.error.issues[0].message)
+    }
+
+    await db.barbershop.update({
+      where: { id: barbershopId },
+      data: { cancelWindowHours: parsed.data },
+    })
+
+    revalidatePath("/dashboard/configuracoes")
+    revalidatePath("/bookings")
   })
 }
 

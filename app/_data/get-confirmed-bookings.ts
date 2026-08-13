@@ -39,6 +39,7 @@ const BOOKING_SELECT = {
           logoKey: true,
           logoUrl: true,
           accentColor: true,
+          cancelWindowHours: true,
         },
       },
     },

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { unwrap } from "@/app/_lib/action-result"
+import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import Image from "next/image"
 import { format, isFuture } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -32,6 +32,7 @@ import BookingSummary from "./booking-summary"
 import BarbershopLogo from "./brand/barbershop-logo"
 import ReviewForm, { type ExistingReview } from "./review-form"
 import { deleteBooking } from "../_actions/delete-booking"
+import { canClientCancel, describeCancelWindow } from "@/app/_lib/cancel-policy"
 import { formatCurrency } from "@/app/_lib/utils"
 
 /**
@@ -63,6 +64,8 @@ export interface BookingItemData {
       logoKey: string
       logoUrl: string | null
       accentColor: string
+      /** Antecedência exigida para o cliente cancelar. Zero é sem prazo. */
+      cancelWindowHours: number
     }
   }
 }
@@ -91,6 +94,17 @@ const BookingItem = ({ booking }: BookingItemProps) => {
    */
   const concluded = booking.canReview || !isFuture(date)
 
+  /*
+   * A mesma conta que o servidor faz. Aqui ela decide o que a tela mostra;
+   * lá, se o pedido passa. Duplicar a decisão seria arriscado se a regra
+   * morasse nos dois lugares — por isso mora em `canClientCancel`, e as duas
+   * pontas só perguntam.
+   */
+  const prazo = canClientCancel({
+    date,
+    windowHours: barbershop.cancelWindowHours,
+  })
+
   const handleCancelBooking = async () => {
     setCancelling(true)
     try {
@@ -99,7 +113,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
       toast.success("Agendamento cancelado.")
     } catch (error) {
       console.error(error)
-      toast.error("Não foi possível cancelar. Tente novamente.")
+      // A mensagem do servidor é mais específica que "tente novamente" — é ela
+      // que explica o prazo da casa quando o cancelamento é recusado.
+      toast.error(messageFrom(error, "Não foi possível cancelar."))
     } finally {
       setCancelling(false)
     }
@@ -239,7 +255,23 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </Button>
           </SheetClose>
 
-          {!concluded && (
+          {/*
+            Passado o prazo, o botão sai e no lugar entra o motivo. Botão que
+            aparece e recusa ensina menos do que a frase que diz por quê e para
+            quem ligar.
+          */}
+          {!concluded && !prazo.allowed && (
+            <p className="w-full rounded-md bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+              Esta barbearia pede{" "}
+              <strong className="font-semibold text-foreground">
+                {describeCancelWindow(prazo.hoursRequired)}
+              </strong>{" "}
+              de antecedência para cancelar pelo app. Para desmarcar agora, fale
+              direto com ela.
+            </p>
+          )}
+
+          {!concluded && prazo.allowed && (
             <Dialog>
               <DialogTrigger asChild>
                 <Button variant="destructive" className="w-full">

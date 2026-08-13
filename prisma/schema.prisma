@@ -208,6 +208,17 @@ model Barbershop {
   reviewCount Int                 @default(0)
   reviews     Review[]
 
+  /// Antecedência mínima, em horas, para o cliente cancelar sozinho.
+  ///
+  /// Zero é "sem prazo", e é o padrão de propósito: era o comportamento até
+  /// aqui, e ligar uma trava em toda barbearia de uma vez mudaria a regra de
+  /// quem nunca pediu. Quem quiser a proteção escolhe o prazo no painel.
+  ///
+  /// Vale só para o cliente. A barbearia cancela a qualquer momento — imprevisto
+  /// dela costuma acontecer justamente em cima da hora, e é ela quem responde
+  /// pelo horário.
+  cancelWindowHours Int @default(0)
+
   /// ---------------------------------------------------------------------
   /// Cobrança do sinal
   /// ---------------------------------------------------------------------

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation"
 import { OwnerOnly, PageHeader } from "../_components/ui"
 import ProfileForm from "../_components/profile-form"
 import HoursForm from "../_components/hours-form"
+import CancelPolicyForm from "../_components/cancel-policy-form"
 import PublishCard from "../_components/publish-card"
 import { db } from "@/app/_lib/prisma"
 import {
@@ -25,7 +26,9 @@ const SettingsPage = async ({ searchParams }: PageProps) => {
   if (!barbershop) return notFound()
 
   if (!(await isOwnerOf(barbershop.id))) {
-    return <OwnerOnly title="Configurações" shops={shops} current={barbershop} />
+    return (
+      <OwnerOnly title="Configurações" shops={shops} current={barbershop} />
+    )
   }
 
   const [openingHours, counts] = await Promise.all([
@@ -86,7 +89,14 @@ const SettingsPage = async ({ searchParams }: PageProps) => {
             }}
           />
 
-          <HoursForm barbershopId={barbershop.id} hours={openingHours} />
+          <div className="space-y-6">
+            <HoursForm barbershopId={barbershop.id} hours={openingHours} />
+
+            <CancelPolicyForm
+              barbershopId={barbershop.id}
+              cancelWindowHours={barbershop.cancelWindowHours}
+            />
+          </div>
         </div>
       </div>
     </>

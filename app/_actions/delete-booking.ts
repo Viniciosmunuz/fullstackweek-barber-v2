@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { db } from "../_lib/prisma"
 import { UserFacingError, runAction } from "../_lib/action-result"
+import { canClientCancel, describeCancelWindow } from "../_lib/cancel-policy"
 import { notifyClient } from "../_lib/notify-client"
 import { requireSession } from "./dashboard/guard"
 import { isPlatformAdminEmail } from "../_lib/config"
@@ -40,7 +41,7 @@ const doDeleteBooking = async (bookingId: string) => {
         select: {
           name: true,
           barbershopId: true,
-          barbershop: { select: { name: true } },
+          barbershop: { select: { name: true, cancelWindowHours: true } },
         },
       },
       payment: { select: { id: true, status: true } },
@@ -73,6 +74,27 @@ const doDeleteBooking = async (bookingId: string) => {
       ))
 
   if (!ehDono && !gerencia) negar()
+
+  /*
+   * O prazo vale só para o cliente, e é conferido aqui — não na tela.
+   * Server action é endpoint acessível direto: esconder o botão impede o
+   * clique, não o pedido.
+   *
+   * Quem gerencia a barbearia cancela a qualquer momento. O imprevisto dela
+   * acontece justamente em cima da hora, e é ela quem responde pelo horário.
+   */
+  if (ehDono) {
+    const prazo = canClientCancel({
+      date: booking!.date,
+      windowHours: booking!.service.barbershop.cancelWindowHours,
+    })
+
+    if (!prazo.allowed) {
+      throw new UserFacingError(
+        `Esta barbearia pede ${describeCancelWindow(prazo.hoursRequired)} de antecedência para cancelar. Fale direto com ela.`,
+      )
+    }
+  }
 
   const pagamento = booking!.payment
   const movimentouDinheiro =
