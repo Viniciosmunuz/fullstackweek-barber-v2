@@ -10,6 +10,7 @@ import ServiceItem from "@/app/_components/service-item"
 import SidebarSheet from "@/app/_components/sidebar-sheet"
 import BarbershopLogo from "@/app/_components/brand/barbershop-logo"
 import BarberAvatar from "@/app/_components/barber-avatar"
+import ShopHero from "@/app/_components/shop-hero"
 import {
   Avatar,
   AvatarFallback,
@@ -121,16 +122,25 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
       {/* ------------------------------------------------------------------ */}
       {/* CAPA                                                                */}
       {/* ------------------------------------------------------------------ */}
-      <div className="relative h-[260px] w-full sm:h-[340px] lg:h-[400px]">
+      <div className="relative h-[250px] w-full overflow-hidden sm:h-[300px]">
+        {/* Só como cor de fundo: desfocada e apagada, a foto dá o tom do lugar
+            sem disputar espaço com a marca. Ela aparece inteira no diálogo. */}
         <Image
-          alt={`Ambiente da ${barbershop.name}`}
+          alt=""
+          aria-hidden
           src={barbershop.imageUrl}
           fill
           priority
-          sizes="100vw"
-          className="object-cover"
+          sizes="640px"
+          className="scale-110 object-cover opacity-20 blur-2xl"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/85 to-background/60" />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(70% 90% at 15% 100%, ${accent}22, transparent 70%)`,
+          }}
+        />
 
         <div className="container relative flex h-full flex-col">
           <div className="flex items-center justify-between pt-5">
@@ -160,32 +170,20 @@ const BarbershopPage = async ({ params }: BarbershopPageProps) => {
             </Sheet>
           </div>
 
-          <div className="mt-auto flex items-end gap-4 pb-6">
-            <span
-              className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-background/85 backdrop-blur sm:h-20 sm:w-20"
-              style={{ boxShadow: `inset 0 0 0 1px ${accent}40` }}
-            >
-              <BarbershopLogo
-                logoKey={barbershop.logoKey}
-                logoUrl={barbershop.logoUrl}
-                accentColor={accent}
-                label={`Logo da ${barbershop.name}`}
-                className="h-10 w-10 sm:h-12 sm:w-12"
-              />
-            </span>
-
-            <div className="min-w-0">
-              <h1 className="font-display text-2xl font-extrabold leading-tight tracking-tight sm:text-4xl">
-                {barbershop.name}
-              </h1>
-              <p
-                className="mt-1 text-sm sm:text-base"
-                style={{ color: accent }}
-              >
-                {barbershop.slogan}
-              </p>
-            </div>
-          </div>
+          <ShopHero
+            name={barbershop.name}
+            slogan={barbershop.slogan}
+            imageUrl={barbershop.imageUrl}
+            accentColor={accent}
+          >
+            <BarbershopLogo
+              logoKey={barbershop.logoKey}
+              logoUrl={barbershop.logoUrl}
+              accentColor={accent}
+              label={`Logo da ${barbershop.name}`}
+              className="h-16 w-16 sm:h-24 sm:w-24"
+            />
+          </ShopHero>
         </div>
       </div>
 
