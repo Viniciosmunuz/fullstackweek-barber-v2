@@ -28,8 +28,15 @@ export interface Interval {
 }
 
 export interface SlotsInput {
-  /** Dia consultado; só a data importa, a hora é ignorada. */
-  day: Date
+  /**
+   * Instante em que começa o dia consultado, **no fuso da barbearia**.
+   *
+   * Antes esta entrada era um `Date` qualquer do dia e os horários saíam de
+   * `setHours`, que usa o fuso de quem executa — UTC na Vercel. Recebendo a
+   * âncora pronta, o cálculo vira soma de minutos e não tem mais opinião sobre
+   * fuso nenhum. Quem sabe converter é `_lib/timezone`.
+   */
+  dayStart: Date
   /** Janela de funcionamento válida para este profissional neste dia. */
   window: DayWindow | null
   /** Duração do serviço escolhido. */
@@ -65,10 +72,16 @@ export function timeFromMinutes(total: number): string {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
 }
 
-function at(day: Date, totalMinutes: number): Date {
-  const result = new Date(day)
-  result.setHours(Math.floor(totalMinutes / 60), totalMinutes % 60, 0, 0)
-  return result
+/**
+ * Soma minutos ao início do dia.
+ *
+ * Aritmética pura, sem `setHours`: some minutos a um instante e o resultado é o
+ * mesmo em qualquer fuso em que o processo esteja rodando. Vale porque o Brasil
+ * não tem mais horário de verão desde 2019 — voltando a ter, um dia passa a
+ * ter 23 ou 25 horas e esta conta precisa converter de novo pelo fuso.
+ */
+function at(dayStart: Date, totalMinutes: number): Date {
+  return new Date(dayStart.getTime() + totalMinutes * 60_000)
 }
 
 /** Dois intervalos se cruzam quando um começa antes de o outro acabar. */
@@ -85,7 +98,7 @@ function overlaps(a: Interval, b: Interval): boolean {
  * fechamento menos a duração.
  */
 export function buildSlots({
-  day,
+  dayStart,
   window,
   durationMinutes,
   busy = [],
@@ -107,10 +120,10 @@ export function buildSlots({
     start + durationMinutes <= closes;
     start += SLOT_STEP_MINUTES
   ) {
-    const startsAt = at(day, start)
+    const startsAt = at(dayStart, start)
     const candidate = {
       start: startsAt,
-      end: at(day, start + durationMinutes),
+      end: at(dayStart, start + durationMinutes),
     }
 
     // Horário que já passou não é oferecido — vale só quando o dia é hoje,

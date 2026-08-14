@@ -115,6 +115,12 @@ const BookingFlow = ({
     }
   }, [barber, day, service.id])
 
+  /*
+   * Só para exibir. O horário que vai para o servidor é o texto de `time`, e
+   * quem transforma isso num instante é `_actions/create-booking` — este
+   * navegador pode estar em qualquer fuso do mundo, e a barbearia está sempre
+   * no mesmo.
+   */
   const selectedDate = useMemo(() => {
     if (!day || !time) return undefined
     const [hours, minutes] = time.split(":").map(Number)
@@ -122,7 +128,7 @@ const BookingFlow = ({
   }, [day, time])
 
   const handleConfirm = async () => {
-    if (!selectedDate || !barber) return
+    if (!day || !time || !barber) return
 
     setSubmitting(true)
     try {
@@ -131,7 +137,8 @@ const BookingFlow = ({
           createBookingWithDeposit({
             serviceId: service.id,
             barberId: barber.id,
-            date: selectedDate,
+            day,
+            time,
             cpfCnpj: document,
           }),
         )
@@ -145,12 +152,13 @@ const BookingFlow = ({
         createBooking({
           serviceId: service.id,
           barberId: barber.id,
-          date: selectedDate,
+          day,
+          time,
         }),
       )
 
       toast.success("Agendamento confirmado!", {
-        description: `${service.name} · ${format(selectedDate, "dd/MM 'às' HH:mm", { locale: ptBR })}`,
+        description: `${service.name} · ${format(day, "dd/MM", { locale: ptBR })} às ${time}`,
         action: {
           label: "Ver meus agendamentos",
           onClick: () => router.push("/bookings"),

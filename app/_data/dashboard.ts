@@ -1,4 +1,14 @@
-import { subDays, subMonths, startOfDay, endOfDay, startOfMonth } from "date-fns"
+import { subDays, subMonths } from "date-fns"
+/*
+ * As bordas de dia e de mês vêm do fuso da barbearia, não do processo. No
+ * servidor em UTC, "hoje" começava às 21:00 do dia anterior em Brasília — e o
+ * painel contava como de hoje o que ainda era de ontem.
+ */
+import {
+  startOfDayInZone as startOfDay,
+  endOfDayInZone as endOfDay,
+  startOfMonthInZone as startOfMonth,
+} from "../_lib/timezone"
 import { db } from "../_lib/prisma"
 import { getManagedBarbershopIds } from "../_actions/dashboard/guard"
 
@@ -100,10 +110,7 @@ interface ScopeArgs {
 async function findBookings({ barbershopId, from, to }: ScopeArgs) {
   return db.booking.findMany({
     where: {
-      AND: [
-        { service: { barbershopId } },
-        { date: { gte: from, lte: to } },
-      ],
+      AND: [{ service: { barbershopId } }, { date: { gte: from, lte: to } }],
     },
     select: {
       id: true,
@@ -111,7 +118,9 @@ async function findBookings({ barbershopId, from, to }: ScopeArgs) {
       status: true,
       user: { select: { id: true, name: true, phone: true, image: true } },
       barber: { select: { id: true, name: true, specialty: true } },
-      service: { select: { id: true, name: true, price: true, durationMinutes: true } },
+      service: {
+        select: { id: true, name: true, price: true, durationMinutes: true },
+      },
     },
     orderBy: { date: "asc" },
   })
@@ -130,7 +139,9 @@ export interface DashboardBooking {
   durationMinutes: number
 }
 
-function toDashboardBooking(row: Awaited<ReturnType<typeof findBookings>>[number]): DashboardBooking {
+function toDashboardBooking(
+  row: Awaited<ReturnType<typeof findBookings>>[number],
+): DashboardBooking {
   return {
     id: row.id,
     date: row.date,
@@ -151,7 +162,9 @@ function toDashboardBooking(row: Awaited<ReturnType<typeof findBookings>>[number
  */
 export async function getOverview(barbershopId: string, period: Period) {
   const { from, to } = resolvePeriod(period)
-  const rows = (await findBookings({ barbershopId, from, to })).map(toDashboardBooking)
+  const rows = (await findBookings({ barbershopId, from, to })).map(
+    toDashboardBooking,
+  )
 
   const now = new Date()
   const todayStart = startOfDay(now)
@@ -197,7 +210,9 @@ export interface ClientSummary {
 }
 
 /** Clientes agregados a partir do histórico da barbearia. */
-export async function getClients(barbershopId: string): Promise<ClientSummary[]> {
+export async function getClients(
+  barbershopId: string,
+): Promise<ClientSummary[]> {
   const rows = await db.booking.findMany({
     where: { service: { barbershopId } },
     select: {
@@ -242,7 +257,10 @@ export async function getMonthlyRevenue(barbershopId: string) {
   const { from, to } = resolvePeriod("12m")
   const rows = await findBookings({ barbershopId, from, to })
 
-  const buckets = new Map<string, { label: string; revenue: number; count: number }>()
+  const buckets = new Map<
+    string,
+    { label: string; revenue: number; count: number }
+  >()
   const now = new Date()
 
   for (let i = 11; i >= 0; i--) {
@@ -270,11 +288,19 @@ export async function getMonthlyRevenue(barbershopId: string) {
 /** Ranking de serviços e desempenho por profissional no período. */
 export async function getPerformance(barbershopId: string, period: Period) {
   const { from, to } = resolvePeriod(period)
-  const rows = (await findBookings({ barbershopId, from, to })).map(toDashboardBooking)
+  const rows = (await findBookings({ barbershopId, from, to })).map(
+    toDashboardBooking,
+  )
   const done = rows.filter((r) => r.status === "COMPLETED")
 
-  const services = new Map<string, { name: string; count: number; revenue: number }>()
-  const barbers = new Map<string, { name: string; count: number; revenue: number }>()
+  const services = new Map<
+    string,
+    { name: string; count: number; revenue: number }
+  >()
+  const barbers = new Map<
+    string,
+    { name: string; count: number; revenue: number }
+  >()
 
   for (const row of done) {
     const s = services.get(row.serviceName) ?? {
@@ -287,7 +313,11 @@ export async function getPerformance(barbershopId: string, period: Period) {
     services.set(row.serviceName, s)
 
     const barberName = row.barberName ?? "Sem profissional"
-    const b = barbers.get(barberName) ?? { name: barberName, count: 0, revenue: 0 }
+    const b = barbers.get(barberName) ?? {
+      name: barberName,
+      count: 0,
+      revenue: 0,
+    }
     b.count += 1
     b.revenue += row.price
     barbers.set(barberName, b)

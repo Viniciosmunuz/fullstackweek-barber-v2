@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { format } from "date-fns"
+
+import { formatInZone } from "@/app/_lib/timezone"
 import { ptBR } from "date-fns/locale"
 import { CalendarOff, Clock, Loader2, Plus, Save, Trash2 } from "lucide-react"
 import { toast } from "sonner"
@@ -264,8 +265,8 @@ const BarberScheduleForm = ({
                       className="shrink-0 text-muted-foreground"
                     />
                     <span className="min-w-0 flex-1 truncate">
-                      {format(row.startsAt, "dd/MM HH:mm", { locale: ptBR })} —{" "}
-                      {format(row.endsAt, "dd/MM HH:mm", { locale: ptBR })}
+                      {formatInZone(row.startsAt, "dd/MM HH:mm", ptBR)} —{" "}
+                      {formatInZone(row.endsAt, "dd/MM HH:mm", ptBR)}
                       {row.reason && (
                         <span className="text-muted-foreground">
                           {" "}

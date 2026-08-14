@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+
+import { formatInZone } from "@/app/_lib/timezone"
 import { ptBR } from "date-fns/locale"
 import { ArrowDownLeft, Landmark, Percent, Receipt, Wallet } from "lucide-react"
 import {
@@ -147,9 +148,7 @@ const PayoutsPage = async ({ searchParams }: PageProps) => {
                       className={row.refunded ? "opacity-55" : undefined}
                     >
                       <td className="whitespace-nowrap px-4 py-2.5 text-muted-foreground">
-                        {format(row.paidAt, "dd/MM 'às' HH:mm", {
-                          locale: ptBR,
-                        })}
+                        {formatInZone(row.paidAt, "dd/MM 'às' HH:mm", ptBR)}
                       </td>
                       <td className="px-4 py-2.5">
                         {row.serviceName}

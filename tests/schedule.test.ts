@@ -27,7 +27,7 @@ const ABERTO: DayWindow = {
 
 function slots(overrides: Partial<Parameters<typeof buildSlots>[0]> = {}) {
   return buildSlots({
-    day: DIA,
+    dayStart: DIA,
     window: ABERTO,
     durationMinutes: 30,
     now: CEDO,

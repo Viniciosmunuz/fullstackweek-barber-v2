@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { addDays, format, isValid, parseISO, startOfDay } from "date-fns"
+import { addDays } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { CalendarX, ChevronLeft, ChevronRight } from "lucide-react"
 import { EmptyState, PageHeader } from "../_components/ui"
+import { dateKey, formatInZone, startOfDayFromKey } from "@/app/_lib/timezone"
 import StatusSelect from "../_components/status-select"
 import BarberAvatar from "@/app/_components/barber-avatar"
 import { Button } from "@/app/_components/ui/button"
@@ -29,16 +30,23 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
 
   if (!barbershop) return notFound()
 
-  // Data inválida na URL cai para hoje em vez de quebrar a página.
-  const parsed = searchParams.date ? parseISO(searchParams.date) : new Date()
-  const day = isValid(parsed) ? startOfDay(parsed) : startOfDay(new Date())
+  /*
+   * A data da URL é tratada como texto até o fim. Convertê-la para `Date`
+   * antes de aplicar o fuso já erra: "2026-08-13" lido pelo servidor em UTC
+   * vira um instante que, no relógio da barbearia, ainda é dia 12.
+   */
+  const key =
+    searchParams.date && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.date)
+      ? searchParams.date
+      : dateKey(new Date())
+
+  const day = startOfDayFromKey(key)
 
   const bookings = await getAgenda(barbershop.id, day)
 
   const dayHref = (offset: number) =>
-    `/dashboard/agendamentos?shop=${barbershop.slug}&date=${format(
+    `/dashboard/agendamentos?shop=${barbershop.slug}&date=${dateKey(
       addDays(day, offset),
-      "yyyy-MM-dd",
     )}`
 
   // O preço de cada linha continua à vista para os dois papéis — é o mesmo que
@@ -72,7 +80,7 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
           </div>
 
           <p className="font-display text-sm font-bold capitalize">
-            {format(day, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            {formatInZone(day, "EEEE, dd 'de' MMMM 'de' yyyy", ptBR)}
           </p>
 
           <Button variant="ghost" size="sm" asChild>
@@ -107,19 +115,34 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
             <table className="hidden w-full text-sm md:table">
               <thead>
                 <tr className="border-b border-white/[0.06] text-left text-[11px] uppercase tracking-wider text-muted-foreground">
-                  <th scope="col" className="px-4 py-3 font-semibold">Horário</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Cliente</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Serviço</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Profissional</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Valor</th>
-                  <th scope="col" className="px-4 py-3 font-semibold">Status</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Horário
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Cliente
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Serviço
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Profissional
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Valor
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/[0.06]">
                 {bookings.map((booking) => (
-                  <tr key={booking.id} className="transition-colors hover:bg-white/[0.02]">
+                  <tr
+                    key={booking.id}
+                    className="transition-colors hover:bg-white/[0.02]"
+                  >
                     <td className="whitespace-nowrap px-4 py-3 font-medium">
-                      {format(booking.date, "HH:mm")}
+                      {formatInZone(booking.date, "HH:mm")}
                       <span className="ml-1.5 text-xs text-muted-foreground">
                         {formatDuration(booking.durationMinutes)}
                       </span>
@@ -153,7 +176,7 @@ const AgendaPage = async ({ searchParams }: PageProps) => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-display font-bold">
-                        {format(booking.date, "HH:mm")}
+                        {formatInZone(booking.date, "HH:mm")}
                       </p>
                       <p className="truncate text-sm">{booking.clientName}</p>
                     </div>

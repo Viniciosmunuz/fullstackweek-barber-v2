@@ -1,4 +1,4 @@
-import { format } from "date-fns"
+import { formatInZone } from "./timezone"
 import { ptBR } from "date-fns/locale"
 import { db } from "./prisma"
 
@@ -42,7 +42,7 @@ export async function notifyBarbershop({
 
     if (managers.length === 0) return
 
-    const quando = format(date, "dd/MM 'às' HH:mm", { locale: ptBR })
+    const quando = formatInZone(date, "dd/MM 'às' HH:mm", ptBR)
     const detalhe = barberName
       ? `${clientName} · ${serviceName} · ${barberName} · ${quando}`
       : `${clientName} · ${serviceName} · ${quando}`

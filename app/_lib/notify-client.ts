@@ -1,4 +1,4 @@
-import { format } from "date-fns"
+import { formatInZone } from "./timezone"
 import { ptBR } from "date-fns/locale"
 import { sendEmail, type EmailResult } from "./email"
 
@@ -77,7 +77,7 @@ function details(notice: ClientNotice, quando: string): string[] {
 }
 
 export function buildClientNotice(notice: ClientNotice) {
-  const quando = format(notice.date, "EEEE, dd/MM 'às' HH:mm", { locale: ptBR })
+  const quando = formatInZone(notice.date, "EEEE, dd/MM 'às' HH:mm", ptBR)
   const { subject, lead, tail } = copyFor(notice, quando)
   const linhas = details(notice, quando)
 

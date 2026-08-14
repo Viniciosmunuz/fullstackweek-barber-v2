@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
+
+import { formatInZone } from "@/app/_lib/timezone"
 import { ptBR } from "date-fns/locale"
 import {
   CalendarCheck,
@@ -168,7 +169,7 @@ const DashboardPage = async ({ searchParams }: PageProps) => {
                     </div>
                     <div className="shrink-0 text-right">
                       <p className="text-sm font-medium">
-                        {format(booking.date, "dd/MM HH:mm", { locale: ptBR })}
+                        {formatInZone(booking.date, "dd/MM HH:mm", ptBR)}
                       </p>
                       <StatusBadge status={booking.status} />
                     </div>

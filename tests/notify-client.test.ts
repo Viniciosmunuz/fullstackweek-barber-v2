@@ -18,7 +18,7 @@ const BASE: ClientNotice = {
   barbershopName: "Barbearia Modelo",
   serviceName: "Corte Masculino",
   barberName: "Carlos",
-  date: new Date("2026-08-13T14:30:00"),
+  date: new Date("2026-08-13T14:30:00-04:00"),
   address: "Rua Exemplo, 123",
 }
 

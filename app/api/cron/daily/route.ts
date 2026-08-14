@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server"
-import { addDays, endOfDay, startOfDay } from "date-fns"
+import { addDays } from "date-fns"
+import {
+  endOfDayInZone as endOfDay,
+  startOfDayInZone as startOfDay,
+} from "@/app/_lib/timezone"
 import { db } from "@/app/_lib/prisma"
 import { notifyClient } from "@/app/_lib/notify-client"
 import { getCronSecret } from "@/app/_lib/config"
@@ -53,6 +57,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
 
+  // "Amanhã" é o dia da barbearia, não o do servidor: rodando às 21:00 UTC, o
+  // relógio de Brasília ainda marca 18:00 de hoje — e o lembrete sairia com um
+  // dia de erro.
   const amanha = addDays(new Date(), 1)
 
   const bookings = await db.booking.findMany({

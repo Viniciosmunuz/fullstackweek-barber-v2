@@ -1,6 +1,10 @@
 "use server"
 
-import { endOfDay, startOfDay } from "date-fns"
+import {
+  endOfDayInZone,
+  startOfDayInZone,
+  weekdayInZone,
+} from "../_lib/timezone"
 import { db } from "../_lib/prisma"
 import { activeBookingFilter } from "../_lib/booking-slot"
 import { buildSlots, resolveWindow, type DayWindow } from "../_lib/schedule"
@@ -61,7 +65,10 @@ export async function getAvailableSlots({
   if (!barber?.active || !service) return []
   if (barber.barbershopId !== service.barbershopId) return []
 
-  const weekday = date.getDay()
+  // O dia da semana é o da barbearia. Um agendamento de sábado 22:00 em
+  // Brasília cai em domingo pelo relógio UTC do servidor — e consultaria a
+  // grade do dia errado.
+  const weekday = weekdayInZone(date)
 
   const shopHour = await db.openingHour.findUnique({
     where: {
@@ -79,8 +86,8 @@ export async function getAvailableSlots({
 
   if (!window || window.closed) return []
 
-  const from = startOfDay(date)
-  const to = endOfDay(date)
+  const from = startOfDayInZone(date)
+  const to = endOfDayInZone(date)
 
   const [bookings, timeOff] = await Promise.all([
     db.booking.findMany({
@@ -100,7 +107,7 @@ export async function getAvailableSlots({
   ])
 
   return buildSlots({
-    day: date,
+    dayStart: from,
     window,
     durationMinutes: service.durationMinutes,
     busy: bookings.map((booking) => ({

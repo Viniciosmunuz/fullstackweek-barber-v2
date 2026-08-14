@@ -1,4 +1,4 @@
-import { format } from "date-fns"
+import { formatInZone } from "@/app/_lib/timezone"
 import { ptBR } from "date-fns/locale"
 import { formatDuration } from "@/app/_lib/utils"
 
@@ -44,13 +44,15 @@ const BookingSummary = ({
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Data</dt>
           <dd className="text-right font-medium capitalize">
-            {format(date, "d 'de' MMMM", { locale: ptBR })}
+            {formatInZone(date, "d 'de' MMMM", ptBR)}
           </dd>
         </div>
 
         <div className="flex justify-between gap-4">
           <dt className="text-muted-foreground">Horário</dt>
-          <dd className="text-right font-medium">{format(date, "HH:mm")}</dd>
+          <dd className="text-right font-medium">
+            {formatInZone(date, "HH:mm")}
+          </dd>
         </div>
 
         <div className="flex justify-between gap-4">

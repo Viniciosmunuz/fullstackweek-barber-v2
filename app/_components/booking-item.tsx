@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { messageFrom, unwrap } from "@/app/_lib/action-result"
 import Image from "next/image"
-import { format, isFuture } from "date-fns"
+import { isFuture } from "date-fns"
+import { formatInZone } from "@/app/_lib/timezone"
 import { ptBR } from "date-fns/locale"
 import { toast } from "sonner"
 import { Badge } from "./ui/badge"
@@ -168,13 +169,13 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
           <div className="flex flex-col items-center justify-center border-l border-white/[0.06] px-5">
             <p className="text-xs capitalize text-muted-foreground">
-              {format(date, "MMM", { locale: ptBR })}
+              {formatInZone(date, "MMM", ptBR)}
             </p>
             <p className="font-display text-2xl font-bold">
-              {format(date, "dd")}
+              {formatInZone(date, "dd")}
             </p>
             <p className="text-sm text-muted-foreground">
-              {format(date, "HH:mm")}
+              {formatInZone(date, "HH:mm")}
             </p>
           </div>
         </button>

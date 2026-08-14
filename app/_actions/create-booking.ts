@@ -8,18 +8,33 @@ import { activeBookingFilter } from "../_lib/booking-slot"
 import { notifyBarbershop } from "../_lib/notify-barbershop"
 import { notifyClient } from "../_lib/notify-client"
 import { UserFacingError, runAction } from "../_lib/action-result"
+import { zonedDateTime } from "../_lib/timezone"
 
 interface CreateBookingParams {
   serviceId: string
   barberId: string
-  date: Date
+  /** Dia escolhido. Só a data importa; o horário vem em `time`. */
+  day: Date
+  /** Horário escolhido, "HH:mm", exatamente como o cliente viu na tela. */
+  time: string
 }
 
 const doCreateBooking = async ({
   serviceId,
   barberId,
-  date,
+  day,
+  time,
 }: CreateBookingParams) => {
+  /*
+   * O instante é montado aqui, e não no navegador.
+   *
+   * Antes o cliente fazia `set(dia, {hours, minutes})` no relógio dele e
+   * mandava o `Date` pronto. Como o servidor roda em UTC, o horário oferecido
+   * e o horário gravado eram instantes diferentes — três horas de distância —,
+   * e a checagem de conflito logo abaixo comparava maçã com laranja: o mesmo
+   * horário podia ser vendido duas vezes.
+   */
+  const date = zonedDateTime(day, time)
   const session = await getServerSession(authOptions)
   const user = session?.user as
     | { id?: string; name?: string | null }

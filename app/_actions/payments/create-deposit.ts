@@ -13,6 +13,7 @@ import {
 } from "@/app/_lib/payments/asaas"
 import { isPaymentsConfigured } from "@/app/_lib/config"
 import { UserFacingError, runAction } from "@/app/_lib/action-result"
+import { zonedDateTime } from "@/app/_lib/timezone"
 import type { DepositResult } from "./types"
 
 /**
@@ -27,7 +28,10 @@ import type { DepositResult } from "./types"
 const schema = z.object({
   serviceId: z.string().uuid(),
   barberId: z.string().uuid(),
-  date: z.coerce.date(),
+  /** Dia escolhido; o horário vem separado, em `time`. */
+  day: z.coerce.date(),
+  /** "HH:mm" como o cliente viu. O instante é montado no servidor. */
+  time: z.string().regex(/^\d{2}:\d{2}$/, "Horário inválido."),
   cpfCnpj: z
     .string()
     .trim()
@@ -40,7 +44,10 @@ const schema = z.object({
 async function doCreateBookingWithDeposit(
   input: z.infer<typeof schema>,
 ): Promise<DepositResult> {
-  const { serviceId, barberId, date, cpfCnpj } = schema.parse(input)
+  const { serviceId, barberId, day, time, cpfCnpj } = schema.parse(input)
+
+  // Um relógio só, o da barbearia. Ver `_lib/timezone`.
+  const date = zonedDateTime(day, time)
 
   const session = await getServerSession(authOptions)
   const user = session?.user as
