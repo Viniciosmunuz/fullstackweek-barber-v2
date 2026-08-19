@@ -1,7 +1,7 @@
 /**
  * Recarrega o catálogo de demonstração do BarberFlow.
  *
- * Os dados vivem na migration `20260808020000_barberflow_demo_catalog` porque o
+ * Os dados vivem na migration `20260819010000_portfolio_catalog` porque o
  * ambiente de build não executa `prisma db seed`. Este script reaproveita
  * exatamente aquele SQL para que não existam duas fontes de verdade: rodar o
  * seed localmente produz o mesmo catálogo que o deploy produz.
@@ -17,7 +17,7 @@ const prisma = new PrismaClient()
 const CATALOG_MIGRATION = path.join(
   __dirname,
   "migrations",
-  "20260808020000_barberflow_demo_catalog",
+  "20260819010000_portfolio_catalog",
   "migration.sql",
 )
 
@@ -25,17 +25,23 @@ async function seedDatabase() {
   const sql = fs.readFileSync(CATALOG_MIGRATION, "utf8")
 
   // O arquivo é um lote único de comandos; executamos como script para manter a
-  // ordem (limpeza -> barbearias -> serviços -> barbeiros -> horários).
+  // ordem (limpeza -> barbearias -> serviços -> barbeiros -> horários ->
+  // clientes -> atendimentos -> avaliações).
   await prisma.$executeRawUnsafe(sql)
 
-  const [barbershops, services, barbers] = await Promise.all([
-    prisma.barbershop.count(),
-    prisma.barbershopService.count(),
-    prisma.barber.count(),
-  ])
+  const [barbershops, services, barbers, bookings, reviews] = await Promise.all(
+    [
+      prisma.barbershop.count(),
+      prisma.barbershopService.count(),
+      prisma.barber.count(),
+      prisma.booking.count(),
+      prisma.review.count(),
+    ],
+  )
 
   console.log(
-    `Catálogo recarregado: ${barbershops} barbearias, ${services} serviços, ${barbers} profissionais.`,
+    `Catálogo recarregado: ${barbershops} barbearias, ${services} serviços, ` +
+      `${barbers} profissionais, ${bookings} atendimentos e ${reviews} avaliações.`,
   )
 }
 
