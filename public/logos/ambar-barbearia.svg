@@ -1,10 +1,33 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#F8F0E2"/>
-  <circle cx="256" cy="212" r="150" fill="none" stroke="#D98F2B" stroke-width="6"/>
-  <circle cx="256" cy="212" r="132" fill="none" stroke="#3D2C12" stroke-width="2"/>
-  <rect x="228" y="120" width="56" height="184" rx="28" fill="#FFFFFF" stroke="#3D2C12" stroke-width="6"/>
-  <path d="M232 158h48M232 194h48M232 230h48M232 266h48" stroke="#D98F2B" stroke-width="13" stroke-linecap="round"/>
-  <path d="M216 108h80M216 316h80" stroke="#3D2C12" stroke-width="12" stroke-linecap="round"/>
-  <text x="256" y="416" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="68" fill="#3D2C12" textLength="220" lengthAdjust="spacingAndGlyphs">Âmbar</text>
-  <text x="256" y="456" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#96702F" textLength="250" lengthAdjust="spacingAndGlyphs">BARBEARIA · EST. 1952</text>
+  <defs>
+    <radialGradient id="papel" cx="40%" cy="32%" r="80%">
+      <stop offset="0" stop-color="#FCF6EA"/>
+      <stop offset="1" stop-color="#EBDBBE"/>
+    </radialGradient>
+    <path id="aTopo" d="M100 258A156 156 0 0 1 412 258"/>
+    <path id="aBase" d="M112 298A144 144 0 0 0 400 298"/>
+  </defs>
+  <rect width="512" height="512" fill="url(#papel)"/>
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#3D2C12" stroke-width="8"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="#D98F2B" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#3D2C12" stroke-width="1" opacity=".4"/>
+
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="31" font-weight="bold" letter-spacing="11" fill="#3D2C12">
+    <textPath href="#aTopo" startOffset="50%" text-anchor="middle">BARBEARIA</textPath>
+  </text>
+
+  <g transform="translate(158 246)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#C98722" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#C98722" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#C98722" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#C98722" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#C98722" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#C98722" transform="rotate(-50 -15 -69)"/></g>
+  <g transform="translate(354 246) scale(-1 1)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#C98722" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#C98722" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#C98722" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#C98722" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#C98722" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#C98722" transform="rotate(-50 -15 -69)"/></g>
+
+  <path d="M214 134h84M214 274h84" stroke="#3D2C12" stroke-width="14" stroke-linecap="round"/>
+  <clipPath id="poste"><rect x="226" y="144" width="60" height="122" rx="30"/></clipPath>
+  <g clip-path="url(#poste)"><path d="M104 266 L116 266 L183.10000000000002 144 L171.10000000000002 144Z" fill="#D98F2B"/><path d="M128 266 L140 266 L207.10000000000002 144 L195.10000000000002 144Z" fill="#D98F2B"/><path d="M152 266 L164 266 L231.10000000000002 144 L219.10000000000002 144Z" fill="#D98F2B"/><path d="M176 266 L188 266 L255.10000000000002 144 L243.10000000000002 144Z" fill="#D98F2B"/><path d="M200 266 L212 266 L279.1 144 L267.1 144Z" fill="#D98F2B"/><path d="M224 266 L236 266 L303.1 144 L291.1 144Z" fill="#D98F2B"/><path d="M248 266 L260 266 L327.1 144 L315.1 144Z" fill="#D98F2B"/><path d="M272 266 L284 266 L351.1 144 L339.1 144Z" fill="#D98F2B"/><path d="M296 266 L308 266 L375.1 144 L363.1 144Z" fill="#D98F2B"/><path d="M320 266 L332 266 L399.1 144 L387.1 144Z" fill="#D98F2B"/><path d="M344 266 L356 266 L423.1 144 L411.1 144Z" fill="#D98F2B"/><path d="M368 266 L380 266 L447.1 144 L435.1 144Z" fill="#D98F2B"/><path d="M392 266 L404 266 L471.1 144 L459.1 144Z" fill="#D98F2B"/></g>
+  <rect x="226" y="144" width="60" height="122" rx="30" fill="none" stroke="#3D2C12" stroke-width="7"/>
+
+  <path d="M54 302h404l-28 42 28 42H54l28-42Z" fill="#3D2C12"/>
+  <text x="256" y="359" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="bold" font-size="56" fill="#FCF6EA" textLength="300" lengthAdjust="spacingAndGlyphs">Âmbar</text>
+
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" letter-spacing="5" fill="#8A6526">
+    <textPath href="#aBase" startOffset="50%" text-anchor="middle">CURITIBA · EST. 1952</textPath>
+  </text>
 </svg>

@@ -1,10 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#15181B"/>
-  <circle cx="256" cy="196" r="112" fill="none" stroke="#93A7B4" stroke-width="6"/>
-  <circle cx="256" cy="196" r="92" fill="none" stroke="#93A7B4" stroke-width="1.5" opacity=".4"/>
-  <path d="M256 104 292 214 256 190 220 214Z" fill="#E9F0F5"/>
-  <path d="M256 230v58" stroke="#93A7B4" stroke-width="8" stroke-linecap="round"/>
-  <text x="256" y="376" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="bold" font-size="56" fill="#E9F0F5" textLength="300" lengthAdjust="spacingAndGlyphs">DISTRITO</text>
-  <text x="256" y="428" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="34" fill="#93A7B4" textLength="230" lengthAdjust="spacingAndGlyphs">N O R T E</text>
-  <text x="256" y="470" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" fill="#5F7180" textLength="130" lengthAdjust="spacingAndGlyphs">SÃO PAULO</text>
+  <defs>
+    <path id="aDn" d="M136 230A120 120 0 0 1 376 230"/>
+  </defs>
+  <rect width="512" height="512" fill="#14171A"/>
+  <path d="M256 20 464 138v236L256 492 48 374V138Z" fill="none" stroke="#93A7B4" stroke-width="7"/>
+  <path d="M256 50 438 154v204L256 462 74 358V154Z" fill="none" stroke="#93A7B4" stroke-width="1.5" opacity=".4"/>
+
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="23" font-weight="bold" letter-spacing="10" fill="#8DA1AF">
+    <textPath href="#aDn" startOffset="50%" text-anchor="middle">SÃO PAULO</textPath>
+  </text>
+
+  <path d="M212 152h88M212 288h88" stroke="#E9F0F5" stroke-width="13" stroke-linecap="round"/>
+  <clipPath id="posteDn"><rect x="228" y="162" width="56" height="118" rx="28"/></clipPath>
+  <g clip-path="url(#posteDn)"><path d="M110 280 L122 280 L186.9 162 L174.9 162Z" fill="#93A7B4"/><path d="M134 280 L146 280 L210.9 162 L198.9 162Z" fill="#93A7B4"/><path d="M158 280 L170 280 L234.9 162 L222.9 162Z" fill="#93A7B4"/><path d="M182 280 L194 280 L258.9 162 L246.9 162Z" fill="#93A7B4"/><path d="M206 280 L218 280 L282.9 162 L270.9 162Z" fill="#93A7B4"/><path d="M230 280 L242 280 L306.9 162 L294.9 162Z" fill="#93A7B4"/><path d="M254 280 L266 280 L330.9 162 L318.9 162Z" fill="#93A7B4"/><path d="M278 280 L290 280 L354.9 162 L342.9 162Z" fill="#93A7B4"/><path d="M302 280 L314 280 L378.9 162 L366.9 162Z" fill="#93A7B4"/><path d="M326 280 L338 280 L402.9 162 L390.9 162Z" fill="#93A7B4"/><path d="M350 280 L362 280 L426.9 162 L414.9 162Z" fill="#93A7B4"/><path d="M374 280 L386 280 L450.9 162 L438.9 162Z" fill="#93A7B4"/><path d="M398 280 L410 280 L474.9 162 L462.9 162Z" fill="#93A7B4"/></g>
+  <rect x="228" y="162" width="56" height="118" rx="28" fill="none" stroke="#E9F0F5" stroke-width="7"/>
+  <path d="M186 221h-48M326 221h48" stroke="#93A7B4" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="126" cy="221" r="8" fill="#93A7B4"/>
+  <circle cx="386" cy="221" r="8" fill="#93A7B4"/>
+
+  <text x="256" y="368" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="bold" font-size="60" fill="#E9F0F5" textLength="310" lengthAdjust="spacingAndGlyphs">DISTRITO</text>
+  <path d="M136 388h240" stroke="#93A7B4" stroke-width="2"/>
+  <text x="256" y="428" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" letter-spacing="16" fill="#93A7B4" textLength="250" lengthAdjust="spacingAndGlyphs">NORTE</text>
 </svg>

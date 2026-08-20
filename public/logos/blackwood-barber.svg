@@ -1,12 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#141019"/>
-  <path d="M256 40 472 256 256 472 40 256Z" fill="none" stroke="#834CF1" stroke-width="5"/>
-  <path d="M256 74 438 256 256 438 74 256Z" fill="none" stroke="#834CF1" stroke-width="1.5" opacity=".45"/>
-  <path d="M256 132v104" stroke="#F2EEFF" stroke-width="9" stroke-linecap="round"/>
-  <path d="M214 168h84" stroke="#834CF1" stroke-width="7" stroke-linecap="round"/>
-  <path d="M232 206h48" stroke="#834CF1" stroke-width="5" stroke-linecap="round" opacity=".6"/>
-  <text x="256" y="306" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="46" fill="#F2EEFF" textLength="300" lengthAdjust="spacingAndGlyphs">BLACKWOOD</text>
-  <path d="M150 330h212" stroke="#834CF1" stroke-width="2"/>
-  <text x="256" y="366" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" fill="#A98BF5" textLength="170" lengthAdjust="spacingAndGlyphs">BARBER SHOP</text>
-  <text x="256" y="416" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="16" fill="#6F5E96" textLength="120" lengthAdjust="spacingAndGlyphs">EST. 2014</text>
+  <defs>
+    <linearGradient id="fundo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1C1528"/>
+      <stop offset="1" stop-color="#0F0B16"/>
+    </linearGradient>
+    <path id="aBw" d="M126 196A130 130 0 0 1 386 196"/>
+  </defs>
+  <rect width="512" height="512" fill="url(#fundo)"/>
+
+  <path d="M256 24 448 84v168c0 88-78 144-192 194C142 396 64 340 64 252V84Z" fill="none" stroke="#834CF1" stroke-width="6"/>
+  <path d="M256 46 426 100v150c0 78-70 128-170 172-100-44-170-94-170-172V100Z" fill="none" stroke="#834CF1" stroke-width="1.5" opacity=".4"/>
+
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="23" letter-spacing="11" fill="#A98BF5">
+    <textPath href="#aBw" startOffset="50%" text-anchor="middle">EST. 2014</textPath>
+  </text>
+
+  <!-- navalha: cabo cheio, dorso grosso, fio fino -->
+  <g transform="rotate(-34 256 250)">
+    <rect x="132" y="236" width="90" height="26" rx="13" fill="#834CF1"/>
+    <path d="M226 238h150a12 12 0 0 1 0 24H226Z" fill="#F2EEFF"/>
+    <path d="M232 258h140" stroke="#C9B6FA" stroke-width="3"/>
+  </g>
+  <g transform="rotate(34 256 250)">
+    <rect x="290" y="236" width="90" height="26" rx="13" fill="#F2EEFF"/>
+    <path d="M286 238H136a12 12 0 0 0 0 24h150Z" fill="#834CF1"/>
+    <path d="M280 258H140" stroke="#5B32B0" stroke-width="3"/>
+  </g>
+  <circle cx="256" cy="250" r="15" fill="#0F0B16" stroke="#A98BF5" stroke-width="4"/>
+
+  <path d="M110 336h292" stroke="#834CF1" stroke-width="2"/>
+  <text x="256" y="396" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="58" fill="#F2EEFF" textLength="330" lengthAdjust="spacingAndGlyphs">BLACKWOOD</text>
+  <text x="256" y="442" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="25" letter-spacing="14" fill="#A98BF5" textLength="220" lengthAdjust="spacingAndGlyphs">BARBER</text>
 </svg>
