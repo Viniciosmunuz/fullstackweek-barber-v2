@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#F4EADB"/>
+  <rect x="26" y="26" width="460" height="460" fill="none" stroke="#B87333" stroke-width="3"/>
+  <path d="M256 96 396 202" fill="none" stroke="#43301C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M256 96 116 202" fill="none" stroke="#43301C" stroke-width="12" stroke-linecap="round"/>
+  <path d="M146 212v104h220V212" fill="none" stroke="#43301C" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M228 316v-56h56v56" fill="none" stroke="#B87333" stroke-width="10" stroke-linejoin="round"/>
+  <text x="256" y="386" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="54" fill="#43301C" textLength="270" lengthAdjust="spacingAndGlyphs">CASA BRAVO</text>
+  <path d="M120 406h272" stroke="#B87333" stroke-width="2"/>
+  <text x="256" y="440" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#7A5836" textLength="256" lengthAdjust="spacingAndGlyphs">BARBEARIA · DESDE 1994</text>
+</svg>

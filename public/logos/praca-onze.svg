@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#1A1315"/>
+  <circle cx="256" cy="196" r="146" fill="none" stroke="#A6414D" stroke-width="5"/>
+  <circle cx="256" cy="196" r="128" fill="none" stroke="#A6414D" stroke-width="1.5" opacity=".45"/>
+  <path d="M220 130v122M292 130v122" stroke="#F5E9EA" stroke-width="18" stroke-linecap="round"/>
+  <path d="M188 130h32M260 130h32" stroke="#F5E9EA" stroke-width="18" stroke-linecap="round"/>
+  <path d="M182 286h148" stroke="#A6414D" stroke-width="9" stroke-linecap="round"/>
+  <path d="M56 372h400l-30 52H86Z" fill="#A6414D"/>
+  <text x="256" y="408" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="40" fill="#1A1315" textLength="268" lengthAdjust="spacingAndGlyphs">PRAÇA ONZE</text>
+  <text x="256" y="466" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#9E6A71" textLength="270" lengthAdjust="spacingAndGlyphs">BARBEARIA · RIO DE JANEIRO</text>
+</svg>

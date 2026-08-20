@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#101114"/>
+  <path d="M126 268V138l58 50 72-92 72 92 58-50v130" fill="none" stroke="#D8DCE2" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M126 300h260" stroke="#D8DCE2" stroke-width="11" stroke-linecap="round"/>
+  <circle cx="256" cy="96" r="11" fill="#D8DCE2"/>
+  <text x="256" y="384" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#F4F6F8" textLength="230" lengthAdjust="spacingAndGlyphs">NOBRE</text>
+  <path d="M146 404h220M146 412h220" stroke="#D8DCE2" stroke-width="1" opacity=".55"/>
+  <text x="256" y="452" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#9EA6B0" textLength="200" lengthAdjust="spacingAndGlyphs">BARBEARIA</text>
+</svg>

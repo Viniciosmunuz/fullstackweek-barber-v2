@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0C1A22"/>
+  <circle cx="256" cy="212" r="118" fill="none" stroke="#3B84A6" stroke-width="4" opacity=".5"/>
+  <text x="256" y="272" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="bold" font-size="190" fill="#E8F6FC" textLength="150" lengthAdjust="spacingAndGlyphs">09</text>
+  <path d="M138 300 374 124" stroke="#3B84A6" stroke-width="7" stroke-linecap="round"/>
+  <text x="256" y="386" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="bold" font-size="52" fill="#E8F6FC" textLength="288" lengthAdjust="spacingAndGlyphs">STUDIO</text>
+  <text x="256" y="440" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="30" fill="#3B84A6" textLength="230" lengthAdjust="spacingAndGlyphs">N O V E</text>
+</svg>

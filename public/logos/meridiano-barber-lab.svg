@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#15101F"/>
+  <circle cx="256" cy="200" r="126" fill="none" stroke="#834CF1" stroke-width="7"/>
+  <ellipse cx="256" cy="200" rx="54" ry="126" fill="none" stroke="#B79BF8" stroke-width="4" opacity=".8"/>
+  <path d="M130 200h252" stroke="#B79BF8" stroke-width="4"/>
+  <path d="M256 74v252" stroke="#834CF1" stroke-width="4" opacity=".6"/>
+  <circle cx="256" cy="200" r="16" fill="#834CF1"/>
+  <text x="256" y="400" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="50" fill="#F1EBFF" textLength="310" lengthAdjust="spacingAndGlyphs">MERIDIANO</text>
+  <text x="256" y="446" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#834CF1" textLength="200" lengthAdjust="spacingAndGlyphs">BARBER LAB</text>
+</svg>
