@@ -30,5 +30,5 @@
 
   <path d="M110 336h292" stroke="#834CF1" stroke-width="2"/>
   <text x="256" y="396" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="58" fill="#F2EEFF" textLength="330" lengthAdjust="spacingAndGlyphs">BLACKWOOD</text>
-  <text x="256" y="442" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="25" letter-spacing="14" fill="#A98BF5" textLength="220" lengthAdjust="spacingAndGlyphs">BARBER</text>
+  <text x="256" y="442" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="25" fill="#A98BF5" textLength="220" lengthAdjust="spacingAndGlyphs">BARBER</text>
 </svg>

@@ -1,9 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#101114"/>
-  <path d="M126 268V138l58 50 72-92 72 92 58-50v130" fill="none" stroke="#D8DCE2" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"/>
-  <path d="M126 300h260" stroke="#D8DCE2" stroke-width="11" stroke-linecap="round"/>
-  <circle cx="256" cy="96" r="11" fill="#D8DCE2"/>
-  <text x="256" y="384" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="62" fill="#F4F6F8" textLength="230" lengthAdjust="spacingAndGlyphs">NOBRE</text>
-  <path d="M146 404h220M146 412h220" stroke="#D8DCE2" stroke-width="1" opacity=".55"/>
-  <text x="256" y="452" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" fill="#9EA6B0" textLength="200" lengthAdjust="spacingAndGlyphs">BARBEARIA</text>
+  <defs>
+    <linearGradient id="fundoNb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#191B20"/>
+      <stop offset="1" stop-color="#0C0D10"/>
+    </linearGradient>
+    <path id="aNb" d="M126 200A130 130 0 0 1 386 200"/>
+  </defs>
+  <rect width="512" height="512" fill="url(#fundoNb)"/>
+  <path d="M256 24 448 84v168c0 88-78 144-192 194C142 396 64 340 64 252V84Z" fill="none" stroke="#D8DCE2" stroke-width="6"/>
+  <path d="M256 46 426 100v150c0 78-70 128-170 172-100-44-170-94-170-172V100Z" fill="none" stroke="#D8DCE2" stroke-width="1.5" opacity=".35"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" letter-spacing="11" fill="#9EA6B0">
+    <textPath href="#aNb" startOffset="50%" text-anchor="middle">EST. 2009</textPath>
+  </text>
+  <path d="M156 268V158l50 42 50-78 50 78 50-42v110" fill="none" stroke="#D8DCE2" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M156 296h200" stroke="#D8DCE2" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="256" cy="112" r="10" fill="#D8DCE2"/>
+  <circle cx="206" cy="188" r="7" fill="#D8DCE2"/>
+  <circle cx="306" cy="188" r="7" fill="#D8DCE2"/>
+  <path d="M110 336h292" stroke="#D8DCE2" stroke-width="2" opacity=".7"/>
+  <text x="256" y="398" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="64" fill="#F4F6F8" textLength="240" lengthAdjust="spacingAndGlyphs">NOBRE</text>
+  <text x="256" y="444" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#9EA6B0" textLength="280" lengthAdjust="spacingAndGlyphs">BARBEARIA</text>
 </svg>

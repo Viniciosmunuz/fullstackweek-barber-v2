@@ -1,11 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs><path id="aTopo" d="M100 258A156 156 0 0 1 412 258"/><path id="aBase" d="M112 298A144 144 0 0 0 400 298"/></defs>
   <rect width="512" height="512" fill="#1A1315"/>
-  <circle cx="256" cy="196" r="146" fill="none" stroke="#A6414D" stroke-width="5"/>
-  <circle cx="256" cy="196" r="128" fill="none" stroke="#A6414D" stroke-width="1.5" opacity=".45"/>
-  <path d="M220 130v122M292 130v122" stroke="#F5E9EA" stroke-width="18" stroke-linecap="round"/>
-  <path d="M188 130h32M260 130h32" stroke="#F5E9EA" stroke-width="18" stroke-linecap="round"/>
-  <path d="M182 286h148" stroke="#A6414D" stroke-width="9" stroke-linecap="round"/>
-  <path d="M56 372h400l-30 52H86Z" fill="#A6414D"/>
-  <text x="256" y="408" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="40" fill="#1A1315" textLength="268" lengthAdjust="spacingAndGlyphs">PRAÇA ONZE</text>
-  <text x="256" y="466" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#9E6A71" textLength="270" lengthAdjust="spacingAndGlyphs">BARBEARIA · RIO DE JANEIRO</text>
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#F5E9EA" stroke-width="8"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="#A6414D" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#F5E9EA" stroke-width="1" opacity=".4"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" font-weight="bold" letter-spacing="6" fill="#F5E9EA">
+    <textPath href="#aTopo" startOffset="50%" text-anchor="middle">BARBEARIA CLÁSSICA</textPath>
+  </text>
+  <g transform="translate(160 240)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#A6414D" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-50 -15 -69)"/></g>
+  <g transform="translate(352 240) scale(-1 1)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#A6414D" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#A6414D" transform="rotate(-50 -15 -69)"/></g>
+  <path d="M222 136v122M290 136v122" stroke="#F5E9EA" stroke-width="20" stroke-linecap="round"/>
+  <path d="M192 136h30M260 136h30" stroke="#F5E9EA" stroke-width="20" stroke-linecap="round"/>
+  <path d="M186 276h140" stroke="#A6414D" stroke-width="10" stroke-linecap="round"/>
+  <path d="M78 302h356l-26 42 26 42H78l26-42Z" fill="#A6414D"/>
+  <text x="256" y="360" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="46" fill="#1A1315" textLength="296" lengthAdjust="spacingAndGlyphs">PRAÇA ONZE</text>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" letter-spacing="5" fill="#B9767E">
+    <textPath href="#aBase" startOffset="50%" text-anchor="middle">RIO DE JANEIRO</textPath>
+  </text>
 </svg>

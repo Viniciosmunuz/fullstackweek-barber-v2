@@ -1,11 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" fill="#F4EADB"/>
-  <rect x="26" y="26" width="460" height="460" fill="none" stroke="#B87333" stroke-width="3"/>
-  <path d="M256 96 396 202" fill="none" stroke="#43301C" stroke-width="12" stroke-linecap="round"/>
-  <path d="M256 96 116 202" fill="none" stroke="#43301C" stroke-width="12" stroke-linecap="round"/>
-  <path d="M146 212v104h220V212" fill="none" stroke="#43301C" stroke-width="12" stroke-linejoin="round"/>
-  <path d="M228 316v-56h56v56" fill="none" stroke="#B87333" stroke-width="10" stroke-linejoin="round"/>
-  <text x="256" y="386" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="54" fill="#43301C" textLength="270" lengthAdjust="spacingAndGlyphs">CASA BRAVO</text>
-  <path d="M120 406h272" stroke="#B87333" stroke-width="2"/>
-  <text x="256" y="440" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="21" fill="#7A5836" textLength="256" lengthAdjust="spacingAndGlyphs">BARBEARIA · DESDE 1994</text>
+  <defs><path id="aTopo" d="M100 258A156 156 0 0 1 412 258"/><path id="aBase" d="M112 298A144 144 0 0 0 400 298"/>
+    <radialGradient id="papelCb" cx="40%" cy="32%" r="80%">
+      <stop offset="0" stop-color="#FBF5EA"/>
+      <stop offset="1" stop-color="#EADDC6"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#papelCb)"/>
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#43301C" stroke-width="8"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="#B87333" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#43301C" stroke-width="1" opacity=".4"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="29" font-weight="bold" letter-spacing="11" fill="#43301C">
+    <textPath href="#aTopo" startOffset="50%" text-anchor="middle">BARBEARIA</textPath>
+  </text>
+  <g transform="translate(150 260)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#B87333" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#B87333" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#B87333" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#B87333" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#B87333" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#B87333" transform="rotate(-50 -15 -69)"/></g>
+  <g transform="translate(362 260) scale(-1 1)"><path d="M0 0c-16 -24 -16 -52 0 -76" fill="none" stroke="#B87333" stroke-width="5" stroke-linecap="round"/><ellipse cx="-15" cy="-9" rx="13" ry="6.5" fill="#B87333" transform="rotate(-30 -15 -9)"/><ellipse cx="-15" cy="-24" rx="13" ry="6.5" fill="#B87333" transform="rotate(-35 -15 -24)"/><ellipse cx="-15" cy="-39" rx="13" ry="6.5" fill="#B87333" transform="rotate(-40 -15 -39)"/><ellipse cx="-15" cy="-54" rx="13" ry="6.5" fill="#B87333" transform="rotate(-45 -15 -54)"/><ellipse cx="-15" cy="-69" rx="13" ry="6.5" fill="#B87333" transform="rotate(-50 -15 -69)"/></g>
+  <path d="M256 118 372 200" fill="none" stroke="#43301C" stroke-width="13" stroke-linecap="round"/>
+  <path d="M256 118 140 200" fill="none" stroke="#43301C" stroke-width="13" stroke-linecap="round"/>
+  <path d="M166 208v56h180v-56" fill="none" stroke="#43301C" stroke-width="13" stroke-linejoin="round"/>
+  <path d="M78 302h356l-26 42 26 42H78l26-42Z" fill="#43301C"/>
+  <text x="256" y="360" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="46" fill="#FBF5EA" textLength="300" lengthAdjust="spacingAndGlyphs">CASA BRAVO</text>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" letter-spacing="5" fill="#8A6526">
+    <textPath href="#aBase" startOffset="50%" text-anchor="middle">DESDE 1994</textPath>
+  </text>
 </svg>

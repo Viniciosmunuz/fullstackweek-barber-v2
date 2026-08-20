@@ -20,5 +20,5 @@
 
   <text x="256" y="368" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-weight="bold" font-size="60" fill="#E9F0F5" textLength="310" lengthAdjust="spacingAndGlyphs">DISTRITO</text>
   <path d="M136 388h240" stroke="#93A7B4" stroke-width="2"/>
-  <text x="256" y="428" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" letter-spacing="16" fill="#93A7B4" textLength="250" lengthAdjust="spacingAndGlyphs">NORTE</text>
+  <text x="256" y="428" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="36" fill="#93A7B4" textLength="250" lengthAdjust="spacingAndGlyphs">NORTE</text>
 </svg>

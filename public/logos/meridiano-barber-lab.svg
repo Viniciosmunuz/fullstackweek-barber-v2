@@ -1,10 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <path id="aMd" d="M136 226A120 120 0 0 1 376 226"/>
+  </defs>
   <rect width="512" height="512" fill="#15101F"/>
-  <circle cx="256" cy="200" r="126" fill="none" stroke="#834CF1" stroke-width="7"/>
-  <ellipse cx="256" cy="200" rx="54" ry="126" fill="none" stroke="#B79BF8" stroke-width="4" opacity=".8"/>
-  <path d="M130 200h252" stroke="#B79BF8" stroke-width="4"/>
-  <path d="M256 74v252" stroke="#834CF1" stroke-width="4" opacity=".6"/>
-  <circle cx="256" cy="200" r="16" fill="#834CF1"/>
-  <text x="256" y="400" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="50" fill="#F1EBFF" textLength="310" lengthAdjust="spacingAndGlyphs">MERIDIANO</text>
-  <text x="256" y="446" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#834CF1" textLength="200" lengthAdjust="spacingAndGlyphs">BARBER LAB</text>
+  <path d="M256 20 464 138v236L256 492 48 374V138Z" fill="none" stroke="#834CF1" stroke-width="7"/>
+  <path d="M256 50 438 154v204L256 462 74 358V154Z" fill="none" stroke="#B79BF8" stroke-width="1.5" opacity=".4"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" font-weight="bold" letter-spacing="9" fill="#9C7BF0">
+    <textPath href="#aMd" startOffset="50%" text-anchor="middle">RECIFE · PE</textPath>
+  </text>
+  <circle cx="256" cy="238" r="96" fill="none" stroke="#834CF1" stroke-width="7"/>
+  <ellipse cx="256" cy="238" rx="42" ry="96" fill="none" stroke="#B79BF8" stroke-width="4"/>
+  <path d="M160 238h192" stroke="#B79BF8" stroke-width="4"/>
+  <path d="M256 142v192" stroke="#834CF1" stroke-width="4" opacity=".6"/>
+  <circle cx="256" cy="238" r="14" fill="#834CF1"/>
+  <path d="M118 366h276" stroke="#834CF1" stroke-width="2"/>
+  <text x="256" y="416" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="52" fill="#F1EBFF" textLength="310" lengthAdjust="spacingAndGlyphs">MERIDIANO</text>
+  <text x="256" y="456" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="24" fill="#9C7BF0" textLength="230" lengthAdjust="spacingAndGlyphs">BARBER LAB</text>
 </svg>

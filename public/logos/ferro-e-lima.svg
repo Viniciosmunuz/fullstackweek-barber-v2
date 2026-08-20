@@ -1,9 +1,27 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs><path id="aTopo" d="M100 258A156 156 0 0 1 412 258"/><path id="aBase" d="M112 298A144 144 0 0 0 400 298"/></defs>
   <rect width="512" height="512" fill="#1C1211"/>
-  <path d="M112 108 340 336a34 34 0 0 1-48 48L64 156a34 34 0 0 1 48-48Z" fill="none" stroke="#C1554A" stroke-width="7" stroke-linejoin="round"/>
-  <path d="M400 108 172 336a34 34 0 0 0 48 48l228-228a34 34 0 0 0-48-48Z" fill="none" stroke="#F0DAD6" stroke-width="7" stroke-linejoin="round"/>
-  <circle cx="256" cy="222" r="42" fill="#1C1211" stroke="#C1554A" stroke-width="6"/>
-  <text x="256" y="238" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="34" fill="#F0DAD6" textLength="46" lengthAdjust="spacingAndGlyphs">FL</text>
-  <text x="256" y="418" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="50" fill="#F0DAD6" textLength="280" lengthAdjust="spacingAndGlyphs">FERRO &amp; LIMA</text>
-  <text x="256" y="456" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="19" fill="#C1554A" textLength="240" lengthAdjust="spacingAndGlyphs">BARBA E NAVALHA</text>
+  <circle cx="256" cy="256" r="222" fill="none" stroke="#F0DAD6" stroke-width="8"/>
+  <circle cx="256" cy="256" r="205" fill="none" stroke="#C1554A" stroke-width="2.5"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#F0DAD6" stroke-width="1" opacity=".4"/>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" font-weight="bold" letter-spacing="8" fill="#F0DAD6">
+    <textPath href="#aTopo" startOffset="50%" text-anchor="middle">BARBA E NAVALHA</textPath>
+  </text>
+  <g transform="rotate(-32 256 244)">
+    <path d="M132 232h92v24h-92a12 12 0 0 1 0-24Z" fill="#C1554A"/>
+    <circle cx="230" cy="244" r="10" fill="#F0DAD6"/>
+    <path d="M242 230h108l32 14-32 14H242Z" fill="#F0DAD6"/>
+    <path d="M248 252h100" stroke="#C1554A" stroke-width="3" opacity=".5"/>
+  </g>
+  <g transform="rotate(32 256 244)">
+    <path d="M132 232h92v24h-92a12 12 0 0 1 0-24Z" fill="#F0DAD6"/>
+    <circle cx="230" cy="244" r="10" fill="#C1554A"/>
+    <path d="M242 230h108l32 14-32 14H242Z" fill="#C1554A"/>
+    <path d="M248 252h100" stroke="#F0DAD6" stroke-width="3" opacity=".5"/>
+  </g>
+  <path d="M78 302h356l-26 42 26 42H78l26-42Z" fill="#C1554A"/>
+  <text x="256" y="360" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="44" fill="#1C1211" textLength="300" lengthAdjust="spacingAndGlyphs">FERRO &amp; LIMA</text>
+  <text font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="20" letter-spacing="5" fill="#CE8880">
+    <textPath href="#aBase" startOffset="50%" text-anchor="middle">SAVASSI · BH</textPath>
+  </text>
 </svg>
